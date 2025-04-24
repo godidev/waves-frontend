@@ -3,6 +3,7 @@ import { Buoy, BuoyData, station } from '../types'
 import TableCell from './TableCell'
 import { divideDays, formatHourAndMinutes } from '../utils/buoyHelpers'
 import { TableHeader } from './TableHeader'
+import { TableHeaderCell } from './TableHeaderCell'
 
 const apiUrl = import.meta.env.VITE_API_URL as string
 
@@ -52,6 +53,8 @@ export default function BuoyTable() {
     fetchStations()
   }, [])
 
+  console.log({ buoys })
+
   return (
     <div className='px-0.5 text-center'>
       <h2 className='bg-amber-100 text-xl font-medium uppercase'>buoys</h2>
@@ -69,7 +72,7 @@ export default function BuoyTable() {
           )
         })}
       </select>
-      <div className='mx-auto flex flex-1 flex-col flex-nowrap gap-2 overflow-y-auto rounded-sm border-3 border-black bg-green-900 text-white md:w-3/4 lg:w-1/2 xl:w-1/3'>
+      <div className='mx-auto flex flex-col gap-2 overflow-y-auto rounded-sm border-3 border-black bg-white text-sm text-black md:w-3/4 lg:w-1/2 xl:w-1/3'>
         {Object.keys(buoys[selectedStation] || {}).map((day, index) => (
           <div key={day}>
             <TableHeader index={index} day={day} />
@@ -77,11 +80,16 @@ export default function BuoyTable() {
               ({ avgDirection, date, height, period, tm02, peakDirection }) => (
                 <div
                   key={new Date(date).toISOString()}
-                  className={`flex text-[12px]`}
+                  className={`flex w-full items-baseline justify-around even:bg-gray-200`}
                 >
-                  <TableCell data={formatHourAndMinutes(date)} identifier='' />
+                  <TableHeaderCell border='r'>
+                    {formatHourAndMinutes(date)}
+                  </TableHeaderCell>
+
                   <TableCell data={height} identifier='m' />
+
                   <TableCell data={period} identifier='s' />
+
                   <TableCell data={tm02} identifier='s' />
                   <TableCell data={avgDirection} identifier='°' icon='↘' />
                   {!peakDirection ||

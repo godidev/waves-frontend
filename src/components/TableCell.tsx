@@ -3,13 +3,26 @@ const TableCell = ({
   identifier,
   icon,
 }: {
-  data: string | number
+  data: number
   identifier: string
   icon?: string
 }) => {
+  const correctedData = (data: number) => {
+    if (identifier === 's' && data.toString().length === 1) {
+      return `${data}.0`
+    }
+    if (identifier === 'm') {
+      if (data.toString().length === 1) {
+        return `${data}.00`
+      } else if (data.toString().length === 3) {
+        return `${data}0`
+      }
+    }
+    return data
+  }
   return (
-    <p className={`w-12 pr-1 pl-1 text-left`}>
-      {data}
+    <p className={`w-15 px-1 text-left`}>
+      {correctedData(data)}
       {identifier}
       {icon && (
         <span className='ml-1 text-gray-500' key='icon'>

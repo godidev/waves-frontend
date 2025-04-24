@@ -1,18 +1,18 @@
-import TableCell from './TableCell'
+import { TableHeaderCell } from './TableHeaderCell'
 
 export const TableHeader = ({ index, day }: { index: number; day: string }) => {
   return (
     <>
-      <p className='border-b-2 pr-1 pl-1 text-center'>
+      <p className='border-b-2 bg-blue-200 px-1 text-center text-black'>
         {index === 0 ? `${day} (hoy)` : day}
       </p>
-      <div className='flex text-[12px]'>
-        <TableCell data='hour' identifier='' />
-        <TableCell data='height' identifier='' />
-        <TableCell data='period' identifier='' />
-        <TableCell data='tm02' identifier='' />
-        <TableCell data='avgDirection' identifier='' />
-        <TableCell data='peakDirection' identifier='' />
+      <div className='flex justify-around border-b-1 bg-gray-200'>
+        <TableHeaderCell border='r'>hour</TableHeaderCell>
+        <TableHeaderCell border='r'>height</TableHeaderCell>
+        <TableHeaderCell border='r'>period</TableHeaderCell>
+        <TableHeaderCell border='r'>tm02</TableHeaderCell>
+        <TableHeaderCell border='r'>avgDir.</TableHeaderCell>
+        <TableHeaderCell>peakDir.</TableHeaderCell>
       </div>
     </>
   )
