@@ -6,7 +6,7 @@ function App() {
   return (
     <>
       <Header />
-      <main className='flex flex-1 flex-col bg-red-100'>
+      <main className='flex flex-1 flex-col'>
         <BuoyTable />
       </main>
     </>
