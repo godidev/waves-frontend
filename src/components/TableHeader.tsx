@@ -1,6 +1,12 @@
-import { TableHeaderCell } from './TableHeaderCell'
+import TableHeaderCell from './TableHeaderCell'
 
-export const TableHeader = ({ index, day }: { index: number; day: string }) => {
+export default function TableHeader({
+  index,
+  day,
+}: {
+  index: number
+  day: string
+}) {
   return (
     <>
       <p className='border-b-2 bg-blue-200 px-1 text-center text-black'>
