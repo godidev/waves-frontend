@@ -3,7 +3,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import BuoyTable from './components/BuoyTable'
+import BuoyPage from './pages/BuoysPage'
+import SurfForecastPage from './pages/SurfForecastPage'
 
 const router = createBrowserRouter([
   {
@@ -11,7 +12,8 @@ const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: '/', element: <Home /> },
-      { path: '/buoys', element: <BuoyTable /> },
+      { path: '/buoys', element: <BuoyPage /> },
+      { path: '/forecast', element: <SurfForecastPage /> },
     ],
   },
   {
