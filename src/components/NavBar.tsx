@@ -7,6 +7,9 @@ export default function NavBar() {
         <li className='m-2 rounded-sm border p-1 text-center'>
           <Link to='/buoys'>Buoys</Link>
         </li>
+        <li className='m-2 rounded-sm border p-1 text-center'>
+          <Link to='/forecast'>Forecast</Link>
+        </li>
       </ul>
     </nav>
   )

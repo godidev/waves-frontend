@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import Home from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import BuoyTable from './components/BuoyTable'
+import SurfForecastPage from './pages/SurfForecastPage'
 
 const router = createBrowserRouter([
   {
@@ -12,6 +13,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/buoys', element: <BuoyTable /> },
+      { path: '/forecast', element: <SurfForecastPage /> },
     ],
   },
   {
