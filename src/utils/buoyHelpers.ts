@@ -1,13 +1,11 @@
-import { Buoy } from '../types'
-
-export const divideDays = (buoys: Buoy[]) => {
-  const days: { [day: string]: Buoy[] } = {}
-  buoys.forEach((buoy) => {
-    const date = new Date(buoy.date).toLocaleDateString()
+export const divideDays = <T extends {date:string | Date}> (items: T[]) => {
+  const days: { [day: string]: T[] } = {}
+  items.forEach((item) => {
+    const date = new Date(item.date).toLocaleDateString()
     if (!days[date]) {
       days[date] = []
     }
-    days[date].push(buoy)
+    days[date].push(item)
   })
   return days
 }

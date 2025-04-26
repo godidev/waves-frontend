@@ -3,11 +3,11 @@ const TableCell = ({
   identifier,
   icon,
 }: {
-  data: number
+  data: number | string
   identifier: string
   icon?: string
 }) => {
-  const correctedData = (data: number) => {
+  const correctedData = (data: number | string) => {
     if (identifier === 's' && data.toString().length === 1) {
       return `${data}.0`
     }

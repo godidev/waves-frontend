@@ -27,3 +27,14 @@ export interface station {
 export interface BuoyData {
   [station:string]: { [date: string]: Buoy[] };
 }
+
+export interface SurfForecast {
+  date: Date
+  height: number
+  period: number
+  waveDirection: number
+  windSpeed: number
+  windAngle: number
+  windLetters: string
+  energy: string
+}

@@ -3,7 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import BuoyTable from './components/BuoyTable'
+import BuoyTable from './components/buoys/BuoyTable'
 import SurfForecastPage from './pages/SurfForecastPage'
 
 const router = createBrowserRouter([

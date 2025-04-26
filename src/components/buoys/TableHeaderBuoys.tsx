@@ -1,4 +1,4 @@
-import TableHeaderCell from './TableHeaderCell'
+import TableHeaderCell from '../TableHeaderCell'
 
 export default function TableHeader({
   index,
