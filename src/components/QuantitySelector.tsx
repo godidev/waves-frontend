@@ -1,10 +1,10 @@
-export const QuantitySelector = ({
+export default function QuantitySelector({
   displayQuantity,
   setDisplayQuantity,
 }: {
   displayQuantity: number
   setDisplayQuantity: (value: number) => void
-}) => {
+}) {
   const checkboxes = [
     { value: 8, label: '8' },
     { value: 16, label: '16' },

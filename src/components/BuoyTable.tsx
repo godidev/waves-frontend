@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Buoy, BuoyData, station } from '../types'
 import TableCell from './TableCell'
 import { divideDays, formatHourAndMinutes } from '../utils/buoyHelpers'
-import { TableHeader } from './TableHeader'
-import { TableHeaderCell } from './TableHeaderCell'
-import { QuantitySelector } from './QuantitySelector'
+import TableHeader from './TableHeader'
+import TableHeaderCell from './TableHeaderCell'
+import QuantitySelector from './QuantitySelector'
 
 const apiUrl = import.meta.env.VITE_API_URL as string
 
