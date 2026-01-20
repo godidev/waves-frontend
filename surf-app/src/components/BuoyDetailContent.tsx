@@ -72,7 +72,7 @@ export const BuoyDetailContent = ({
     [buoyData],
   )
 
-  const latest = useMemo(() => buoys[0], [buoys])
+  const latest = useMemo(() => buoys.at(-1), [buoys])
 
   if (loading) {
     if (!showStatusMessages) return null
