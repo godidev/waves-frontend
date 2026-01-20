@@ -1,18 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  getBuoyData,
   getSurfForecast,
   getStations,
   getTotalWaveHeight,
   getPrimarySwell,
 } from '../services/api'
 import './HomePage.css'
-import type {
-  Buoy,
-  SurfForecast,
-  Station,
-  SelectableItem,
-} from '../types'
+import type { SurfForecast, Station, SelectableItem } from '../types'
 import { BottomSheet } from '../components/BottomSheet'
 import { MetricCard } from '../components/MetricCard'
 import { DirectionArrow } from '../components/DirectionArrow'
@@ -26,6 +20,7 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { SelectorLabel } from '../components/SelectorLabel'
 import { MetricGroup } from '../components/MetricGroup'
 import { MetricRow } from '../components/MetricRow'
+import { BuoyDetailContent } from '../components/BuoyDetailContent'
 
 interface HomePageProps {
   defaultSpotId: string
@@ -43,7 +38,6 @@ export const HomePage = ({
   const [spotId, setSpotId] = useState(defaultSpotId)
   const [stationId, setStationId] = useState(defaultStationId)
   const [forecasts, setForecasts] = useState<SurfForecast[]>([])
-  const [buoys, setBuoys] = useState<Buoy[]>([])
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [tab, setTab] = useState<'forecast' | 'buoy'>('forecast')
   const [loading, setLoading] = useState(true)
@@ -67,31 +61,17 @@ export const HomePage = ({
       setLoading(true)
       setError(false)
       try {
-        const [forecastResponse, buoyDataResponse, stationData] = await Promise.all(
-          [
-            getSurfForecast(spotId, 1, 48),
-            getBuoyData(stationId, 6),
-            getStations(),
-          ],
-        )
+        const [forecastResponse, stationData] = await Promise.all([
+          getSurfForecast(spotId, 1, 48),
+          getStations(),
+        ])
         if (!mounted) return
-        
-        // Convert BuoyDataDoc[] to Buoy[]
-        const buoysConverted: Buoy[] = buoyDataResponse.map(data => ({
-          date: data.date.getTime(),
-          buoyId: data.buoyId,
-          period: data.period,
-          height: data.height,
-          avgDirection: data.avgDirection,
-          peakDirection: data.peakDirection ?? undefined
-        }))
-        
+
         setForecasts(forecastResponse)
-        setBuoys(buoysConverted)
         setStations(stationData)
         setStationLabel(
-          stationData.find((item: Station) => item.buoyId === stationId)?.name ??
-            stationId,
+          stationData.find((item: Station) => item.buoyId === stationId)
+            ?.name ?? stationId,
         )
         setSelectedDate(forecastResponse[0]?.date ?? null)
       } catch {
@@ -112,8 +92,6 @@ export const HomePage = ({
     return forecasts.find((f) => f.date === selectedDate) ?? forecasts[0]
   }, [forecasts, selectedDate])
 
-  const latestBuoy = useMemo(() => buoys[0], [buoys])
-
   const locale = 'es-ES'
 
   // Convert stations to selectable items
@@ -123,19 +101,15 @@ export const HomePage = ({
   )
 
   if (loading) {
-    return <StatusMessage message="Cargando..." />
+    return <StatusMessage message='Cargando...' />
   }
 
   if (error) {
-    return <StatusMessage message="Error al cargar datos" variant="error" />
+    return <StatusMessage message='Error al cargar datos' variant='error' />
   }
 
   if (tab === 'forecast' && !forecasts.length) {
-    return <StatusMessage message="No hay datos disponibles" />
-  }
-
-  if (tab === 'buoy' && !buoys.length) {
-    return <StatusMessage message="No hay datos disponibles" />
+    return <StatusMessage message='No hay datos disponibles' />
   }
 
   const selectedTotalHeight = selected ? getTotalWaveHeight(selected) : 0
@@ -146,11 +120,7 @@ export const HomePage = ({
       <div className='rounded-3xl border border-white/10 bg-ocean-800/70 p-5'>
         <SectionHeader
           title={tab === 'forecast' ? spotId : stationLabel}
-          action={
-            tab === 'forecast'
-              ? 'Cambiar spot'
-              : 'Cambiar boya'
-          }
+          action={tab === 'forecast' ? 'Cambiar spot' : 'Cambiar boya'}
           onAction={() =>
             tab === 'forecast' ? setSpotSheetOpen(true) : setBuoySheetOpen(true)
           }
@@ -167,57 +137,39 @@ export const HomePage = ({
         </div>
         <div className='mt-4'>
           <SelectorLabel
-            text={
-              tab === 'forecast'
-                ? 'Cambiar spot'
-                : 'Cambiar boya'
-            }
+            text={tab === 'forecast' ? 'Cambiar spot' : 'Cambiar boya'}
           />
         </div>
         <div className='mt-4 flex items-center justify-end'>
           <ShareButton url={window.location.href} />
         </div>
-        <div className='mt-5 grid gap-3 sm:grid-cols-3'>
-          {tab === 'forecast' && selected && (
-            <>
-              <MetricCard
-                label="Altura de ola"
-                value={selectedTotalHeight.toFixed(1)}
-                suffix='m'
-              />
-              <MetricCard
-                label="Periodo"
-                value={`${selectedPrimarySwell?.period ?? '--'}`}
-                suffix='s'
-              />
-              <MetricCard
-                label="Viento"
-                value={`${selected.wind.speed}`}
-                suffix='km/h'
-                icon={<DirectionArrow degrees={selected.wind.angle} />}
-              />
-            </>
-          )}
-          {tab === 'buoy' && latestBuoy && (
-            <>
-              <MetricCard
-                label="Altura"
-                value={`${latestBuoy.height}`}
-                suffix='m'
-              />
-              <MetricCard
-                label="Periodo"
-                value={`${latestBuoy.period}`}
-                suffix='s'
-              />
-              <MetricCard
-                label="Dirección"
-                value={`${latestBuoy.avgDirection}°`}
-                icon={<DirectionArrow degrees={latestBuoy.avgDirection} />}
-              />
-            </>
-          )}
-        </div>
+
+        {tab === 'forecast' && selected && (
+          <div className='mt-5 grid gap-3 sm:grid-cols-3'>
+            <MetricCard
+              label='Altura de ola'
+              value={selectedTotalHeight.toFixed(1)}
+              suffix='m'
+            />
+            <MetricCard
+              label='Periodo'
+              value={`${selectedPrimarySwell?.period ?? '--'}`}
+              suffix='s'
+            />
+            <MetricCard
+              label='Viento'
+              value={`${selected.wind.speed}`}
+              suffix='km/h'
+              icon={<DirectionArrow degrees={selected.wind.angle} />}
+            />
+          </div>
+        )}
+
+        {tab === 'buoy' && (
+          <div className='mt-5'>
+            <BuoyDetailContent stationId={stationId} />
+          </div>
+        )}
       </div>
 
       {tab === 'forecast' && forecasts.length > 0 && (
@@ -230,7 +182,7 @@ export const HomePage = ({
             onSelect={(date) => setSelectedDate(date)}
           />
           {selected && selected.validSwells.length > 0 && (
-            <MetricGroup title="Swells">
+            <MetricGroup title='Swells'>
               {selected.validSwells.map((swell, index) => (
                 <MetricRow
                   key={index}
@@ -238,10 +190,7 @@ export const HomePage = ({
                   value={`${swell.height}m @ ${swell.period}s (${swell.angle}°)`}
                 />
               ))}
-              <MetricRow
-                label="Energía"
-                value={`${selected.energy}`}
-              />
+              <MetricRow label='Energía' value={`${selected.energy}`} />
             </MetricGroup>
           )}
         </>
@@ -249,9 +198,9 @@ export const HomePage = ({
 
       <BottomSheet
         open={spotSheetOpen}
-        title="Seleccionar spot"
+        title='Seleccionar spot'
         onClose={() => setSpotSheetOpen(false)}
-        closeLabel="Cerrar"
+        closeLabel='Cerrar'
       >
         <div className='p-4'>
           <label className='text-xs uppercase text-ocean-200'>
@@ -278,9 +227,9 @@ export const HomePage = ({
 
       <BottomSheet
         open={buoySheetOpen}
-        title="Seleccionar boya"
+        title='Seleccionar boya'
         onClose={() => setBuoySheetOpen(false)}
-        closeLabel="Cerrar"
+        closeLabel='Cerrar'
       >
         <SearchAutocomplete
           items={stationItems}

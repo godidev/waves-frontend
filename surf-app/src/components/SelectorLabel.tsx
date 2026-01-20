@@ -3,5 +3,5 @@ interface SelectorLabelProps {
 }
 
 export const SelectorLabel = ({ text }: SelectorLabelProps) => (
-  <p className="text-xs uppercase text-ocean-200">{text}</p>
+  <p className='text-xs uppercase text-ocean-200'>{text}</p>
 )

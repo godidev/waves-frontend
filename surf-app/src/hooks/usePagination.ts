@@ -1,6 +1,10 @@
 import { useMemo } from 'react'
 
-export const usePagination = <T>(items: T[], page: number, pageSize: number) => {
+export const usePagination = <T>(
+  items: T[],
+  page: number,
+  pageSize: number,
+) => {
   return useMemo(() => {
     const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
     const safePage = Math.min(Math.max(page, 1), totalPages)

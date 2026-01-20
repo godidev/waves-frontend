@@ -14,11 +14,7 @@ import { BuoyDetailPage } from './pages/BuoyDetailPage'
 
 const BuoyRoute = ({ stationId }: { stationId: string }) => {
   const params = useParams()
-  return (
-    <BuoyDetailPage
-      stationId={params.id ?? stationId}
-    />
-  )
+  return <BuoyDetailPage stationId={params.id ?? stationId} />
 }
 
 const AppRoutes = () => {
@@ -65,11 +61,7 @@ const AppRoutes = () => {
         />
         <Route
           path='buoy/:id'
-          element={
-            <BuoyRoute
-              stationId={settings.defaultStationId}
-            />
-          }
+          element={<BuoyRoute stationId={settings.defaultStationId} />}
         />
       </Route>
     </Routes>

@@ -19,8 +19,8 @@ export const ShareButton = ({ url }: ShareButtonProps) => {
   return (
     <button
       onClick={onShare}
-      className="rounded-full border border-white/10 bg-ocean-700 px-4 py-2 text-xs uppercase tracking-wide text-white"
-      type="button"
+      className='rounded-full border border-white/10 bg-ocean-700 px-4 py-2 text-xs uppercase tracking-wide text-white'
+      type='button'
     >
       {copied ? 'Copiado' : 'Compartir'}
     </button>

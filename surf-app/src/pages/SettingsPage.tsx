@@ -39,40 +39,46 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
   }))
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Ajustes" />
-      <div className="rounded-3xl border border-white/10 bg-ocean-800/70 p-5">
-        <div className="mt-2 space-y-4 text-sm text-ocean-100">
-          <div className="flex items-center justify-between">
+    <div className='space-y-6'>
+      <PageHeader title='Ajustes' />
+      <div className='rounded-3xl border border-white/10 bg-ocean-800/70 p-5'>
+        <div className='mt-2 space-y-4 text-sm text-ocean-100'>
+          <div className='flex items-center justify-between'>
             <span>Tema</span>
             <select
               value={settings.theme}
-              onChange={(event) => onUpdate({ ...settings, theme: event.target.value as 'dark' | 'light' })}
-              className="rounded-xl border border-white/10 bg-ocean-900 px-3 py-2 text-xs"
+              onChange={(event) =>
+                onUpdate({
+                  ...settings,
+                  theme: event.target.value as 'dark' | 'light',
+                })
+              }
+              className='rounded-xl border border-white/10 bg-ocean-900 px-3 py-2 text-xs'
             >
-              <option value="dark">Oscuro</option>
-              <option value="light">Claro</option>
+              <option value='dark'>Oscuro</option>
+              <option value='light'>Claro</option>
             </select>
           </div>
-          <div className="flex items-center justify-between">
+          <div className='flex items-center justify-between'>
             <span>Spot por defecto</span>
             <button
               onClick={() => setSpotSheetOpen(true)}
-              className="rounded-full border border-white/10 px-3 py-2 text-xs"
-              type="button"
+              className='rounded-full border border-white/10 px-3 py-2 text-xs'
+              type='button'
             >
               {settings.defaultSpotId || 'sopelana'}
             </button>
           </div>
-          <div className="flex items-center justify-between">
+          <div className='flex items-center justify-between'>
             <span>Boya por defecto</span>
             <button
               onClick={() => setBuoySheetOpen(true)}
-              className="rounded-full border border-white/10 px-3 py-2 text-xs"
-              type="button"
+              className='rounded-full border border-white/10 px-3 py-2 text-xs'
+              type='button'
             >
-              {stations.find((item) => item.buoyId === settings.defaultStationId)?.name ??
-                settings.defaultStationId}
+              {stations.find(
+                (item) => item.buoyId === settings.defaultStationId,
+              )?.name ?? settings.defaultStationId}
             </button>
           </div>
         </div>
@@ -80,24 +86,26 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
 
       <BottomSheet
         open={spotSheetOpen}
-        title="Seleccionar spot"
+        title='Seleccionar spot'
         onClose={() => setSpotSheetOpen(false)}
-        closeLabel="Cerrar"
+        closeLabel='Cerrar'
       >
-        <div className="p-4">
-          <label className="text-xs uppercase text-ocean-200">
+        <div className='p-4'>
+          <label className='text-xs uppercase text-ocean-200'>
             ID del spot
             <input
-              type="text"
+              type='text'
               value={settings.defaultSpotId}
-              onChange={(e) => onUpdate({ ...settings, defaultSpotId: e.target.value })}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-ocean-800 px-3 py-2 text-sm text-white"
-              placeholder="sopelana"
+              onChange={(e) =>
+                onUpdate({ ...settings, defaultSpotId: e.target.value })
+              }
+              className='mt-2 w-full rounded-xl border border-white/10 bg-ocean-800 px-3 py-2 text-sm text-white'
+              placeholder='sopelana'
             />
           </label>
           <button
             onClick={() => setSpotSheetOpen(false)}
-            className="mt-4 w-full rounded-xl bg-ocean-600 py-2 text-sm font-semibold text-white"
+            className='mt-4 w-full rounded-xl bg-ocean-600 py-2 text-sm font-semibold text-white'
           >
             Confirmar
           </button>
@@ -106,9 +114,9 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
 
       <BottomSheet
         open={buoySheetOpen}
-        title="Seleccionar boya"
+        title='Seleccionar boya'
         onClose={() => setBuoySheetOpen(false)}
-        closeLabel="Cerrar"
+        closeLabel='Cerrar'
       >
         <SearchAutocomplete
           items={stationItems}

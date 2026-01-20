@@ -13,9 +13,9 @@ export const getStations = async (): Promise<Station[]> => {
   }
   const buoys: BuoyInfoDoc[] = await response.json()
   // Convertir BuoyInfoDoc[] a Station[]
-  return buoys.map(buoy => ({
+  return buoys.map((buoy) => ({
     name: buoy.buoyName,
-    buoyId: buoy.buoyId
+    buoyId: buoy.buoyId,
   }))
 }
 
@@ -47,7 +47,10 @@ export const getBuoyInfo = async (buoyId: string): Promise<BuoyInfoDoc> => {
  * Obtiene datos históricos de mediciones de una boya específica
  * GET /buoys/:id/data
  */
-export const getBuoyData = async (buoyId: string, limit = 6): Promise<BuoyDataDoc[]> => {
+export const getBuoyData = async (
+  buoyId: string,
+  limit = 6,
+): Promise<BuoyDataDoc[]> => {
   const params = new URLSearchParams({
     limit: String(limit),
   })
@@ -57,9 +60,9 @@ export const getBuoyData = async (buoyId: string, limit = 6): Promise<BuoyDataDo
   }
   const data: BuoyDataDoc[] = await response.json()
   // Convert date strings to Date objects
-  return data.map(item => ({
+  return data.map((item) => ({
     ...item,
-    date: new Date(item.date)
+    date: new Date(item.date),
   }))
 }
 
@@ -70,7 +73,7 @@ export const getBuoyData = async (buoyId: string, limit = 6): Promise<BuoyDataDo
 export const getSurfForecast = async (
   spot: string,
   page = 1,
-  limit = 50
+  limit = 50,
 ): Promise<SurfForecast[]> => {
   const params = new URLSearchParams({
     page: String(page),
@@ -78,7 +81,7 @@ export const getSurfForecast = async (
   })
   console.log({ spot })
   const response = await fetch(
-    `${API_BASE_URL}/surf-forecast/${spot}?${params}`
+    `${API_BASE_URL}/surf-forecast/${spot}?${params}`,
   )
   if (!response.ok) {
     throw new Error('Failed to fetch surf forecast')
@@ -96,7 +99,7 @@ export const getSurfForecast = async (
 export const getPrimarySwell = (forecast: SurfForecast) => {
   if (!forecast.validSwells.length) return null
   return forecast.validSwells.reduce((max, swell) =>
-    swell.height > max.height ? swell : max
+    swell.height > max.height ? swell : max,
   )
 }
 
@@ -108,7 +111,7 @@ export const getTotalWaveHeight = (forecast: SurfForecast): number => {
   // Usamos la fórmula de suma cuadrática para combinar alturas de olas
   const sumOfSquares = forecast.validSwells.reduce(
     (sum, swell) => sum + swell.height ** 2,
-    0
+    0,
   )
   return Math.sqrt(sumOfSquares)
 }
