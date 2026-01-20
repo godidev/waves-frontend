@@ -16,12 +16,11 @@ interface BuoyDetailContentProps {
 
 type RangeOption = '6' | '12' | '24'
 
-type ChartMetric = 'height' | 'period' | 'avgDirection'
+type ChartMetric = 'height' | 'period'
 
 const chartOptions: { value: ChartMetric; label: string }[] = [
   { value: 'height', label: 'Altura' },
   { value: 'period', label: 'Periodo' },
-  { value: 'avgDirection', label: 'Dirección' },
 ]
 
 export const BuoyDetailContent = ({
@@ -101,7 +100,7 @@ export const BuoyDetailContent = ({
         onChange={(value) => setRange(value as RangeOption)}
       />
 
-      <div className='grid gap-3 sm:grid-cols-3'>
+      <div className='flex justify-stretch gap-4'>
         <MetricCard
           label='Altura'
           value={`${latest?.height ?? '--'}`}

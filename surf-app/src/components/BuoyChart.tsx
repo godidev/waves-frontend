@@ -12,7 +12,7 @@ import { formatHour } from '../utils/time'
 
 interface BuoyChartProps {
   buoys: Buoy[]
-  metric: 'height' | 'period' | 'avgDirection'
+  metric: 'height' | 'period'
   locale: string
 }
 
@@ -33,7 +33,6 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
     timestamp: new Date(buoy.date).toISOString(),
     height: buoy.height,
     period: buoy.period,
-    avgDirection: buoy.avgDirection,
   }))
 
   return (
