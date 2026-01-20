@@ -38,7 +38,7 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
   return (
     <div
       ref={containerRef}
-      className='h-56 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-3'
+      className='h-56 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-2'
     >
       {isReady && (
         <ResponsiveContainer width='100%' height='100%'>

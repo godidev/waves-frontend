@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { getBuoyData } from '../services/api'
 import type { BuoyDataDoc } from '../types'
 import { MetricCard } from './MetricCard'
-import { DirectionArrow } from './DirectionArrow'
 import { BuoyChart } from './BuoyChart'
 import { BuoyTable } from './BuoyTable'
 import { SegmentedToggle } from './SegmentedToggle'
@@ -89,7 +88,7 @@ export const BuoyDetailContent = ({
   }
 
   return (
-    <div className='space-y-5'>
+    <div className='space-y-2 '>
       <SegmentedToggle
         options={[
           { label: '6h', value: '6' },
@@ -100,7 +99,7 @@ export const BuoyDetailContent = ({
         onChange={(value) => setRange(value as RangeOption)}
       />
 
-      <div className='flex justify-stretch gap-4'>
+      <div className='grid grid-cols-3 gap-3'>
         <MetricCard
           label='Altura'
           value={`${latest?.height ?? '--'}`}
@@ -114,11 +113,10 @@ export const BuoyDetailContent = ({
         <MetricCard
           label='Dirección'
           value={`${latest?.avgDirection ?? '--'}°`}
-          icon={<DirectionArrow degrees={latest?.avgDirection ?? null} />}
         />
       </div>
 
-      <div className='space-y-3'>
+      <div className='space-y-2 '>
         <SegmentedToggle
           options={chartOptions}
           value={chartMetric}
