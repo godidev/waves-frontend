@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd surf-app && npm install && npm run build",
+  "outputDirectory": "surf-app/dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
