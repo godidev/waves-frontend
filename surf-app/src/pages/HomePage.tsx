@@ -115,7 +115,7 @@ export const HomePage = ({
 
   return (
     <div className='space-y-3'>
-      <div className='rounded-3xl border border-white/10 bg-ocean-800/70 p-5'>
+      <div className='rounded-3xl border border-white/10 bg-ocean-800/70 px-3 py-3'>
         <SectionHeader
           title={tab === 'forecast' ? spotId : stationLabel}
           action={tab === 'forecast' ? 'Cambiar spot' : 'Cambiar boya'}
