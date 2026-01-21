@@ -40,13 +40,13 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
   return (
     <div
       ref={containerRef}
-      className='h-56 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-'
+      className='h-56 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-2'
     >
       {isReady && (
         <ResponsiveContainer width='100%' height='100%'>
           <LineChart
             data={chartData}
-            margin={{ top: 0, right: 5, left: 0, bottom: -10 }}
+            margin={{ top: 0, right: 0, left: 0, bottom: -5 }}
           >
             <XAxis
               dataKey='timestamp'
@@ -61,7 +61,7 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
               fontSize={10}
               tickCount={12}
               tickFormatter={(value) => value + 'm'}
-              width={30}
+              width={33}
               padding={{ top: 20, bottom: 0 }}
             />
             <YAxis
@@ -70,6 +70,7 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
               stroke='#fbbf24'
               fontSize={8}
               width={28}
+              padding={{ top: 10, bottom: 10 }}
               tickFormatter={(value) => value + 's'}
               domain={[
                 (dataMin) => roundDown(dataMin),
