@@ -24,9 +24,10 @@ export const BuoyTable = ({ buoys, locale }: BuoyTableProps) => (
             <td className='px-3 py-2'>
               {formatHour(new Date(buoy.date).toISOString(), locale)}
             </td>
-            <td className='px-3 py-2'>{buoy.height}m</td>
-            <td className='px-3 py-2'>{buoy.period}s</td>
-            <td className='px-3 py-2'>
+            <td className='px-3 py-1'>{buoy.height}m</td>
+            <td className='px-3 py-1'>{buoy.period}s</td>
+            <td className='px-3 py-1 flex items-center gap-2'>
+              {buoy.avgDirection}°
               <DirectionArrow degrees={buoy.avgDirection} />
             </td>
           </tr>
