@@ -13,11 +13,9 @@ import { DirectionArrow } from '../components/DirectionArrow'
 import { ForecastChart } from '../components/ForecastChart'
 import { ForecastChips } from '../components/ForecastChips'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
-import { ShareButton } from '../components/ShareButton'
 import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
 import { SegmentedTabs } from '../components/SegmentedTabs'
-import { SelectorLabel } from '../components/SelectorLabel'
 import { MetricGroup } from '../components/MetricGroup'
 import { MetricRow } from '../components/MetricRow'
 import { BuoyDetailContent } from '../components/BuoyDetailContent'
@@ -134,14 +132,6 @@ export const HomePage = ({
             value={tab}
             onChange={(value) => setTab(value as 'forecast' | 'buoy')}
           />
-        </div>
-        <div className='mt-4'>
-          <SelectorLabel
-            text={tab === 'forecast' ? 'Cambiar spot' : 'Cambiar boya'}
-          />
-        </div>
-        <div className='mt-4 flex items-center justify-end'>
-          <ShareButton url={window.location.href} />
         </div>
 
         {tab === 'forecast' && selected && (
