@@ -26,7 +26,7 @@ export const BuoyTable = ({ buoys, locale }: BuoyTableProps) => (
             </td>
             <td className='px-3 py-1'>{buoy.height}m</td>
             <td className='px-3 py-1'>{buoy.period}s</td>
-            <td className='px-3 py-1 flex items-center gap-2'>
+            <td className='flex items-center gap-2 px-3 py-1'>
               {buoy.avgDirection}°
               <DirectionArrow degrees={buoy.avgDirection} />
             </td>
