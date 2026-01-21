@@ -17,7 +17,7 @@ export const ForecastChips = ({
   onSelect,
 }: ForecastChipsProps) => (
   <div className='space-y-3'>
-    <div className='hide-scrollbar flex gap-3 overflow-x-auto pb-2'>
+    <div className='hide-scrollbar flex gap-3 items-end overflow-x-auto pb-2'>
       {forecasts.map((forecast, index) => {
         const showSeparator = index === 0 || isTomorrow(forecast.date)
         const primarySwell = getPrimarySwell(forecast)
