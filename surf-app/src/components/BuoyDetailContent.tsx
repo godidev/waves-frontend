@@ -15,20 +15,12 @@ interface BuoyDetailContentProps {
 
 type RangeOption = '6' | '12' | '24'
 
-type ChartMetric = 'height' | 'period'
-
-const chartOptions: { value: ChartMetric; label: string }[] = [
-  { value: 'height', label: 'Altura' },
-  { value: 'period', label: 'Periodo' },
-]
-
 export const BuoyDetailContent = ({
   stationId,
   showStatusMessages = true,
 }: BuoyDetailContentProps) => {
   const [range, setRange] = useState<RangeOption>('6')
   const [buoyData, setBuoyData] = useState<BuoyDataDoc[]>([])
-  const [chartMetric, setChartMetric] = useState<ChartMetric>('height')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const locale = 'es-ES'
@@ -89,16 +81,6 @@ export const BuoyDetailContent = ({
 
   return (
     <div className='space-y-2 '>
-      <SegmentedToggle
-        options={[
-          { label: '6h', value: '6' },
-          { label: '12h', value: '12' },
-          { label: '24h', value: '24' },
-        ]}
-        value={range}
-        onChange={(value) => setRange(value as RangeOption)}
-      />
-
       <div className='grid grid-cols-3 gap-3'>
         <MetricCard
           label='Altura'
@@ -117,14 +99,17 @@ export const BuoyDetailContent = ({
       </div>
 
       <div className='space-y-2 '>
-        <SegmentedToggle
-          options={chartOptions}
-          value={chartMetric}
-          onChange={(value) => setChartMetric(value as ChartMetric)}
-        />
-        <BuoyChart buoys={buoys} metric={chartMetric} locale={locale} />
+        <BuoyChart buoys={buoys} locale={locale} />
       </div>
-
+      <SegmentedToggle
+        options={[
+          { label: '6h', value: '6' },
+          { label: '12h', value: '12' },
+          { label: '24h', value: '24' },
+        ]}
+        value={range}
+        onChange={(value) => setRange(value as RangeOption)}
+      />
       <BuoyTable buoys={buoys} locale={locale} />
     </div>
   )

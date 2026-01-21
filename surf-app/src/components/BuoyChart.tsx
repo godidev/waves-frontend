@@ -12,11 +12,10 @@ import { formatHour } from '../utils/time'
 
 interface BuoyChartProps {
   buoys: Buoy[]
-  metric: 'height' | 'period'
   locale: string
 }
 
-export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
+export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isReady, setIsReady] = useState(false)
 
@@ -29,11 +28,14 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
   }, [])
 
   // Transform data for the chart - convert timestamp to ISO string
-  const chartData = buoys.map((buoy) => ({
-    timestamp: new Date(buoy.date).toISOString(),
-    height: buoy.height,
-    period: buoy.period,
+  const chartData = buoys.map(({ date, height, period }) => ({
+    timestamp: new Date(date).toISOString(),
+    height,
+    period,
   }))
+
+  const roundDown = (v: number) => Math.floor(v / 5) * 5
+  const roundUp = (v: number) => Math.ceil(v / 5) * 5
 
   return (
     <div
@@ -42,7 +44,10 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
     >
       {isReady && (
         <ResponsiveContainer width='100%' height='100%'>
-          <LineChart data={chartData}>
+          <LineChart
+            data={chartData}
+            margin={{ top: 0, right: 5, left: 0, bottom: -10 }}
+          >
             <XAxis
               dataKey='timestamp'
               tickFormatter={(value) => formatHour(value, locale)}
@@ -50,12 +55,26 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
               fontSize={10}
             />
             <YAxis
+              yAxisId='left'
+              orientation='left'
               stroke='#7dd3fc'
               fontSize={10}
               tickCount={12}
               tickFormatter={(value) => value + 'm'}
               width={30}
               padding={{ top: 20, bottom: 0 }}
+            />
+            <YAxis
+              yAxisId='right'
+              orientation='right'
+              stroke='#fbbf24'
+              fontSize={8}
+              width={28}
+              tickFormatter={(value) => value + 's'}
+              domain={[
+                (dataMin) => roundDown(dataMin),
+                (dataMax) => roundUp(dataMax + 2),
+              ]}
             />
             <Tooltip
               contentStyle={{
@@ -65,11 +84,25 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
               labelFormatter={(value) => formatHour(String(value), locale)}
             />
             <Line
-              type='monotone'
-              dataKey={metric}
-              stroke={metric === 'height' ? '#38bdf8' : '#facc15'}
-              strokeWidth={1.5}
-              dot={true}
+              yAxisId='left'
+              type='natural'
+              dataKey={'height'}
+              stroke={'#38bdf8'}
+              strokeWidth={2}
+              activeDot={{ r: 5 }}
+              name='Altura'
+              dot={false}
+            />
+            <Line
+              yAxisId='right'
+              type='natural'
+              dataKey='period'
+              stroke='#fbbf24'
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 5 }}
+              name='Periodo'
+              strokeDasharray='5 5'
             />
           </LineChart>
         </ResponsiveContainer>
