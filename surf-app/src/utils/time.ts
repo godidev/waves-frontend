@@ -3,6 +3,7 @@
  */
 export const formatHour = (timestamp: string, locale: string) =>
   new Date(timestamp).toLocaleTimeString(locale, {
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   })

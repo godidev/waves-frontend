@@ -38,7 +38,7 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
   return (
     <div
       ref={containerRef}
-      className='h-56 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-2'
+      className='h-56 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-'
     >
       {isReady && (
         <ResponsiveContainer width='100%' height='100%'>
@@ -49,7 +49,14 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
               stroke='#7dd3fc'
               fontSize={10}
             />
-            <YAxis stroke='#7dd3fc' fontSize={10} />
+            <YAxis
+              stroke='#7dd3fc'
+              fontSize={10}
+              tickCount={12}
+              tickFormatter={(value) => value + 'm'}
+              width={30}
+              padding={{ top: 20, bottom: 0 }}
+            />
             <Tooltip
               contentStyle={{
                 backgroundColor: '#0f172a',
@@ -60,9 +67,9 @@ export const BuoyChart = ({ buoys, metric, locale }: BuoyChartProps) => {
             <Line
               type='monotone'
               dataKey={metric}
-              stroke='#38bdf8'
-              strokeWidth={2}
-              dot={false}
+              stroke={metric === 'height' ? '#38bdf8' : '#facc15'}
+              strokeWidth={1.5}
+              dot={true}
             />
           </LineChart>
         </ResponsiveContainer>
