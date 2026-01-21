@@ -66,7 +66,7 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
   // Transform data for the chart
   const chartData = forecasts.map((forecast) => ({
     date: forecast.date,
-    waveHeight: forecast.validSwells[0].height.toFixed(2),
+    waveHeight: forecast.validSwells[0].height.toFixed(1),
     energy: forecast.energy,
   }))
 
@@ -101,7 +101,7 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
         <ResponsiveContainer width='100%' height='100%'>
           <LineChart
             data={chartData}
-            margin={{ top: 0, right: 5, left: 0, bottom: 0 }}
+            margin={{ top: 0, right: 5, left: 0, bottom: -10 }}
           >
             <XAxis
               dataKey='date'
@@ -114,7 +114,8 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
               stroke='#7dd3fc'
               fontSize={10}
               width={33}
-              tickCount={15}
+              padding={{ top: 25 }}
+              tickCount={10}
               tickFormatter={(value) => value + 'm'}
             />
             <YAxis
@@ -123,7 +124,7 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
               stroke='#fbbf24'
               fontSize={8}
               width={28}
-              tickCount={15}
+              tickCount={10}
             />
             <Tooltip content={<CustomTooltip />} />
 
