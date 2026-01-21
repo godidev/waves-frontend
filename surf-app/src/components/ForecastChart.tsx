@@ -10,7 +10,6 @@ import {
 } from 'recharts'
 import type { SurfForecast } from '../types'
 import { formatHour } from '../utils/time'
-import { getTotalWaveHeight } from '../services/api'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -67,8 +66,8 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
   // Transform data for the chart
   const chartData = forecasts.map((forecast) => ({
     date: forecast.date,
-    waveHeight: Number(getTotalWaveHeight(forecast).toFixed(2)),
-    energy: forecast.energy, // Valor original de la API
+    waveHeight: forecast.validSwells[0].height.toFixed(2),
+    energy: forecast.energy,
   }))
 
   // Calcular líneas de referencia para cambios de día
