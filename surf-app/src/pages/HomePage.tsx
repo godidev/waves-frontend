@@ -137,7 +137,7 @@ export const HomePage = ({
         {tab === 'forecast' && selected && (
           <div className='mt-5 flex flex-nowrap justify-between gap-3'>
             <MetricCard
-              label='Altura de ola'
+              label='Altura'
               value={selectedTotalHeight.toFixed(1)}
               suffix='m'
             />
