@@ -96,45 +96,34 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
   })
 
   return (
-    <div className='h-80 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-4'>
+    <div className='h-80 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-2'>
       {isReady && (
         <ResponsiveContainer width='100%' height='100%'>
           <LineChart
             data={chartData}
-            margin={{ top: 10, right: 5, left: 0, bottom: 0 }}
+            margin={{ top: 0, right: 5, left: 0, bottom: 0 }}
           >
             <XAxis
               dataKey='date'
               tickFormatter={(value) => formatHour(value, locale)}
               stroke='#7dd3fc'
-              fontSize={10}
+              fontSize={8}
             />
             <YAxis
               yAxisId='left'
               stroke='#7dd3fc'
               fontSize={10}
-              width={40}
-              label={{
-                value: 'Altura (m)',
-                angle: -90,
-                position: 'insideLeft',
-                style: { fill: '#7dd3fc', fontSize: 10 },
-                offset: 5,
-              }}
+              width={33}
+              tickCount={15}
+              tickFormatter={(value) => value + 'm'}
             />
             <YAxis
               yAxisId='right'
               orientation='right'
               stroke='#fbbf24'
-              fontSize={10}
-              width={40}
-              label={{
-                value: 'Energía',
-                angle: 90,
-                position: 'insideRight',
-                style: { fill: '#fbbf24', fontSize: 10 },
-                offset: 5,
-              }}
+              fontSize={8}
+              width={28}
+              tickCount={15}
             />
             <Tooltip content={<CustomTooltip />} />
 
@@ -159,7 +148,7 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
               yAxisId='left'
               label={{
                 value: 'Ahora',
-                position: 'top',
+                position: 'insideTopLeft',
                 fill: '#ef4444',
                 fontSize: 10,
                 fontWeight: 'bold',
@@ -171,8 +160,8 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
               type='natural'
               dataKey='waveHeight'
               stroke='#38bdf8'
-              strokeWidth={2.5}
-              dot={{ fill: '#38bdf8', r: 3 }}
+              strokeWidth={2}
+              dot={false}
               activeDot={{ r: 5 }}
               name='Altura'
             />
@@ -182,15 +171,15 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
               dataKey='energy'
               stroke='#fbbf24'
               strokeWidth={2}
-              dot={{ fill: '#fbbf24', r: 2 }}
-              activeDot={{ r: 4 }}
+              dot={false}
+              activeDot={{ r: 5 }}
               name='Energía'
               strokeDasharray='5 5'
             />
           </LineChart>
         </ResponsiveContainer>
       )}
-      <div className='mt-2 flex items-center justify-center gap-4 text-xs text-ocean-200'>
+      <div className='mt-3 flex items-center justify-center gap-4 text-xs text-ocean-200'>
         <div className='flex items-center gap-2'>
           <div className='h-0.5 w-6 bg-[#38bdf8]'></div>
           <span>Altura de ola</span>
