@@ -114,7 +114,7 @@ export const HomePage = ({
   const selectedPrimarySwell = selected ? getPrimarySwell(selected) : null
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-3'>
       <div className='rounded-3xl border border-white/10 bg-ocean-800/70 p-5'>
         <SectionHeader
           title={tab === 'forecast' ? spotId : stationLabel}
@@ -123,7 +123,7 @@ export const HomePage = ({
             tab === 'forecast' ? setSpotSheetOpen(true) : setBuoySheetOpen(true)
           }
         />
-        <div className='mt-4'>
+        <div className='mt-2'>
           <SegmentedTabs
             options={[
               { label: 'Spots', value: 'forecast' },
@@ -135,7 +135,7 @@ export const HomePage = ({
         </div>
 
         {tab === 'forecast' && selected && (
-          <div className='mt-5 flex flex-nowrap justify-between gap-3'>
+          <div className='mt-3 flex flex-nowrap justify-between gap-3'>
             <MetricCard
               label='Altura'
               value={selectedTotalHeight.toFixed(1)}
@@ -156,7 +156,7 @@ export const HomePage = ({
         )}
 
         {tab === 'buoy' && (
-          <div className='mt-5'>
+          <div className='mt-3'>
             <BuoyDetailContent stationId={stationId} />
           </div>
         )}
