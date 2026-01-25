@@ -10,8 +10,8 @@ import type { SurfForecast, Station, SelectableItem } from '../types'
 import { BottomSheet } from '../components/BottomSheet'
 import { MetricCard } from '../components/MetricCard'
 import { DirectionArrow } from '../components/DirectionArrow'
-import { ForecastChart } from '../components/ForecastChart'
-import { ForecastChips } from '../components/ForecastChips'
+import { ForecastChart } from '../components/Forecast/ForecastChart'
+import { ForecastChips } from '../components/Forecast/ForecastChips'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
@@ -19,6 +19,7 @@ import { SegmentedTabs } from '../components/SegmentedTabs'
 import { MetricGroup } from '../components/MetricGroup'
 import { MetricRow } from '../components/MetricRow'
 import { BuoyDetailContent } from '../components/BuoyDetailContent'
+import { ForecastTable } from '../components/Forecast/ForecastTable'
 
 interface HomePageProps {
   defaultSpotId: string
@@ -164,6 +165,7 @@ export const HomePage = ({
 
       {tab === 'forecast' && forecasts.length > 0 && (
         <>
+          <ForecastTable forecasts={forecasts} locale={locale} />
           <ForecastChart forecasts={forecasts} locale={locale} />
           <ForecastChips
             forecasts={forecasts}
