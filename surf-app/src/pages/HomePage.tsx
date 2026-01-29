@@ -34,28 +34,24 @@ export const HomePage = ({
   const [spotId, setSpotId] = useState(defaultSpotId)
   const [stationId, setStationId] = useState(defaultStationId)
   const [forecasts, setForecasts] = useState<SurfForecast[]>([])
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [tab, setTab] = useState<'forecast' | 'buoy'>('forecast')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [status, setStatus] = useState<'loading' | 'error' | 'success'>('loading')
   const [spotSheetOpen, setSpotSheetOpen] = useState(false)
   const [buoySheetOpen, setBuoySheetOpen] = useState(false)
   const [stations, setStations] = useState<Station[]>([])
-  const [stationLabel, setStationLabel] = useState('')
 
-  useEffect(() => {
+  // Sync local state with props when they change externally
+  if (spotId !== defaultSpotId && !spotSheetOpen) {
     setSpotId(defaultSpotId)
-  }, [defaultSpotId])
-
-  useEffect(() => {
+  }
+  if (stationId !== defaultStationId && !buoySheetOpen) {
     setStationId(defaultStationId)
-  }, [defaultStationId])
+  }
 
   useEffect(() => {
     let mounted = true
     const load = async () => {
-      setLoading(true)
-      setError(false)
+      setStatus('loading')
       try {
         const [forecastResponse, stationData] = await Promise.all([
           getSurfForecast(spotId, 1, 48),
@@ -65,16 +61,10 @@ export const HomePage = ({
 
         setForecasts(forecastResponse)
         setStations(stationData)
-        setStationLabel(
-          stationData.find((item: Station) => item.buoyId === stationId)
-            ?.name ?? stationId,
-        )
-        setSelectedDate(forecastResponse[0]?.date ?? null)
+        setStatus('success')
       } catch {
         if (!mounted) return
-        setError(true)
-      } finally {
-        if (mounted) setLoading(false)
+        setStatus('error')
       }
     }
     void load()
@@ -83,24 +73,26 @@ export const HomePage = ({
     }
   }, [spotId, stationId])
 
-  const selected = useMemo(() => {
-    if (!selectedDate) return forecasts[0]
-    return forecasts.find((f) => f.date === selectedDate) ?? forecasts[0]
-  }, [forecasts, selectedDate])
+  const selected = forecasts[0]
 
   const locale = 'es-ES'
 
-  // Convert stations to selectable items
+  // Derived values
+  const stationLabel = useMemo(
+    () => stations.find((s) => s.buoyId === stationId)?.name ?? stationId,
+    [stations, stationId],
+  )
+
   const stationItems: SelectableItem[] = useMemo(
     () => stations.map((s) => ({ id: s.buoyId, name: s.name })),
     [stations],
   )
 
-  if (loading) {
+  if (status === 'loading') {
     return <StatusMessage message='Cargando...' />
   }
 
-  if (error) {
+  if (status === 'error') {
     return <StatusMessage message='Error al cargar datos' variant='error' />
   }
 
