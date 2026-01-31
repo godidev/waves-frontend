@@ -8,8 +8,6 @@ import {
 import './HomePage.css'
 import type { SurfForecast, Station, SelectableItem } from '../types'
 import { BottomSheet } from '../components/BottomSheet'
-import { MetricCard } from '../components/MetricCard'
-import { DirectionArrow } from '../components/DirectionArrow'
 import { ForecastChart } from '../components/Forecast/ForecastChart'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { StatusMessage } from '../components/StatusMessage'
@@ -17,6 +15,7 @@ import { SectionHeader } from '../components/SectionHeader'
 import { SegmentedTabs } from '../components/SegmentedTabs'
 import { BuoyDetailContent } from '../components/BuoyDetailContent'
 import { ForecastTable } from '../components/Forecast/ForecastTable'
+import { Hero } from '../components/Hero'
 
 interface HomePageProps {
   defaultSpotId: string
@@ -35,7 +34,9 @@ export const HomePage = ({
   const [stationId, setStationId] = useState(defaultStationId)
   const [forecasts, setForecasts] = useState<SurfForecast[]>([])
   const [tab, setTab] = useState<'forecast' | 'buoy'>('forecast')
-  const [status, setStatus] = useState<'loading' | 'error' | 'success'>('loading')
+  const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
+    'loading',
+  )
   const [spotSheetOpen, setSpotSheetOpen] = useState(false)
   const [buoySheetOpen, setBuoySheetOpen] = useState(false)
   const [stations, setStations] = useState<Station[]>([])
@@ -125,24 +126,11 @@ export const HomePage = ({
         </div>
 
         {tab === 'forecast' && selected && (
-          <div className='mt-3 flex flex-nowrap justify-between gap-3'>
-            <MetricCard
-              label='Altura'
-              value={selectedTotalHeight.toFixed(1)}
-              suffix='m'
-            />
-            <MetricCard
-              label='Periodo'
-              value={`${selectedPrimarySwell?.period ?? '--'}`}
-              suffix='s'
-            />
-            <MetricCard
-              label='Viento'
-              value={`${selected.wind.speed}`}
-              suffix='km/h'
-              icon={<DirectionArrow degrees={selected.wind.angle} />}
-            />
-          </div>
+          <Hero
+            selectedTotalHeight={selectedTotalHeight}
+            selectedPrimarySwell={selectedPrimarySwell}
+            wind={selected.wind}
+          />
         )}
 
         {tab === 'buoy' && (
