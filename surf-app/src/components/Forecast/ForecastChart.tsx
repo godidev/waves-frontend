@@ -8,8 +8,8 @@ import {
   YAxis,
   ReferenceLine,
 } from 'recharts'
-import type { SurfForecast } from '../types'
-import { formatHour } from '../utils/time'
+import type { SurfForecast } from '../../types'
+import { formatHour } from '../../utils/time'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]

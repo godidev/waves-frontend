@@ -1,7 +1,7 @@
-import type { SurfForecast } from '../types'
-import { formatHour, isToday, isTomorrow } from '../utils/time'
-import { DirectionArrow } from './DirectionArrow'
-import { getTotalWaveHeight, getPrimarySwell } from '../services/api'
+import type { SurfForecast } from '../../types'
+import { formatHour, isToday, isTomorrow } from '../../utils/time'
+import { DirectionArrow } from '../DirectionArrow'
+import { getTotalWaveHeight, getPrimarySwell } from '../../services/api'
 
 interface ForecastChipsProps {
   forecasts: SurfForecast[]
