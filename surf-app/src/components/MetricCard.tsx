@@ -12,12 +12,12 @@ export const MetricCard = ({ label, value, suffix, icon }: MetricCardProps) => (
     <div>
       <span className='text-xs uppercase text-ocean-200'>{label}</span>
     </div>
-    <div className='mt-2 flex gap-3 text-2xl font-semibold'>
+    <div className='mt-1 flex gap-3 text-xl font-semibold'>
       <div>
         {value}
         {suffix && <span className='text-base text-ocean-200'>{suffix}</span>}
       </div>
-      {icon && <div className='flex text-3xl'>{icon}</div>}
+      {icon && <div className='flex text-2xl'>{icon}</div>}
     </div>
   </div>
 )

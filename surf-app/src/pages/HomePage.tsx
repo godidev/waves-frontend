@@ -74,7 +74,7 @@ export const HomePage = ({
     }
   }, [spotId, stationId])
 
-  const selected = forecasts[0]
+  const selected = forecasts[2]
 
   const locale = 'es-ES'
 
