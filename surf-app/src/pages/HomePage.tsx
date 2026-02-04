@@ -76,6 +76,8 @@ export const HomePage = ({
 
   const selected = forecasts[2]
 
+  console.log({ selected })
+
   const locale = 'es-ES'
 
   // Derived values
@@ -130,6 +132,7 @@ export const HomePage = ({
             selectedTotalHeight={selectedTotalHeight}
             selectedPrimarySwell={selectedPrimarySwell}
             wind={selected.wind}
+            energy={selected.energy}
           />
         )}
 
