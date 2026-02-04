@@ -60,7 +60,7 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
               stroke='#7dd3fc'
               fontSize={10}
               tickCount={12}
-              tickFormatter={(value) => value + 'm'}
+              tickFormatter={(value) => value.toFixed(1) + 'm'}
               width={33}
               padding={{ top: 20, bottom: 0 }}
             />
