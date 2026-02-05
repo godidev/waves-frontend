@@ -6,6 +6,7 @@ import { BuoyChart } from './BuoyChart'
 import { BuoyTable } from './BuoyTable'
 import { SegmentedToggle } from './SegmentedToggle'
 import { StatusMessage } from './StatusMessage'
+import { DirectionArrow, WaveHeight, WavePeriod } from './Icons'
 
 interface BuoyDetailContentProps {
   stationId: string
@@ -83,17 +84,26 @@ export const BuoyDetailContent = ({
     <div className='space-y-2'>
       <div className='grid grid-cols-3 gap-3'>
         <MetricCard
+          icon={<WaveHeight className='h-6 w-6' />}
           label='Altura'
           value={`${latest?.height ?? '--'}`}
           suffix='m'
         />
         <MetricCard
+          icon={<WavePeriod className='h-6 w-6' />}
           label='Periodo'
           value={`${latest?.period ?? '--'}`}
           suffix='s'
         />
         <MetricCard
+          icon={
+            <DirectionArrow
+              className='h-6 w-6'
+              degrees={latest?.peakDirection ?? latest?.avgDirection ?? 0}
+            />
+          }
           label='Dirección'
+          suffix=''
           value={`${latest?.avgDirection ?? '--'}°`}
         />
       </div>
