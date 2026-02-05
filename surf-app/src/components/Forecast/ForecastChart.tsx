@@ -8,6 +8,7 @@ import {
   YAxis,
   ReferenceLine,
 } from 'recharts'
+import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
 import { formatHour } from '../../utils/time'
 
@@ -17,8 +18,14 @@ interface ForecastChartProps {
 }
 
 // Custom tooltip component
-const CustomTooltip = (props: any) => {
-  const { active, payload, label } = props
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<number | string, string> & {
+  payload?: Array<{ dataKey?: string; value?: number | string }>
+  label?: string | number
+}) => {
   if (active && payload && payload.length) {
     const date = new Date(label as string)
     const formattedDate = date.toLocaleDateString('es-ES', {
@@ -30,10 +37,8 @@ const CustomTooltip = (props: any) => {
     })
 
     // Extraer valores originales del payload
-    const waveHeight = payload.find(
-      (p: any) => p.dataKey === 'waveHeight',
-    )?.value
-    const energy = payload.find((p: any) => p.dataKey === 'energy')?.value
+    const waveHeight = payload.find((p) => p.dataKey === 'waveHeight')?.value
+    const energy = payload.find((p) => p.dataKey === 'energy')?.value
 
     return (
       <div className='rounded-lg border border-white/10 bg-ocean-900/95 p-3 text-xs shadow-lg'>
