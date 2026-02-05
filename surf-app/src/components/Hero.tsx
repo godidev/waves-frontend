@@ -1,4 +1,4 @@
-import { DirectionArrow } from './Icons'
+import { DirectionArrow, EnergyIcon } from './Icons'
 import { WaveHeight, WavePeriod, WindIcon } from './Icons'
 import { MetricCard } from './MetricCard'
 
@@ -26,7 +26,6 @@ export const Hero = ({
 }: HeroProps) => {
   return (
     <div>
-      <p>Prevision en sopelana ahora</p>
       <div className='mt-1 grid w-full min-w-0 grid-cols-[auto_auto_1fr] gap-1'>
         <MetricCard
           label='Altura'
@@ -64,17 +63,12 @@ export const Hero = ({
           }
           suffix='°'
         />
-        <MetricCard
-          icon={<div className='h-7 w-7'>🌡️</div>}
-          label='Temperatura'
-          value='--'
-          suffix='°C'
-        />
+
         <MetricCard
           label='Energía'
           value={energy ? energy.toFixed(0) : '--'}
           suffix='kJ'
-          icon={<div className='h-7 w-7'>⚡</div>}
+          icon={<EnergyIcon className='h-7 w-7' />}
         />
       </div>
     </div>

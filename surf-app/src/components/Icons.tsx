@@ -58,3 +58,19 @@ export const DirectionArrow = ({
     </svg>
   )
 }
+
+export const EnergyIcon = ({ className }: { className?: string }) => {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      fill='currentColor'
+      className={className}
+      viewBox='0 0 24 24'
+    >
+      <path
+        id='SVGRepo_iconCarrier'
+        d='M7.493 22.862a1 1 0 0 0 1.244-.186l11-12A1 1 0 0 0 19 9h-5.867l.859-6.876a1 1 0 0 0-1.8-.712l-8 11A1 1 0 0 0 5 14h4.612l-2.56 7.684a1 1 0 0 0 .441 1.178M6.964 12l4.562-6.273-.518 4.149A1 1 0 0 0 12 11h4.727l-6.295 6.867 1.516-4.551A1 1 0 0 0 11 12Z'
+      />
+    </svg>
+  )
+}

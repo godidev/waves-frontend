@@ -47,7 +47,7 @@ export const MetricCard = ({
       )}
       <div
         ref={iconRef}
-        className='flex size-6 cursor-pointer'
+        className='flex size-6 cursor-pointer items-center justify-center rounded text-white/80 transition-colors hover:text-white'
         onClick={(e) => {
           e.stopPropagation()
           setShowLabel(true)
