@@ -26,7 +26,7 @@ export const Hero = ({
 }: HeroProps) => {
   return (
     <div>
-      <div className='mt-1 grid w-full min-w-0 grid-cols-[auto_auto_1fr] gap-1'>
+      <div className='mt-1 grid w-full min-w-0 grid-cols-[auto_auto_auto] gap-1'>
         <MetricCard
           label='Altura'
           value={selectedTotalHeight.toFixed(1)}
