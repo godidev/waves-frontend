@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Line, LineChart, Tooltip, XAxis, YAxis, ReferenceLine } from 'recharts'
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+  ReferenceLine,
+} from 'recharts'
 import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
 import { formatHour } from '../../utils/time'
@@ -93,6 +101,30 @@ export const ForecastChart = ({
     energy: forecast.energy,
   }))
 
+  const maxWaveHeight = useMemo(
+    () => chartData.reduce((max, item) => Math.max(max, item.waveHeight), 0),
+    [chartData],
+  )
+
+  const leftAxisStep = useMemo(() => {
+    if (maxWaveHeight > 7) return 2
+    if (maxWaveHeight < 4) return 0.5
+    return 1
+  }, [maxWaveHeight])
+
+  const leftAxisMax = useMemo(() => {
+    const rounded = Math.ceil(maxWaveHeight / leftAxisStep) * leftAxisStep
+    return Number(Math.max(leftAxisStep, rounded).toFixed(2))
+  }, [leftAxisStep, maxWaveHeight])
+
+  const leftAxisTicks = useMemo(() => {
+    const ticks: number[] = []
+    for (let value = 0; value <= leftAxisMax; value += leftAxisStep) {
+      ticks.push(Number(value.toFixed(2)))
+    }
+    return ticks
+  }, [leftAxisMax, leftAxisStep])
+
   // Calcular líneas de referencia para cambios de día
   const dayChanges: string[] = []
   let lastDay = ''
@@ -130,6 +162,13 @@ export const ForecastChart = ({
             data={chartData}
             margin={{ top: 0, right: 0, left: -8, bottom: -12 }}
           >
+            <CartesianGrid
+              yAxisId='left'
+              vertical={false}
+              stroke='#cbd5e1'
+              opacity={0.2}
+              strokeDasharray='3 3'
+            />
             <XAxis
               dataKey='date'
               tickFormatter={(value) => formatHour(value, locale)}
@@ -140,17 +179,21 @@ export const ForecastChart = ({
               yAxisId='left'
               stroke='#94a3b8'
               fontSize={10}
-              width={48}
+              width={35}
               padding={{ top: 10 }}
-              tickCount={7}
-              tickFormatter={(value) => value + 'm'}
+              domain={[0, leftAxisMax]}
+              ticks={leftAxisTicks}
+              allowDecimals={leftAxisStep % 1 !== 0}
+              tickFormatter={(value) =>
+                `${Number.isInteger(value) ? value : value.toFixed(1)}m`
+              }
             />
             <YAxis
               yAxisId='right'
               orientation='right'
               stroke='#94a3b8'
               fontSize={10}
-              width={44}
+              width={40}
               tickCount={7}
             />
             <Tooltip content={<CustomTooltip />} />
