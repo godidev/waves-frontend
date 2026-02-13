@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceArea,
   Tooltip,
   XAxis,
   YAxis,
@@ -10,7 +11,6 @@ import {
 } from 'recharts'
 import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
-import { formatHour } from '../../utils/time'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -125,6 +125,45 @@ export const ForecastChart = ({
     return ticks
   }, [leftAxisMax, leftAxisStep])
 
+  const dayRanges = useMemo(() => {
+    const ranges: Array<{ x1: string; x2: string; label: string }> = []
+    if (!chartData.length) return ranges
+
+    const minimumHoursToShowDayLabel = 12
+
+    let rangeStartIndex = 0
+
+    for (let index = 1; index <= chartData.length; index += 1) {
+      const reachedEnd = index === chartData.length
+      const currentDay = reachedEnd
+        ? ''
+        : new Date(chartData[index].date).toDateString()
+      const startDay = new Date(chartData[rangeStartIndex].date).toDateString()
+
+      if (reachedEnd || currentDay !== startDay) {
+        const pointsInRange = index - rangeStartIndex
+        const visibleHoursInRange = pointsInRange * interval
+        const startDate = new Date(chartData[rangeStartIndex].date)
+
+        if (visibleHoursInRange >= minimumHoursToShowDayLabel) {
+          ranges.push({
+            x1: chartData[rangeStartIndex].date,
+            x2: chartData[index - 1].date,
+            label: startDate.toLocaleDateString(locale, {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            }),
+          })
+        }
+
+        rangeStartIndex = index
+      }
+    }
+
+    return ranges
+  }, [chartData, interval, locale])
+
   // Calcular líneas de referencia para cambios de día
   const dayChanges: string[] = []
   let lastDay = ''
@@ -169,12 +208,7 @@ export const ForecastChart = ({
               opacity={0.2}
               strokeDasharray='3 3'
             />
-            <XAxis
-              dataKey='date'
-              tickFormatter={(value) => formatHour(value, locale)}
-              stroke='#94a3b8'
-              fontSize={10}
-            />
+            <XAxis dataKey='date' stroke='#94a3b8' opacity={0} />
             <YAxis
               yAxisId='left'
               stroke='#94a3b8'
@@ -198,6 +232,25 @@ export const ForecastChart = ({
             />
             <Tooltip content={<CustomTooltip />} />
 
+            {/* Etiquetas de día centradas entre líneas de cambio de día */}
+            {dayRanges.map((range, index) => (
+              <ReferenceArea
+                key={`day-label-${index}`}
+                x1={range.x1}
+                x2={range.x2}
+                yAxisId='left'
+                strokeOpacity={0}
+                fillOpacity={0}
+                label={{
+                  value: range.label,
+                  position: 'insideBottom',
+                  fill: '#64748b',
+                  fontSize: 16,
+                  dy: 20,
+                }}
+              />
+            ))}
+
             {/* Líneas verticales para separar días */}
             {dayChanges.map((date, index) => (
               <ReferenceLine
@@ -205,7 +258,8 @@ export const ForecastChart = ({
                 x={date}
                 stroke='#cbd5e1'
                 strokeDasharray='3 3'
-                strokeWidth={1}
+                strokeWidth={2}
+                opacity={0.5}
                 yAxisId='left'
               />
             ))}
@@ -224,6 +278,14 @@ export const ForecastChart = ({
                 fontSize: 10,
                 fontWeight: 'bold',
               }}
+            />
+
+            {/* Base inferior del gráfico (y=0) en línea continua */}
+            <ReferenceLine
+              y={0}
+              yAxisId='left'
+              stroke='#94a3b8'
+              strokeWidth={1}
             />
 
             <Line
