@@ -41,8 +41,8 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
   return (
     <div className='space-y-6'>
       <PageHeader title='Ajustes' />
-      <div className='rounded-3xl border border-white/10 bg-ocean-800/70 p-5'>
-        <div className='mt-2 space-y-4 text-sm text-ocean-100'>
+      <div className='rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900'>
+        <div className='mt-2 space-y-4 text-sm text-slate-700 dark:text-slate-200'>
           <div className='flex items-center justify-between'>
             <span>Tema</span>
             <select
@@ -53,7 +53,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
                   theme: event.target.value as 'dark' | 'light',
                 })
               }
-              className='rounded-xl border border-white/10 bg-ocean-900 px-3 py-2 text-xs'
+              className='rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
             >
               <option value='dark'>Oscuro</option>
               <option value='light'>Claro</option>
@@ -63,7 +63,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
             <span>Spot por defecto</span>
             <button
               onClick={() => setSpotSheetOpen(true)}
-              className='rounded-full border border-white/10 px-3 py-2 text-xs'
+              className='rounded-full border border-slate-200 px-3 py-2 text-xs dark:border-slate-700'
               type='button'
             >
               {settings.defaultSpotId || 'sopelana'}
@@ -73,7 +73,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
             <span>Boya por defecto</span>
             <button
               onClick={() => setBuoySheetOpen(true)}
-              className='rounded-full border border-white/10 px-3 py-2 text-xs'
+              className='rounded-full border border-slate-200 px-3 py-2 text-xs dark:border-slate-700'
               type='button'
             >
               {stations.find(
@@ -91,7 +91,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
         closeLabel='Cerrar'
       >
         <div className='p-4'>
-          <label className='text-xs uppercase text-ocean-200'>
+          <label className='text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400'>
             ID del spot
             <input
               type='text'
@@ -99,13 +99,13 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
               onChange={(e) =>
                 onUpdate({ ...settings, defaultSpotId: e.target.value })
               }
-              className='mt-2 w-full rounded-xl border border-white/10 bg-ocean-800 px-3 py-2 text-sm text-white'
+              className='mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
               placeholder='sopelana'
             />
           </label>
           <button
             onClick={() => setSpotSheetOpen(false)}
-            className='mt-4 w-full rounded-xl bg-ocean-600 py-2 text-sm font-semibold text-white'
+            className='mt-4 w-full rounded-2xl bg-sky-600 py-2 text-sm font-semibold text-white'
           >
             Confirmar
           </button>

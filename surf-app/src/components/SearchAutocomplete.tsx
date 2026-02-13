@@ -27,7 +27,7 @@ export const SearchAutocomplete = ({
 
   return (
     <div className='space-y-3'>
-      <label className='text-xs uppercase tracking-wide text-slate-500'>
+      <label className='text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400'>
         Buscar
         <input
           value={query}
@@ -35,31 +35,35 @@ export const SearchAutocomplete = ({
             setQuery(event.target.value)
             setPage(1)
           }}
-          className='mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800'
+          className='mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
           placeholder='Buscar'
         />
       </label>
       {pagedItems.length === 0 && (
-        <p className='text-sm text-slate-500'>No hay resultados</p>
+        <p className='text-sm text-slate-500 dark:text-slate-400'>
+          No hay resultados
+        </p>
       )}
       <ul className='space-y-2'>
         {pagedItems.map((item) => (
           <li key={item.id}>
             <button
-              className='w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-sm shadow-sm'
+              className='w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-sm shadow-sm dark:border-slate-700 dark:bg-slate-900'
               onClick={() => onSelect(item.id)}
             >
-              <p className='font-semibold text-slate-800'>{item.name}</p>
+              <p className='font-semibold text-slate-800 dark:text-slate-100'>
+                {item.name}
+              </p>
             </button>
           </li>
         ))}
       </ul>
       {totalPages > 1 && (
-        <div className='flex items-center justify-between text-xs text-slate-500'>
+        <div className='flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
           <button
             type='button'
             onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            className='rounded-full border border-slate-200 bg-white px-3 py-1'
+            className='rounded-full border border-slate-200 bg-white px-3 py-1 dark:border-slate-700 dark:bg-slate-900'
             disabled={page === 1}
           >
             Anterior
@@ -70,7 +74,7 @@ export const SearchAutocomplete = ({
           <button
             type='button'
             onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            className='rounded-full border border-slate-200 bg-white px-3 py-1'
+            className='rounded-full border border-slate-200 bg-white px-3 py-1 dark:border-slate-700 dark:bg-slate-900'
             disabled={page === totalPages}
           >
             Siguiente

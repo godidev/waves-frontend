@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
 ]
 
 export const BottomNav = () => (
-  <nav className='fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/90 backdrop-blur'>
+  <nav className='fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90'>
     <div className='mx-auto flex max-w-md items-center justify-around px-4 py-2.5 text-xs'>
       {navItems.map((item) => (
         <NavLink
@@ -86,8 +86,8 @@ export const BottomNav = () => (
           className={({ isActive }) =>
             `flex min-w-20 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition ${
               isActive
-                ? 'bg-sky-100 text-sky-600'
-                : 'text-slate-400 hover:bg-slate-100'
+                ? 'bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300'
+                : 'text-slate-400 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
             }`
           }
         >

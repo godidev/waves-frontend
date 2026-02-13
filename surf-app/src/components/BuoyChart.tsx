@@ -43,7 +43,7 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
   return (
     <div
       ref={containerRef}
-      className='h-56 min-h-[220px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2'
+      className='h-56 min-h-[220px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'
     >
       {canRenderChart && (
         <LineChart

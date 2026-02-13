@@ -34,8 +34,10 @@ const CustomTooltip = ({
     const energy = payload.find((p) => p.dataKey === 'energy')?.value
 
     return (
-      <div className='rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-md'>
-        <p className='mb-2 font-semibold text-slate-700'>{formattedDate}</p>
+      <div className='rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-md dark:border-slate-700 dark:bg-slate-900'>
+        <p className='mb-2 font-semibold text-slate-700 dark:text-slate-200'>
+          {formattedDate}
+        </p>
         <p className='flex justify-between gap-3' style={{ color: '#38bdf8' }}>
           <span>Altura:</span>
           <span className='font-semibold'>{waveHeight}m</span>
@@ -119,7 +121,7 @@ export const ForecastChart = ({
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
 
   return (
-    <div className='h-80 w-full rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2'>
+    <div className='h-80 w-full rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'>
       <div ref={containerRef} className='h-full w-full min-w-0'>
         {canRenderChart && (
           <LineChart
@@ -205,7 +207,7 @@ export const ForecastChart = ({
           </LineChart>
         )}
       </div>
-      <div className='mt-3 flex items-center justify-center gap-4 text-xs text-slate-500'>
+      <div className='mt-3 flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400'>
         <div className='flex items-center gap-2'>
           <div className='h-0.5 w-6 bg-[#38bdf8]'></div>
           <span>Altura de ola</span>

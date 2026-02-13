@@ -173,7 +173,7 @@ export const HomePage = ({
         />
       )}
 
-      <div className='space-y-4 rounded-[30px] border border-slate-200 bg-white p-3 shadow-sm'>
+      <div className='space-y-4 rounded-[30px] border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
         <SectionHeader
           title='Forecast'
           action={activeSpotId}
@@ -187,7 +187,7 @@ export const HomePage = ({
           locale={locale}
           interval={forecastInterval}
         />
-        <div className='border-t border-slate-200 pt-4'>
+        <div className='border-t border-slate-200 pt-4 dark:border-slate-700'>
           <BuoySectionHeader
             stationLabel={stationLabel}
             defaultStationId={defaultStationId}

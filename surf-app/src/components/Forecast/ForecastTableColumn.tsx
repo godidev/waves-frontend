@@ -24,8 +24,8 @@ export const ForecastTableColumn = ({
 
   return (
     <div
-      className={`flex flex-col border-r border-slate-200 pt-1 last:border-r-0 ${
-        isCurrentHour ? 'bg-sky-50' : ''
+      className={`flex flex-col border-r border-slate-200 pt-1 last:border-r-0 dark:border-slate-700 ${
+        isCurrentHour ? 'bg-sky-50 dark:bg-sky-900/20' : ''
       }`}
     >
       <ForecastTableItem

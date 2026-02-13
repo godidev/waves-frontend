@@ -136,7 +136,7 @@ export const ForecastTable = ({
         locale={locale}
       />
 
-      <div className='hide-scrollbar flex overflow-x-auto rounded-3xl border border-slate-200 bg-white pb-1 shadow-sm'>
+      <div className='hide-scrollbar flex overflow-x-auto rounded-3xl border border-slate-200 bg-white pb-1 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
         <ForecastTableHeaderColumn />
         {filteredForecasts.map((forecast) => (
           <ForecastTableColumn

@@ -10,7 +10,7 @@ export const SectionHeader = ({
   onAction,
 }: SectionHeaderProps) => (
   <div className='flex items-center justify-between'>
-    <h2 className='text-base font-semibold uppercase tracking-wide text-slate-600'>
+    <h2 className='text-base font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300'>
       {title}
     </h2>
     {action && onAction && (
