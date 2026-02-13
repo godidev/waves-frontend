@@ -1,13 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import {
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  ReferenceLine,
-} from 'recharts'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Line, LineChart, Tooltip, XAxis, YAxis, ReferenceLine } from 'recharts'
 import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
 import { formatHour } from '../../utils/time'
@@ -63,14 +55,24 @@ export const ForecastChart = ({
   locale,
   interval = 1,
 }: ForecastChartProps) => {
-  const [isReady, setIsReady] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
-    // Small delay to ensure container has dimensions
-    const timer = requestAnimationFrame(() => {
-      setIsReady(true)
+    if (!containerRef.current) return
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+
+      const width = Math.floor(entry.contentRect.width)
+      const height = Math.floor(entry.contentRect.height)
+
+      setContainerSize({ width, height })
     })
-    return () => cancelAnimationFrame(timer)
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
   }, [])
 
   const filteredForecasts = useMemo(() => {
@@ -114,11 +116,15 @@ export const ForecastChart = ({
     }
   })
 
+  const canRenderChart = containerSize.width > 0 && containerSize.height > 0
+
   return (
     <div className='h-80 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-2'>
-      {isReady && (
-        <ResponsiveContainer width='100%' height='100%'>
+      <div ref={containerRef} className='h-full w-full min-w-0'>
+        {canRenderChart && (
           <LineChart
+            width={containerSize.width}
+            height={containerSize.height}
             data={chartData}
             margin={{ top: 0, right: 5, left: 0, bottom: -10 }}
           >
@@ -197,8 +203,8 @@ export const ForecastChart = ({
               strokeDasharray='5 5'
             />
           </LineChart>
-        </ResponsiveContainer>
-      )}
+        )}
+      </div>
       <div className='mt-3 flex items-center justify-center gap-4 text-xs text-ocean-200'>
         <div className='flex items-center gap-2'>
           <div className='h-0.5 w-6 bg-[#38bdf8]'></div>
