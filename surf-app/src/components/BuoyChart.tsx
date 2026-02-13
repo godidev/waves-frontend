@@ -43,14 +43,14 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
   return (
     <div
       ref={containerRef}
-      className='h-56 min-h-[220px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3'
+      className='h-56 min-h-[220px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2'
     >
       {canRenderChart && (
         <LineChart
           width={containerSize.width}
           height={containerSize.height}
           data={chartData}
-          margin={{ top: 0, right: 0, left: 0, bottom: -5 }}
+          margin={{ top: 0, right: 0, left: -8, bottom: -8 }}
         >
           <XAxis
             dataKey='timestamp'

@@ -119,14 +119,14 @@ export const ForecastChart = ({
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
 
   return (
-    <div className='h-80 w-full rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3'>
+    <div className='h-80 w-full rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2'>
       <div ref={containerRef} className='h-full w-full min-w-0'>
         {canRenderChart && (
           <LineChart
             width={containerSize.width}
             height={containerSize.height}
             data={chartData}
-            margin={{ top: 0, right: 5, left: 0, bottom: -10 }}
+            margin={{ top: 0, right: 0, left: -8, bottom: -12 }}
           >
             <XAxis
               dataKey='date'

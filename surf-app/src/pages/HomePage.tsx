@@ -4,15 +4,26 @@ import {
   getStations,
   getTotalWaveHeight,
   getPrimarySwell,
+  getBuoyData,
 } from '../services/api'
 import './HomePage.css'
-import type { SurfForecast, Station, SelectableItem } from '../types'
+import type {
+  SurfForecast,
+  Station,
+  SelectableItem,
+  BuoyDataDoc,
+} from '../types'
+import { degreesToCardinal } from '../types'
 import { BottomSheet } from '../components/BottomSheet'
 import { ForecastChart } from '../components/Forecast/ForecastChart'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { StatusMessage } from '../components/StatusMessage'
 import { BuoyDetailContent } from '../components/BuoyDetailContent'
 import { ForecastTable } from '../components/Forecast/ForecastTable'
+import { SectionHeader } from '../components/SectionHeader'
+import { HomeSummaryCards } from '../components/HomeSummaryCards'
+import { BuoySectionHeader } from '../components/BuoySectionHeader'
+import { SpotSelectorContent } from '../components/SpotSelectorContent'
 
 interface HomePageProps {
   defaultSpotId: string
@@ -36,6 +47,9 @@ export const HomePage = ({
   const [spotSheetOpen, setSpotSheetOpen] = useState(false)
   const [buoySheetOpen, setBuoySheetOpen] = useState(false)
   const [stations, setStations] = useState<Station[]>([])
+  const [latestBuoyRecord, setLatestBuoyRecord] = useState<BuoyDataDoc | null>(
+    null,
+  )
   const [buoyHours, setBuoyHours] = useState<'6' | '12' | '24'>('6')
   const forecastInterval = 1
   const activeSpotId = spotSheetOpen ? spotId : defaultSpotId
@@ -80,6 +94,26 @@ export const HomePage = ({
     }
   }, [])
 
+  useEffect(() => {
+    let mounted = true
+    const loadLatestBuoy = async () => {
+      try {
+        const latest = await getBuoyData(activeStationId, 1)
+        if (!mounted) return
+        setLatestBuoyRecord(latest[0] ?? null)
+      } catch (err) {
+        console.error('Failed to load latest buoy record:', err)
+        if (!mounted) return
+        setLatestBuoyRecord(null)
+      }
+    }
+
+    void loadLatestBuoy()
+    return () => {
+      mounted = false
+    }
+  }, [activeStationId])
+
   const selected = useMemo(
     () => forecasts[2] ?? forecasts[0] ?? null,
     [forecasts],
@@ -114,93 +148,56 @@ export const HomePage = ({
 
   const selectedTotalHeight = selected ? getTotalWaveHeight(selected) : 0
   const selectedPrimarySwell = selected ? getPrimarySwell(selected) : null
+  const selectedWaveDirection =
+    selectedPrimarySwell?.angle !== undefined
+      ? `${degreesToCardinal(selectedPrimarySwell.angle)} ${selectedPrimarySwell.angle.toFixed(0)}°`
+      : '--'
+  const selectedWindDirection =
+    selected?.wind.angle !== undefined
+      ? `${degreesToCardinal(selected.wind.angle)} ${selected.wind.angle.toFixed(0)}°`
+      : '--'
 
   return (
     <div className='space-y-4'>
       {selected && (
-        <div className='grid grid-cols-3 divide-x divide-slate-200 rounded-3xl border border-slate-200 bg-white px-2 py-2.5 shadow-sm'>
-          <div className='px-2'>
-            <p className='text-[11px] uppercase tracking-wide text-slate-500'>
-              Altura (m)
-            </p>
-            <p className='text-[30px] font-semibold leading-none text-slate-900'>
-              {selectedTotalHeight.toFixed(2)}m
-            </p>
-          </div>
-          <div className='px-2'>
-            <p className='text-[11px] uppercase tracking-wide text-slate-500'>
-              Periodo (s)
-            </p>
-            <p className='text-[30px] font-semibold leading-none text-slate-900'>
-              {selectedPrimarySwell?.period ?? '--'}s
-            </p>
-          </div>
-          <div className='px-2'>
-            <p className='text-[11px] uppercase tracking-wide text-slate-500'>
-              Energía
-            </p>
-            <p className='text-[30px] font-semibold leading-none text-slate-900'>
-              ⚡ {selected.energy.toFixed(0)}
-            </p>
-          </div>
-        </div>
+        <HomeSummaryCards
+          totalHeight={selectedTotalHeight}
+          primaryPeriod={selectedPrimarySwell?.period ?? null}
+          energy={selected.energy}
+          waveAngle={selectedPrimarySwell?.angle ?? null}
+          waveDirection={selectedWaveDirection}
+          windAngle={selected.wind.angle}
+          windDirection={selectedWindDirection}
+          windSpeed={selected.wind.speed}
+          latestBuoyRecord={latestBuoyRecord}
+        />
       )}
 
-      <div className='space-y-4 rounded-[30px] border border-slate-200 bg-white p-4 shadow-sm'>
-        <div className='flex items-center justify-between'>
-          <h2 className='text-2xl font-semibold uppercase leading-none tracking-wide text-slate-600'>
-            Forecast
-          </h2>
-          <button
-            type='button'
-            onClick={() => {
-              setSpotId(defaultSpotId)
-              setSpotSheetOpen(true)
-            }}
-            className='text-sm font-semibold text-sky-600'
-          >
-            {activeSpotId}
-          </button>
-        </div>
+      <div className='space-y-4 rounded-[30px] border border-slate-200 bg-white p-3 shadow-sm'>
+        <SectionHeader
+          title='Forecast'
+          action={activeSpotId}
+          onAction={() => {
+            setSpotId(defaultSpotId)
+            setSpotSheetOpen(true)
+          }}
+        />
         <ForecastChart
           forecasts={forecasts}
           locale={locale}
           interval={forecastInterval}
         />
         <div className='border-t border-slate-200 pt-4'>
-          <div className='mb-3 flex items-center justify-between gap-3'>
-            <div className='flex items-center gap-3'>
-              <h3 className='text-2xl font-semibold uppercase leading-none tracking-wide text-slate-600'>
-                Boyas
-              </h3>
-              <button
-                type='button'
-                onClick={() => {
-                  setStationId(defaultStationId)
-                  setBuoySheetOpen(true)
-                }}
-                className='text-sm font-semibold text-sky-600'
-              >
-                {stationLabel}
-              </button>
-            </div>
-            <div className='flex items-center gap-3 text-base font-medium text-slate-500'>
-              {(['6', '12', '24'] as const).map((hours) => (
-                <button
-                  key={hours}
-                  type='button'
-                  onClick={() => setBuoyHours(hours)}
-                  className={`transition ${
-                    buoyHours === hours
-                      ? 'font-semibold text-sky-600'
-                      : 'hover:text-slate-700'
-                  }`}
-                >
-                  {hours}h
-                </button>
-              ))}
-            </div>
-          </div>
+          <BuoySectionHeader
+            stationLabel={stationLabel}
+            defaultStationId={defaultStationId}
+            buoyHours={buoyHours}
+            onChangeHours={setBuoyHours}
+            onOpenSelector={() => {
+              setStationId(defaultStationId)
+              setBuoySheetOpen(true)
+            }}
+          />
           <BuoyDetailContent
             stationId={activeStationId}
             viewMode='chart'
@@ -212,9 +209,7 @@ export const HomePage = ({
       </div>
 
       <div className='space-y-3'>
-        <h2 className='text-3xl font-semibold text-slate-900'>
-          Pronóstico Horario
-        </h2>
+        <SectionHeader title='Pronóstico Horario' />
         <ForecastTable
           forecasts={forecasts}
           locale={locale}
@@ -229,27 +224,14 @@ export const HomePage = ({
         onClose={() => setSpotSheetOpen(false)}
         closeLabel='Cerrar'
       >
-        <div className='p-4'>
-          <label className='text-xs uppercase tracking-wide text-slate-500'>
-            ID del spot
-            <input
-              type='text'
-              value={spotId}
-              onChange={(e) => setSpotId(e.target.value)}
-              className='mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800'
-              placeholder='sopelana'
-            />
-          </label>
-          <button
-            onClick={() => {
-              onSelectSpot(spotId)
-              setSpotSheetOpen(false)
-            }}
-            className='mt-4 w-full rounded-2xl bg-sky-600 py-2 text-sm font-semibold text-white'
-          >
-            Confirmar
-          </button>
-        </div>
+        <SpotSelectorContent
+          spotId={spotId}
+          onSpotIdChange={setSpotId}
+          onConfirm={() => {
+            onSelectSpot(spotId)
+            setSpotSheetOpen(false)
+          }}
+        />
       </BottomSheet>
 
       <BottomSheet
