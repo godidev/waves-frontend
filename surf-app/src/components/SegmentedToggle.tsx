@@ -14,15 +14,15 @@ export const SegmentedToggle = ({
   value,
   onChange,
 }: SegmentedToggleProps) => (
-  <div className='flex rounded-full bg-ocean-800 p-1 text-xs'>
+  <div className='flex rounded-full border border-white/10 bg-ocean-900/40 p-0.5 text-[11px]'>
     {options.map((option) => (
       <button
         key={option.value}
         onClick={() => onChange(option.value)}
-        className={`flex-1 rounded-full px-3 py-2 transition ${
+        className={`flex-1 rounded-full px-2 py-1.5 leading-tight transition ${
           value === option.value
-            ? 'bg-ocean-500 text-white shadow-glow'
-            : 'text-ocean-100'
+            ? 'bg-ocean-600 text-white'
+            : 'text-ocean-200 hover:bg-white/5'
         }`}
         type='button'
       >

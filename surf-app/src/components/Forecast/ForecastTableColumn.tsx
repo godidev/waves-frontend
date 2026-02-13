@@ -24,7 +24,7 @@ export const ForecastTableColumn = ({
 
   return (
     <div
-      className={`flex flex-col border-r border-white/10 pt-2 last:border-r-0 ${
+      className={`flex flex-col border-r border-white/10 pt-1 last:border-r-0 ${
         isCurrentHour ? 'bg-cyan-500/20' : ''
       }`}
     >
@@ -34,7 +34,7 @@ export const ForecastTableColumn = ({
       />
       <ForecastTableItem value={`${totalHeight.toFixed(1)}m`} />
       <ForecastTableItem value={`${primarySwell?.period ?? '--'}s`} />
-      <ForecastTableItem value={`${forecast.wind.speed} km/h`} />
+      <ForecastTableItem value={`${forecast.wind.speed}km/h`} />
       <ForecastTableItem value={`${forecast.energy}`} />
     </div>
   )

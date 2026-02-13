@@ -9,24 +9,24 @@ interface BuoyTableProps {
 
 export const BuoyTable = ({ buoys, locale }: BuoyTableProps) => (
   <div className='overflow-hidden rounded-2xl border border-white/10'>
-    <table className='w-full text-left text-xs text-ocean-50'>
-      <thead className='bg-ocean-800/80 text-ocean-200'>
+    <table className='w-full text-left text-[11px] leading-tight text-ocean-50'>
+      <thead className='bg-ocean-800/80 text-[10px] uppercase tracking-wide text-ocean-200'>
         <tr>
-          <th className='px-3 py-2'>Hora</th>
-          <th className='px-3 py-2'>Altura</th>
-          <th className='px-3 py-2'>Periodo</th>
-          <th className='px-3 py-2'>Dirección</th>
+          <th className='px-2 py-1.5'>Hora</th>
+          <th className='px-2 py-1.5'>Altura</th>
+          <th className='px-2 py-1.5'>Periodo</th>
+          <th className='px-2 py-1.5'>Dirección</th>
         </tr>
       </thead>
       <tbody className='bg-ocean-900'>
         {buoys.map((buoy) => (
           <tr key={buoy.date} className='border-t border-white/5'>
-            <td className='px-3 py-2'>
+            <td className='px-2 py-1.5 font-medium tabular-nums'>
               {formatHour(new Date(buoy.date).toISOString(), locale)}
             </td>
-            <td className='px-3 py-1'>{buoy.height}m</td>
-            <td className='px-3 py-1'>{buoy.period}s</td>
-            <td className='flex items-center gap-2 px-3 py-1'>
+            <td className='px-2 py-1 tabular-nums'>{buoy.height}m</td>
+            <td className='px-2 py-1 tabular-nums'>{buoy.period}s</td>
+            <td className='flex items-center gap-1 px-2 py-1 tabular-nums'>
               {buoy.avgDirection}°
               <DirectionArrow degrees={buoy.avgDirection} />
             </td>

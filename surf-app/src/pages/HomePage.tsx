@@ -12,10 +12,10 @@ import { ForecastChart } from '../components/Forecast/ForecastChart'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
-import { SegmentedTabs } from '../components/SegmentedTabs'
 import { BuoyDetailContent } from '../components/BuoyDetailContent'
 import { ForecastTable } from '../components/Forecast/ForecastTable'
 import { Hero } from '../components/Hero'
+import { SegmentedToggle } from '../components/SegmentedToggle'
 
 interface HomePageProps {
   defaultSpotId: string
@@ -33,35 +33,28 @@ export const HomePage = ({
   const [spotId, setSpotId] = useState(defaultSpotId)
   const [stationId, setStationId] = useState(defaultStationId)
   const [forecasts, setForecasts] = useState<SurfForecast[]>([])
-  const [tab, setTab] = useState<'forecast' | 'buoy'>('forecast')
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   )
   const [spotSheetOpen, setSpotSheetOpen] = useState(false)
   const [buoySheetOpen, setBuoySheetOpen] = useState(false)
   const [stations, setStations] = useState<Station[]>([])
-
-  // Sync local state with props when they change externally
-  if (spotId !== defaultSpotId && !spotSheetOpen) {
-    setSpotId(defaultSpotId)
-  }
-  if (stationId !== defaultStationId && !buoySheetOpen) {
-    setStationId(defaultStationId)
-  }
+  const [buoyHours, setBuoyHours] = useState<'6' | '12' | '24'>('24')
+  const [showForecastTable, setShowForecastTable] = useState(false)
+  const [showBuoyTable, setShowBuoyTable] = useState(false)
+  const forecastInterval = 1
+  const activeSpotId = spotSheetOpen ? spotId : defaultSpotId
+  const activeStationId = buoySheetOpen ? stationId : defaultStationId
 
   useEffect(() => {
     let mounted = true
     const load = async () => {
       setStatus('loading')
       try {
-        const [forecastResponse, stationData] = await Promise.all([
-          getSurfForecast(spotId, 1, 48),
-          getStations(),
-        ])
+        const forecastResponse = await getSurfForecast(activeSpotId, 1, 72)
         if (!mounted) return
 
         setForecasts(forecastResponse)
-        setStations(stationData)
         setStatus('success')
       } catch {
         if (!mounted) return
@@ -72,18 +65,36 @@ export const HomePage = ({
     return () => {
       mounted = false
     }
-  }, [spotId, stationId])
+  }, [activeSpotId])
 
-  const selected = forecasts[2]
+  useEffect(() => {
+    let mounted = true
+    const loadStations = async () => {
+      try {
+        const stationData = await getStations()
+        if (!mounted) return
+        setStations(stationData)
+      } catch (err) {
+        console.error('Failed to load stations:', err)
+      }
+    }
 
-  console.log({ selected })
+    void loadStations()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const selected = useMemo(() => forecasts[0] ?? null, [forecasts])
 
   const locale = 'es-ES'
 
   // Derived values
   const stationLabel = useMemo(
-    () => stations.find((s) => s.buoyId === stationId)?.name ?? stationId,
-    [stations, stationId],
+    () =>
+      stations.find((s) => s.buoyId === activeStationId)?.name ??
+      activeStationId,
+    [stations, activeStationId],
   )
 
   const stationItems: SelectableItem[] = useMemo(
@@ -99,7 +110,7 @@ export const HomePage = ({
     return <StatusMessage message='Error al cargar datos' variant='error' />
   }
 
-  if (tab === 'forecast' && !forecasts.length) {
+  if (!forecasts.length) {
     return <StatusMessage message='No hay datos disponibles' />
   }
 
@@ -107,48 +118,96 @@ export const HomePage = ({
   const selectedPrimarySwell = selected ? getPrimarySwell(selected) : null
 
   return (
-    <div className='space-y-3'>
-      <div className='rounded-3xl border border-white/10 bg-ocean-800/70 px-3 py-3'>
+    <div className='space-y-4'>
+      <div className='rounded-3xl border border-white/10 bg-ocean-900/50 px-3 py-3'>
         <SectionHeader
-          title={tab === 'forecast' ? spotId : stationLabel}
-          action={tab === 'forecast' ? 'Cambiar spot' : 'Cambiar boya'}
-          onAction={() =>
-            tab === 'forecast' ? setSpotSheetOpen(true) : setBuoySheetOpen(true)
-          }
+          title={activeSpotId}
+          action='Cambiar spot'
+          onAction={() => {
+            setSpotId(defaultSpotId)
+            setSpotSheetOpen(true)
+          }}
         />
-        <div className='mt-2'>
-          <SegmentedTabs
-            options={[
-              { label: 'Spots', value: 'forecast' },
-              { label: 'Boyas', value: 'buoy' },
-            ]}
-            value={tab}
-            onChange={(value) => setTab(value as 'forecast' | 'buoy')}
-          />
-        </div>
+      </div>
 
-        {tab === 'forecast' && selected && (
+      {selected && (
+        <div className='rounded-3xl border border-white/10 bg-ocean-900/30 px-3 py-3'>
+          <SectionHeader title='Resumen actual' />
           <Hero
             selectedTotalHeight={selectedTotalHeight}
             selectedPrimarySwell={selectedPrimarySwell}
             wind={selected.wind}
             energy={selected.energy}
           />
-        )}
+        </div>
+      )}
 
-        {tab === 'buoy' && (
-          <div className='mt-3'>
-            <BuoyDetailContent stationId={stationId} />
-          </div>
+      <div className='space-y-3 rounded-3xl border border-white/10 bg-ocean-900/40 p-3'>
+        <SectionHeader title='Forecast próximos días' />
+
+        <div className='grid grid-cols-1 items-center gap-2'>
+          <button
+            type='button'
+            onClick={() => setShowForecastTable((prev) => !prev)}
+            className='rounded-full border border-white/15 px-3 py-1.5 text-xs text-ocean-100 transition hover:bg-white/5'
+          >
+            {showForecastTable ? 'Ocultar tabla' : 'Ver tabla'}
+          </button>
+        </div>
+
+        <ForecastChart
+          forecasts={forecasts}
+          locale={locale}
+          interval={forecastInterval}
+        />
+
+        {showForecastTable && (
+          <ForecastTable
+            forecasts={forecasts}
+            locale={locale}
+            interval={forecastInterval}
+            showIntervalControl={false}
+          />
         )}
       </div>
 
-      {tab === 'forecast' && forecasts.length > 0 && (
-        <>
-          <ForecastTable forecasts={forecasts} locale={locale} />
-          <ForecastChart forecasts={forecasts} locale={locale} />
-        </>
-      )}
+      <div className='space-y-3 rounded-3xl border border-white/10 bg-ocean-900/40 p-3'>
+        <SectionHeader
+          title={`Boya · ${stationLabel}`}
+          action='Cambiar boya'
+          onAction={() => {
+            setStationId(defaultStationId)
+            setBuoySheetOpen(true)
+          }}
+        />
+
+        <div className='grid grid-cols-2 items-center gap-2'>
+          <SegmentedToggle
+            options={[
+              { label: '6h', value: '6' },
+              { label: '12h', value: '12' },
+              { label: '24h', value: '24' },
+            ]}
+            value={buoyHours}
+            onChange={(value) => setBuoyHours(value as '6' | '12' | '24')}
+          />
+          <button
+            type='button'
+            onClick={() => setShowBuoyTable((prev) => !prev)}
+            className='rounded-full border border-white/15 px-3 py-1.5 text-xs text-ocean-100 transition hover:bg-white/5'
+          >
+            {showBuoyTable ? 'Ocultar tabla' : 'Ver tabla'}
+          </button>
+        </div>
+
+        <BuoyDetailContent
+          stationId={activeStationId}
+          viewMode={showBuoyTable ? 'both' : 'chart'}
+          hours={buoyHours}
+          showRangeSelector={false}
+          showMetrics={false}
+        />
+      </div>
 
       <BottomSheet
         open={spotSheetOpen}

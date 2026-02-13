@@ -30,8 +30,9 @@ interface ForecastDayNavProps {
   onNextDay: () => void
   hasPrevDay: boolean
   hasNextDay: boolean
-  interval: 1 | 3
-  onIntervalChange: (interval: 1 | 3) => void
+  interval?: 1 | 3
+  onIntervalChange?: (interval: 1 | 3) => void
+  showIntervalControl?: boolean
   locale: string
 }
 
@@ -65,6 +66,7 @@ export const ForecastDayNav = ({
   hasNextDay,
   interval,
   onIntervalChange,
+  showIntervalControl = true,
   locale,
 }: ForecastDayNavProps) => (
   <div className='flex items-center justify-between'>
@@ -90,11 +92,13 @@ export const ForecastDayNav = ({
       </button>
     </div>
 
-    <div className='flex gap-1 rounded-lg bg-white/5 p-1'>
-      <ForecastDayNavInterval
-        interval={interval}
-        onIntervalChange={onIntervalChange}
-      />
-    </div>
+    {showIntervalControl && interval && onIntervalChange && (
+      <div className='flex gap-1 rounded-lg bg-white/5 p-1'>
+        <ForecastDayNavInterval
+          interval={interval}
+          onIntervalChange={onIntervalChange}
+        />
+      </div>
+    )}
   </div>
 )

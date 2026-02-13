@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Line,
   LineChart,
@@ -15,6 +15,7 @@ import { formatHour } from '../../utils/time'
 interface ForecastChartProps {
   forecasts: SurfForecast[]
   locale: string
+  interval?: 1 | 3
 }
 
 // Custom tooltip component
@@ -57,7 +58,11 @@ const CustomTooltip = ({
   return null
 }
 
-export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
+export const ForecastChart = ({
+  forecasts,
+  locale,
+  interval = 1,
+}: ForecastChartProps) => {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
@@ -68,10 +73,19 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
     return () => cancelAnimationFrame(timer)
   }, [])
 
+  const filteredForecasts = useMemo(() => {
+    if (interval === 1) return forecasts
+
+    return forecasts.filter((forecast) => {
+      const hour = new Date(forecast.date).getHours()
+      return hour % 3 === 0
+    })
+  }, [forecasts, interval])
+
   // Transform data for the chart
-  const chartData = forecasts.map((forecast) => ({
+  const chartData = filteredForecasts.map((forecast) => ({
     date: forecast.date,
-    waveHeight: forecast.validSwells[0].height.toFixed(1),
+    waveHeight: Number((forecast.validSwells[0]?.height ?? 0).toFixed(1)),
     energy: forecast.energy,
   }))
 

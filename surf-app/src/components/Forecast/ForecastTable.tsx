@@ -7,6 +7,9 @@ import { ForecastTableHeaderColumn } from './ForecastTableHeaderColumn'
 interface ForecastTableProps {
   forecasts: SurfForecast[]
   locale: string
+  interval?: 1 | 3
+  onIntervalChange?: (interval: 1 | 3) => void
+  showIntervalControl?: boolean
 }
 
 const getUniqueDays = (forecasts: SurfForecast[]): string[] => {
@@ -80,7 +83,13 @@ const isCurrentHour = (forecastDate: string): boolean => {
   )
 }
 
-export const ForecastTable = ({ forecasts, locale }: ForecastTableProps) => {
+export const ForecastTable = ({
+  forecasts,
+  locale,
+  interval,
+  onIntervalChange,
+  showIntervalControl = true,
+}: ForecastTableProps) => {
   const availableDays = useMemo(() => getUniqueDays(forecasts), [forecasts])
   const initialDayIndex = useMemo(
     () => findTodayIndex(availableDays),
@@ -88,15 +97,18 @@ export const ForecastTable = ({ forecasts, locale }: ForecastTableProps) => {
   )
 
   const [selectedDayIndex, setSelectedDayIndex] = useState(initialDayIndex)
-  const [interval, setInterval] = useState<1 | 3>(3)
+  const [internalInterval, setInternalInterval] = useState<1 | 3>(3)
+
+  const activeInterval = interval ?? internalInterval
+  const handleIntervalChange = onIntervalChange ?? setInternalInterval
 
   const selectedDate = availableDays[selectedDayIndex] ?? availableDays[0]
 
   const filteredForecasts = useMemo(() => {
     if (!selectedDate) return []
     const byDay = filterByDay(forecasts, selectedDate)
-    return filterByInterval(byDay, interval)
-  }, [forecasts, selectedDate, interval])
+    return filterByInterval(byDay, activeInterval)
+  }, [forecasts, selectedDate, activeInterval])
 
   const handlePrevDay = () => {
     setSelectedDayIndex((prev) => Math.max(0, prev - 1))
@@ -118,12 +130,13 @@ export const ForecastTable = ({ forecasts, locale }: ForecastTableProps) => {
         onNextDay={handleNextDay}
         hasPrevDay={selectedDayIndex > 0}
         hasNextDay={selectedDayIndex < availableDays.length - 1}
-        interval={interval}
-        onIntervalChange={setInterval}
+        interval={activeInterval}
+        onIntervalChange={handleIntervalChange}
+        showIntervalControl={showIntervalControl}
         locale={locale}
       />
 
-      <div className='hide-scrollbar flex overflow-x-auto rounded-2xl border border-white/10 bg-ocean-800 pb-2'>
+      <div className='hide-scrollbar flex overflow-x-auto rounded-2xl border border-white/10 bg-ocean-800 pb-1'>
         <ForecastTableHeaderColumn />
         {filteredForecasts.map((forecast) => (
           <ForecastTableColumn
