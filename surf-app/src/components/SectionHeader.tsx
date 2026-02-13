@@ -10,11 +10,13 @@ export const SectionHeader = ({
   onAction,
 }: SectionHeaderProps) => (
   <div className='flex items-center justify-between'>
-    <h2 className='text-lg font-semibold text-white'>{title}</h2>
+    <h2 className='text-base font-semibold uppercase tracking-wide text-slate-600'>
+      {title}
+    </h2>
     {action && onAction && (
       <button
         onClick={onAction}
-        className='text-xs uppercase text-ocean-200'
+        className='text-xs font-semibold uppercase text-sky-600'
         type='button'
       >
         {action}

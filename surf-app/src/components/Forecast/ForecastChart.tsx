@@ -34,8 +34,8 @@ const CustomTooltip = ({
     const energy = payload.find((p) => p.dataKey === 'energy')?.value
 
     return (
-      <div className='rounded-lg border border-white/10 bg-ocean-900/95 p-3 text-xs shadow-lg'>
-        <p className='mb-2 font-semibold text-ocean-100'>{formattedDate}</p>
+      <div className='rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-md'>
+        <p className='mb-2 font-semibold text-slate-700'>{formattedDate}</p>
         <p className='flex justify-between gap-3' style={{ color: '#38bdf8' }}>
           <span>Altura:</span>
           <span className='font-semibold'>{waveHeight}m</span>
@@ -119,7 +119,7 @@ export const ForecastChart = ({
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
 
   return (
-    <div className='h-80 w-full rounded-2xl border border-white/10 bg-ocean-800/60 p-2'>
+    <div className='h-80 w-full rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3'>
       <div ref={containerRef} className='h-full w-full min-w-0'>
         {canRenderChart && (
           <LineChart
@@ -131,12 +131,12 @@ export const ForecastChart = ({
             <XAxis
               dataKey='date'
               tickFormatter={(value) => formatHour(value, locale)}
-              stroke='#7dd3fc'
-              fontSize={8}
+              stroke='#94a3b8'
+              fontSize={10}
             />
             <YAxis
               yAxisId='left'
-              stroke='#7dd3fc'
+              stroke='#94a3b8'
               fontSize={10}
               width={33}
               padding={{ top: 25 }}
@@ -146,9 +146,9 @@ export const ForecastChart = ({
             <YAxis
               yAxisId='right'
               orientation='right'
-              stroke='#fbbf24'
-              fontSize={8}
-              width={28}
+              stroke='#94a3b8'
+              fontSize={10}
+              width={32}
               tickCount={10}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -158,7 +158,7 @@ export const ForecastChart = ({
               <ReferenceLine
                 key={`day-${index}`}
                 x={date}
-                stroke='#475569'
+                stroke='#cbd5e1'
                 strokeDasharray='3 3'
                 strokeWidth={1}
                 yAxisId='left'
@@ -168,14 +168,14 @@ export const ForecastChart = ({
             {/* Línea vertical para la hora actual */}
             <ReferenceLine
               x={closestToNow}
-              stroke='#ef4444'
+              stroke='#0284c7'
               strokeWidth={2}
-              strokeOpacity={0.4}
+              strokeOpacity={0.45}
               yAxisId='left'
               label={{
                 value: 'Ahora',
                 position: 'insideTopLeft',
-                fill: '#ef4444',
+                fill: '#0284c7',
                 fontSize: 10,
                 fontWeight: 'bold',
               }}
@@ -205,7 +205,7 @@ export const ForecastChart = ({
           </LineChart>
         )}
       </div>
-      <div className='mt-3 flex items-center justify-center gap-4 text-xs text-ocean-200'>
+      <div className='mt-3 flex items-center justify-center gap-4 text-xs text-slate-500'>
         <div className='flex items-center gap-2'>
           <div className='h-0.5 w-6 bg-[#38bdf8]'></div>
           <span>Altura de ola</span>

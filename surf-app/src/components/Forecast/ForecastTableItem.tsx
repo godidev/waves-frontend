@@ -9,7 +9,7 @@ export const ForecastTableItem = ({
 }) => (
   <div
     className={`flex min-w-[68px] items-center px-1.5 py-0.5 text-[11px] leading-tight tracking-tight ${
-      highlight ? 'font-semibold text-cyan-400' : 'text-white'
+      highlight ? 'font-semibold text-sky-600' : 'text-slate-700'
     }`}
   >
     {value}

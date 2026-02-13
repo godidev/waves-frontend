@@ -74,18 +74,18 @@ export const ForecastDayNav = ({
       <button
         onClick={onPrevDay}
         disabled={!hasPrevDay}
-        className='rounded-lg p-1 text-white transition-colors hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent'
+        className='rounded-lg p-1 text-slate-500 transition-colors hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent'
         aria-label='Dia anterior'
       >
         <ChevronLeft className='h-5 w-5' />
       </button>
-      <span className='min-w-[120px] text-center text-sm font-medium text-white'>
+      <span className='min-w-[120px] text-center text-sm font-medium text-slate-700'>
         {formatDayHeader(selectedDate, locale)}
       </span>
       <button
         onClick={onNextDay}
         disabled={!hasNextDay}
-        className='rounded-lg p-1 text-white transition-colors hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent'
+        className='rounded-lg p-1 text-slate-500 transition-colors hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent'
         aria-label='Dia siguiente'
       >
         <ChevronRight className='h-5 w-5' />
@@ -93,7 +93,7 @@ export const ForecastDayNav = ({
     </div>
 
     {showIntervalControl && interval && onIntervalChange && (
-      <div className='flex gap-1 rounded-lg bg-white/5 p-1'>
+      <div className='flex gap-1 rounded-lg bg-slate-100 p-1'>
         <ForecastDayNavInterval
           interval={interval}
           onIntervalChange={onIntervalChange}

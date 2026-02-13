@@ -37,17 +37,15 @@ export const MetricCard = ({
   }, [showLabel])
 
   return (
-    <div
-      className={`relative flex gap-2 rounded-xl border border-white/10 bg-ocean-800/80 p-1 text-white shadow-glow`}
-    >
+    <div className='relative flex gap-2 rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-sm'>
       {showLabel && (
-        <div className='absolute -top-5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-ocean-900/90 px-2 py-1 text-sm'>
+        <div className='absolute -top-5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-2 py-1 text-xs text-white'>
           {label}
         </div>
       )}
       <div
         ref={iconRef}
-        className='flex size-6 cursor-pointer items-center justify-center rounded text-white/80 transition-colors hover:text-white'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-xl bg-slate-100 text-sky-500 transition-colors hover:bg-slate-200'
         onClick={(e) => {
           e.stopPropagation()
           setShowLabel(true)
@@ -55,9 +53,9 @@ export const MetricCard = ({
       >
         {icon}
       </div>
-      <div className='flex min-h-0 items-center justify-center gap-1 text-xl font-semibold'>
+      <div className='flex min-h-0 items-center justify-center gap-1 text-xl font-semibold text-slate-900'>
         {value}
-        {<span className='text-base text-ocean-200'>{suffix}</span>}
+        {<span className='text-base text-slate-500'>{suffix}</span>}
         {windAngle && windAngle}
       </div>
     </div>

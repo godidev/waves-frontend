@@ -43,7 +43,7 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
   return (
     <div
       ref={containerRef}
-      className='h-56 min-h-[220px] w-full min-w-0 rounded-2xl border border-white/10 bg-ocean-800/60 p-2'
+      className='h-56 min-h-[220px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3'
     >
       {canRenderChart && (
         <LineChart
@@ -55,13 +55,13 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
           <XAxis
             dataKey='timestamp'
             tickFormatter={(value) => formatHour(value, locale)}
-            stroke='#7dd3fc'
+            stroke='#94a3b8'
             fontSize={10}
           />
           <YAxis
             yAxisId='left'
             orientation='left'
-            stroke='#7dd3fc'
+            stroke='#94a3b8'
             fontSize={10}
             tickCount={12}
             tickFormatter={(value) => value.toFixed(1) + 'm'}
@@ -71,9 +71,9 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
           <YAxis
             yAxisId='right'
             orientation='right'
-            stroke='#fbbf24'
-            fontSize={8}
-            width={28}
+            stroke='#94a3b8'
+            fontSize={10}
+            width={32}
             padding={{ top: 10, bottom: 10 }}
             tickFormatter={(value) => value + 's'}
             domain={[
@@ -83,8 +83,9 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#0f172a',
-              border: '1px solid rgba(255,255,255,0.1)',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
             }}
             labelFormatter={(value) => formatHour(String(value), locale)}
           />
