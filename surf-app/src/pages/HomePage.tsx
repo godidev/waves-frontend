@@ -158,7 +158,7 @@ export const HomePage = ({
       : '--'
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-2'>
       {selected && (
         <HomeSummaryCards
           totalHeight={selectedTotalHeight}

@@ -29,7 +29,7 @@ export const HomeSummaryCards = memo(
     const totalHeightText = `${totalHeight.toFixed(2)}m`
     const primaryPeriodText = `${primaryPeriod ?? '--'}s`
     const energyText = energy.toFixed(0)
-    const windSpeedText = `${windSpeed.toFixed(1)} km/h`
+    const windSpeedText = `${windSpeed} km/h`
     const buoyHeightText = latestBuoyRecord
       ? `${latestBuoyRecord.height.toFixed(2)}m`
       : '--'
@@ -40,7 +40,7 @@ export const HomeSummaryCards = memo(
     return (
       <div className='grid grid-cols-1 divide-y divide-slate-300/40 overflow-hidden rounded-3xl border border-slate-200 bg-white p-0 shadow-sm dark:divide-slate-700/60 dark:border-slate-700 dark:bg-slate-900'>
         <div className='bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-          <p className='mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400'>
+          <p className='mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300'>
             Olas
           </p>
           <div className='flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-slate-900 dark:text-slate-100'>
@@ -69,7 +69,7 @@ export const HomeSummaryCards = memo(
 
         <div className='grid grid-cols-2 divide-x divide-slate-300/40 dark:divide-slate-700/60'>
           <div className='flex flex-col items-center bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-            <p className='text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400'>
+            <p className='text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300'>
               Viento
             </p>
             <p className='mt-0.5 flex flex-col items-center justify-center gap-2 text-slate-900 dark:text-slate-100'>
@@ -87,8 +87,8 @@ export const HomeSummaryCards = memo(
           </div>
 
           <div className='flex flex-col items-center bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-            <p className='text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400'>
-              Último boya
+            <p className='text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300'>
+              Última boya
             </p>
             <p className='mt-0.5 flex flex-col items-center gap-2 text-slate-900 dark:text-slate-100'>
               <span className='text-lg font-semibold leading-none'>
