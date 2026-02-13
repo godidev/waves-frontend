@@ -121,7 +121,7 @@ export const ForecastChart = ({
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
 
   return (
-    <div className='h-90 w-full rounded-2xl py-2'>
+    <div className='h-80 w-full rounded-2xl py-2'>
       <div ref={containerRef} className='h-full w-full min-w-0'>
         {canRenderChart && (
           <LineChart
