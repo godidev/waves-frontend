@@ -28,3 +28,18 @@ body {
 #root {
   min-height: 100vh;
 }
+
+.recharts-wrapper:focus:not(:focus-visible),
+.recharts-wrapper *:focus:not(:focus-visible),
+.recharts-surface:focus:not(:focus-visible),
+.recharts-surface *:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-surface * {
+  -webkit-tap-highlight-color: transparent;
+}

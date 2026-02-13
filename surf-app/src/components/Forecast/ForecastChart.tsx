@@ -199,6 +199,8 @@ export const ForecastChart = ({
             width={containerSize.width}
             height={containerSize.height}
             data={chartData}
+            accessibilityLayer={false}
+            tabIndex={-1}
             margin={{ top: 0, right: 0, left: -8, bottom: -12 }}
           >
             <CartesianGrid
@@ -230,7 +232,7 @@ export const ForecastChart = ({
               width={40}
               tickCount={7}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} cursor={false} />
 
             {/* Etiquetas de día centradas entre líneas de cambio de día */}
             {dayRanges.map((range, index) => (
@@ -239,6 +241,7 @@ export const ForecastChart = ({
                 x1={range.x1}
                 x2={range.x2}
                 yAxisId='left'
+                pointerEvents='none'
                 strokeOpacity={0}
                 fillOpacity={0}
                 label={{
