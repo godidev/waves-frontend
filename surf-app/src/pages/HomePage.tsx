@@ -173,7 +173,7 @@ export const HomePage = ({
         />
       )}
 
-      <div className='space-y-4 rounded-[30px] border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
+      <div className='space-y-4 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
         <SectionHeader
           title='Forecast'
           action={activeSpotId}

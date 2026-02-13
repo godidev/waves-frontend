@@ -121,7 +121,7 @@ export const ForecastChart = ({
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
 
   return (
-    <div className='h-80 w-full rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'>
+    <div className='h-90 w-full rounded-2xl py-2'>
       <div ref={containerRef} className='h-full w-full min-w-0'>
         {canRenderChart && (
           <LineChart
@@ -140,9 +140,9 @@ export const ForecastChart = ({
               yAxisId='left'
               stroke='#94a3b8'
               fontSize={10}
-              width={33}
-              padding={{ top: 25 }}
-              tickCount={10}
+              width={48}
+              padding={{ top: 10 }}
+              tickCount={7}
               tickFormatter={(value) => value + 'm'}
             />
             <YAxis
@@ -150,8 +150,8 @@ export const ForecastChart = ({
               orientation='right'
               stroke='#94a3b8'
               fontSize={10}
-              width={32}
-              tickCount={10}
+              width={44}
+              tickCount={7}
             />
             <Tooltip content={<CustomTooltip />} />
 
@@ -190,7 +190,7 @@ export const ForecastChart = ({
               stroke='#38bdf8'
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 5 }}
+              activeDot={{ r: 4 }}
               name='Altura'
             />
             <Line
@@ -200,14 +200,14 @@ export const ForecastChart = ({
               stroke='#fbbf24'
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 5 }}
+              activeDot={{ r: 4 }}
               name='Energía'
               strokeDasharray='5 5'
             />
           </LineChart>
         )}
       </div>
-      <div className='mt-3 flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400'>
+      <div className='mt-1 flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400'>
         <div className='flex items-center gap-2'>
           <div className='h-0.5 w-6 bg-[#38bdf8]'></div>
           <span>Altura de ola</span>
