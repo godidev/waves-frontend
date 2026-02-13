@@ -9,7 +9,7 @@ export const SectionHeader = ({
   action,
   onAction,
 }: SectionHeaderProps) => (
-  <div className='flex items-center justify-between'>
+  <div className='flex items-center justify-center gap-3'>
     <h2 className='text-base font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300'>
       {title}
     </h2>

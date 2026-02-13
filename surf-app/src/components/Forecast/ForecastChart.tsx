@@ -315,16 +315,6 @@ export const ForecastChart = ({
           </LineChart>
         )}
       </div>
-      <div className='mt-1 flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400'>
-        <div className='flex items-center gap-2'>
-          <div className='h-0.5 w-6 bg-[#38bdf8]'></div>
-          <span>Altura de ola</span>
-        </div>
-        <div className='flex items-center gap-2'>
-          <div className='h-0.5 w-6 border-b-2 border-dashed border-[#fbbf24]'></div>
-          <span>Energía</span>
-        </div>
-      </div>
     </div>
   )
 }
