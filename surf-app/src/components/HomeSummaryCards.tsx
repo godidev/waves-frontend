@@ -12,6 +12,7 @@ interface HomeSummaryCardsProps {
   windDirection: string
   windSpeed: number
   latestBuoyRecord: BuoyDataDoc | null
+  forecastUpdatedAt: Date | null
 }
 
 export const HomeSummaryCards = memo(
@@ -25,6 +26,7 @@ export const HomeSummaryCards = memo(
     windDirection,
     windSpeed,
     latestBuoyRecord,
+    forecastUpdatedAt,
   }: HomeSummaryCardsProps) => {
     const totalHeightText = `${totalHeight.toFixed(2)}m`
     const primaryPeriodText = `${primaryPeriod ?? '--'}s`
@@ -35,6 +37,20 @@ export const HomeSummaryCards = memo(
       : '--'
     const buoyPeriodText = latestBuoyRecord
       ? `${latestBuoyRecord.period.toFixed(1)}s`
+      : '--'
+
+    const timeFormatter = new Intl.DateTimeFormat('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    const forecastUpdatedText = forecastUpdatedAt
+      ? timeFormatter.format(forecastUpdatedAt)
+      : '--'
+    const buoyUpdatedText = latestBuoyRecord?.date
+      ? timeFormatter.format(new Date(latestBuoyRecord.date))
       : '--'
 
     return (
@@ -99,6 +115,12 @@ export const HomeSummaryCards = memo(
               </span>
             </p>
           </div>
+        </div>
+
+        <div className='border-t border-slate-300/40 bg-slate-50 px-2.5 py-1 text-center text-[11px] text-slate-600 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300'>
+          <span>Actualizado forecast: {forecastUpdatedText}</span>
+          <span className='mx-1 text-slate-400'>•</span>
+          <span>boya: {buoyUpdatedText}</span>
         </div>
       </div>
     )
