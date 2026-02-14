@@ -148,6 +148,7 @@ export const HomePage = ({
 
   const selectedTotalHeight = selected ? getTotalWaveHeight(selected) : 0
   const selectedPrimarySwell = selected ? getPrimarySwell(selected) : null
+  const forecastUpdatedAt = forecasts[0] ? new Date(forecasts[0].date) : null
   const selectedWaveDirection =
     selectedPrimarySwell?.angle !== undefined
       ? `${degreesToCardinal(selectedPrimarySwell.angle)} ${selectedPrimarySwell.angle.toFixed(0)}°`
@@ -170,6 +171,7 @@ export const HomePage = ({
           windDirection={selectedWindDirection}
           windSpeed={selected.wind.speed}
           latestBuoyRecord={latestBuoyRecord}
+          forecastUpdatedAt={forecastUpdatedAt}
         />
       )}
 
