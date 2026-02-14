@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getBuoyData } from '../services/api'
 import type { BuoyDataDoc } from '../types'
 import { MetricCard } from './MetricCard'
@@ -32,19 +32,10 @@ export const BuoyDetailContent = ({
   const [buoyData, setBuoyData] = useState<BuoyDataDoc[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const buoyCacheRef = useRef<Record<string, BuoyDataDoc[]>>({})
   const locale = 'es-ES'
   const activeRange = hours ?? range
 
   useEffect(() => {
-    const cachedData = buoyCacheRef.current[stationId]
-    if (cachedData) {
-      setBuoyData(cachedData)
-      setLoading(false)
-      setError(false)
-      return
-    }
-
     let mounted = true
     const load = async () => {
       setLoading(true)
@@ -53,7 +44,6 @@ export const BuoyDetailContent = ({
         // Fetch máximo (24h) una sola vez por estación y derivar 6h/12h/24h en memoria
         const data = await getBuoyData(stationId, 24)
         if (!mounted) return
-        buoyCacheRef.current[stationId] = data
         setBuoyData(data)
       } catch (err) {
         console.error('Failed to load buoy data:', err)
