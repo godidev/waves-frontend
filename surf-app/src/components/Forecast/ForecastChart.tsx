@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
+import { DirectionArrow } from '../Icons'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -40,6 +41,11 @@ const CustomTooltip = ({
     // Extraer valores originales del payload
     const waveHeight = payload.find((p) => p.dataKey === 'waveHeight')?.value
     const energy = payload.find((p) => p.dataKey === 'energy')?.value
+    const wavePeriod = payload.find((p) => p.dataKey === 'wavePeriod')?.value
+    const windSpeed = payload.find((p) => p.dataKey === 'windSpeed')?.value
+    const windDirection = payload.find(
+      (p) => p.dataKey === 'windDirection',
+    )?.value
 
     return (
       <div className='rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-md dark:border-slate-700 dark:bg-slate-900'>
@@ -53,6 +59,20 @@ const CustomTooltip = ({
         <p className='flex justify-between gap-3' style={{ color: '#fbbf24' }}>
           <span>Energía:</span>
           <span className='font-semibold'>{energy}</span>
+        </p>
+        <p className='flex justify-between gap-3' style={{ color: '#22c55e' }}>
+          <span>Periodo:</span>
+          <span className='font-semibold'>{wavePeriod}s</span>
+        </p>
+        <p className='flex justify-between gap-1' style={{ color: '#3b82f6' }}>
+          <span>Viento:</span>
+          <span className='font-semibold'>{windSpeed} km/h </span>
+          <span className='font-semibold'>
+            <DirectionArrow
+              className='h-4 w-4 text-sky-600'
+              degrees={Number(windDirection)}
+            />
+          </span>
         </p>
       </div>
     )
@@ -99,6 +119,9 @@ export const ForecastChart = ({
     date: forecast.date,
     waveHeight: Number((forecast.validSwells[0]?.height ?? 0).toFixed(1)),
     energy: forecast.energy,
+    wavePeriod: Number((forecast.validSwells[0]?.period ?? 0).toFixed(1)),
+    windSpeed: Number((forecast.wind.speed ?? 0).toFixed(1)),
+    windDirection: Number((forecast.wind.angle ?? 0).toFixed(1)),
   }))
 
   const maxWaveHeight = useMemo(
@@ -311,6 +334,36 @@ export const ForecastChart = ({
               activeDot={{ r: 4 }}
               name='Energía'
               strokeDasharray='5 5'
+            />
+            <Line
+              yAxisId='right'
+              type='natural'
+              dataKey='wavePeriod'
+              stroke='transparent'
+              name='Periodo'
+              isAnimationActive={false}
+              activeDot={false}
+              dot={false}
+            />
+            <Line
+              yAxisId='right'
+              type='natural'
+              dot={false}
+              dataKey='windSpeed'
+              stroke='transparent'
+              name='Viento (km/h)'
+              isAnimationActive={false}
+              activeDot={false}
+            />
+            <Line
+              yAxisId='right'
+              type='natural'
+              dataKey='windDirection'
+              dot={false}
+              stroke='transparent'
+              activeDot={false}
+              isAnimationActive={false}
+              name='Dirección viento (°)'
             />
           </LineChart>
         )}
