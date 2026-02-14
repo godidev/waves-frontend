@@ -2,7 +2,32 @@ import type { Station, SurfForecast, BuoyInfoDoc, BuoyDataDoc } from '../types'
 import { getCachedResource, setCachedResource } from './storage'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const REQUEST_TIMEOUT_MS = 12000
 const inFlightRequests = new Map<string, Promise<unknown>>()
+
+const fetchJson = async <T>(path: string): Promise<T> => {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      signal: controller.signal,
+    })
+
+    if (!response.ok) {
+      throw new Error(`API ${response.status}: ${path}`)
+    }
+
+    return (await response.json()) as T
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(`API timeout: ${path}`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeout)
+  }
+}
 
 const withCache = async <T>(
   cacheKey: string,
@@ -34,11 +59,7 @@ const withCache = async <T>(
  */
 export const getStations = async (): Promise<Station[]> => {
   return withCache('stations:list:v1', async () => {
-    const response = await fetch(`${API_BASE_URL}/buoys`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch stations')
-    }
-    const buoys: BuoyInfoDoc[] = await response.json()
+    const buoys = await fetchJson<BuoyInfoDoc[]>('/buoys')
     // Convertir BuoyInfoDoc[] a Station[]
     return buoys.map((buoy) => ({
       name: buoy.buoyName,
@@ -53,11 +74,7 @@ export const getStations = async (): Promise<Station[]> => {
  */
 export const getBuoysList = async (): Promise<BuoyInfoDoc[]> => {
   return withCache('buoys:list:v1', async () => {
-    const response = await fetch(`${API_BASE_URL}/buoys`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch buoys list')
-    }
-    return response.json()
+    return fetchJson<BuoyInfoDoc[]>('/buoys')
   })
 }
 
@@ -67,11 +84,7 @@ export const getBuoysList = async (): Promise<BuoyInfoDoc[]> => {
  */
 export const getBuoyInfo = async (buoyId: string): Promise<BuoyInfoDoc> => {
   return withCache(`buoy:info:${buoyId}:v1`, async () => {
-    const response = await fetch(`${API_BASE_URL}/buoys/${buoyId}`)
-    if (!response.ok) {
-      throw new Error('Failed to fetch buoy info')
-    }
-    return response.json()
+    return fetchJson<BuoyInfoDoc>(`/buoys/${buoyId}`)
   })
 }
 
@@ -90,13 +103,7 @@ export const getBuoyData = async (
     const params = new URLSearchParams({
       limit: String(limit),
     })
-    const response = await fetch(
-      `${API_BASE_URL}/buoys/${buoyId}/data?${params}`,
-    )
-    if (!response.ok) {
-      throw new Error('Failed to fetch buoy data')
-    }
-    return response.json()
+    return fetchJson<BuoyDataCacheItem[]>(`/buoys/${buoyId}/data?${params}`)
   })
 
   // Convert date strings to Date objects
@@ -122,13 +129,7 @@ export const getSurfForecast = async (
       page: String(page),
       limit: String(limit),
     })
-    const response = await fetch(
-      `${API_BASE_URL}/surf-forecast/${spot}?${params}`,
-    )
-    if (!response.ok) {
-      throw new Error('Failed to fetch surf forecast')
-    }
-    return response.json()
+    return fetchJson<SurfForecast[]>(`/surf-forecast/${spot}?${params}`)
   })
 }
 
