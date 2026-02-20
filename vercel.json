@@ -3,6 +3,10 @@
   "outputDirectory": "surf-app/dist",
   "framework": "vite",
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://waves-db-backend.vercel.app/$1"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
