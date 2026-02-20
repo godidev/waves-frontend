@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import type { TooltipProps } from 'recharts'
 import type { Buoy } from '../types'
 import { CHART_LAYOUT, CHART_SERIES_COLORS } from './charts/chartTheme'
 import { TimeSeriesChart } from './charts/TimeSeriesChart'
@@ -6,6 +7,49 @@ import { TimeSeriesChart } from './charts/TimeSeriesChart'
 interface BuoyChartProps {
   buoys: Buoy[]
   locale: string
+}
+
+const BuoyTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<number | string, string> & {
+  payload?: Array<{ dataKey?: string; value?: number | string }>
+  label?: string | number
+}) => {
+  if (!active || !payload || payload.length === 0) return null
+
+  const timestamp = Number(label)
+  const formattedDate = new Date(timestamp).toLocaleDateString('es-ES', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  const height = payload.find((p) => p.dataKey === 'height')?.value
+  const period = payload.find((p) => p.dataKey === 'period')?.value
+
+  return (
+    <div className='rounded-xl border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-md backdrop-blur'>
+      <p className='mb-2 font-semibold text-slate-100'>{formattedDate}</p>
+      <p
+        className='flex justify-between gap-3'
+        style={{ color: CHART_SERIES_COLORS.height }}
+      >
+        <span>Altura:</span>
+        <span className='font-semibold'>{height}m</span>
+      </p>
+      <p
+        className='flex justify-between gap-3'
+        style={{ color: CHART_SERIES_COLORS.period }}
+      >
+        <span>Periodo:</span>
+        <span className='font-semibold'>{period}s</span>
+      </p>
+    </div>
+  )
 }
 
 export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
@@ -51,7 +95,7 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
       xAxisTickCount={xAxisTickCount}
       xAxisMinTickGap={32}
       xAxisTickFormatter={(value) => formatHourOnly(value)}
-      tooltipLabelFormatter={(value) => formatHourOnly(value)}
+      tooltipContent={<BuoyTooltip />}
       chartMargin={{ top: 0, right: 2, left: 2, bottom: -8 }}
       showDaySeparators
       showDayLabels={false}
