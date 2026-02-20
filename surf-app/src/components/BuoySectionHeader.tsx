@@ -18,10 +18,10 @@ export const BuoySectionHeader = ({
   <div className='mb-4 flex items-start justify-between gap-3'>
     <div className='space-y-1'>
       <div className='flex items-end gap-2'>
-        <h3 className='text-2xl font-semibold uppercase leading-none tracking-wide text-slate-700 dark:text-slate-100'>
+        <h3 className='text-base font-semibold uppercase leading-none tracking-wide text-slate-700 dark:text-slate-100'>
           Boyas
         </h3>
-        <span className='text-base font-semibold leading-none text-sky-700 dark:text-sky-300'>
+        <span className='text-sm font-semibold leading-none text-sky-700 dark:text-sky-300'>
           {latestReading}
         </span>
       </div>
