@@ -213,10 +213,31 @@ export const ForecastChart = ({
   })
 
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
+  const lastForecastDate = chartData.at(-1)?.date
 
   return (
-    <div className='h-80 w-full rounded-2xl py-2'>
-      <div ref={containerRef} className='h-full w-full min-w-0'>
+    <div className='space-y-2 rounded-2xl py-2'>
+      <div className='flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200'>
+        <span className='inline-flex items-center gap-1.5'>
+          <span
+            className='h-2 w-2 rounded-full bg-sky-400'
+            aria-hidden='true'
+          />
+          Altura (m)
+        </span>
+        <span className='inline-flex items-center gap-1.5'>
+          <span
+            className='h-0.5 w-4 bg-amber-400'
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(to right, #fbbf24 0 7px, transparent 7px 12px)',
+            }}
+            aria-hidden='true'
+          />
+          Energía (kJ)
+        </span>
+      </div>
+      <div ref={containerRef} className='h-80 w-full min-w-0'>
         {canRenderChart && (
           <LineChart
             width={containerSize.width}
@@ -229,33 +250,46 @@ export const ForecastChart = ({
             <CartesianGrid
               yAxisId='left'
               vertical={false}
-              stroke='#cbd5e1'
-              opacity={0.2}
-              strokeDasharray='3 3'
+              stroke='#64748b'
+              opacity={0.25}
+              strokeDasharray='4 4'
             />
-            <XAxis dataKey='date' stroke='#94a3b8' opacity={0} />
+            <XAxis dataKey='date' stroke='#64748b' opacity={0} />
             <YAxis
               yAxisId='left'
-              stroke='#94a3b8'
+              stroke='#64748b'
               fontSize={10}
-              width={35}
+              width={42}
               padding={{ top: 10 }}
               domain={[0, leftAxisMax]}
               ticks={leftAxisTicks}
               allowDecimals={leftAxisStep % 1 !== 0}
               tickFormatter={(value) =>
-                `${Number.isInteger(value) ? value : value.toFixed(1)}m`
+                `${Number.isInteger(value) ? value : value.toFixed(1)} m`
               }
             />
             <YAxis
               yAxisId='right'
               orientation='right'
-              stroke='#94a3b8'
+              stroke='#64748b'
               fontSize={10}
-              width={40}
-              tickCount={7}
+              width={48}
+              tickCount={5}
+              tickFormatter={(value) => `${Math.round(value)} kJ`}
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
+
+            {closestToNow && lastForecastDate && (
+              <ReferenceArea
+                x1={closestToNow}
+                x2={lastForecastDate}
+                yAxisId='left'
+                pointerEvents='none'
+                strokeOpacity={0}
+                fill='#0ea5e9'
+                fillOpacity={0.1}
+              />
+            )}
 
             {/* Etiquetas de día centradas entre líneas de cambio de día */}
             {dayRanges.map((range, index) => (
@@ -270,8 +304,8 @@ export const ForecastChart = ({
                 label={{
                   value: range.label,
                   position: 'insideBottom',
-                  fill: '#64748b',
-                  fontSize: 16,
+                  fill: '#475569',
+                  fontSize: 14,
                   dy: 20,
                 }}
               />
@@ -282,10 +316,10 @@ export const ForecastChart = ({
               <ReferenceLine
                 key={`day-${index}`}
                 x={date}
-                stroke='#cbd5e1'
+                stroke='#64748b'
                 strokeDasharray='3 3'
-                strokeWidth={2}
-                opacity={0.5}
+                strokeWidth={1.5}
+                opacity={0.45}
                 yAxisId='left'
               />
             ))}
@@ -294,14 +328,14 @@ export const ForecastChart = ({
             <ReferenceLine
               x={closestToNow}
               stroke='#0284c7'
-              strokeWidth={2}
-              strokeOpacity={0.45}
+              strokeWidth={3}
+              strokeOpacity={0.9}
               yAxisId='left'
               label={{
                 value: 'Ahora',
                 position: 'insideTopLeft',
-                fill: '#0284c7',
-                fontSize: 10,
+                fill: '#0369a1',
+                fontSize: 11,
                 fontWeight: 'bold',
               }}
             />

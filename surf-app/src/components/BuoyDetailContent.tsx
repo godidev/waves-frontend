@@ -98,7 +98,7 @@ export const BuoyDetailContent = ({
   }
 
   return (
-    <div className='space-y-2'>
+    <div className='space-y-3'>
       {showMetrics && (
         <div className='grid grid-cols-3 gap-3'>
           <MetricCard

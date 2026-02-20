@@ -134,6 +134,10 @@ export const HomePage = ({
     [stations],
   )
 
+  const latestReadingText = latestBuoyRecord
+    ? `${latestBuoyRecord.height.toFixed(2)}m | ${latestBuoyRecord.period.toFixed(1)}s`
+    : '--'
+
   if (status === 'loading') {
     return <StatusMessage message='Cargando...' />
   }
@@ -159,7 +163,7 @@ export const HomePage = ({
       : '--'
 
   return (
-    <div className='space-y-2'>
+    <div className='space-y-4'>
       {selected && (
         <HomeSummaryCards
           totalHeight={selectedTotalHeight}
@@ -175,7 +179,7 @@ export const HomePage = ({
         />
       )}
 
-      <div className='rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
+      <div className='rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
         <SectionHeader
           title='Forecast'
           action={activeSpotId}
@@ -189,12 +193,13 @@ export const HomePage = ({
           locale={locale}
           interval={forecastInterval}
         />
-        <div className='border-t border-slate-200 pt-4 dark:border-slate-700'>
+        <div className='mt-2 border-t border-slate-200 pt-5 dark:border-slate-700'>
           <BuoySectionHeader
             stationLabel={stationLabel}
             defaultStationId={defaultStationId}
             buoyHours={buoyHours}
             onChangeHours={setBuoyHours}
+            latestReading={latestReadingText}
             onOpenSelector={() => {
               setStationId(defaultStationId)
               setBuoySheetOpen(true)

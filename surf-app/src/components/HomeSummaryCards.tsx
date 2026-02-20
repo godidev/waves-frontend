@@ -56,18 +56,18 @@ export const HomeSummaryCards = memo(
     return (
       <div className='grid grid-cols-1 divide-y divide-slate-300/40 overflow-hidden rounded-3xl border border-slate-200 bg-white p-0 shadow-sm dark:divide-slate-700/60 dark:border-slate-700 dark:bg-slate-900'>
         <div className='bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-          <p className='mb-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300'>
+          <p className='mb-1 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-200'>
             Olas
           </p>
           <div className='flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-slate-900 dark:text-slate-100'>
             <span className='text-xl font-semibold leading-none'>
               {totalHeightText}
             </span>
-            <span className='text-slate-300/70 dark:text-slate-600'>•</span>
-            <span className='text-base font-semibold leading-none text-slate-700 dark:text-slate-300'>
+            <span className='text-slate-400 dark:text-slate-500'>•</span>
+            <span className='text-base font-semibold leading-none text-slate-800 dark:text-slate-200'>
               {primaryPeriodText}
             </span>
-            <span className='text-slate-300/70 dark:text-slate-600'>•</span>
+            <span className='text-slate-400 dark:text-slate-500'>•</span>
             <span className='inline-flex items-center gap-1 text-base font-semibold leading-none'>
               <DirectionArrow
                 className='h-4 w-4 text-sky-600'
@@ -75,7 +75,7 @@ export const HomeSummaryCards = memo(
               />
               {waveDirection}
             </span>
-            <span className='text-slate-300/70 dark:text-slate-600'>•</span>
+            <span className='text-slate-400 dark:text-slate-500'>•</span>
             <span className='inline-flex items-center gap-1 text-base font-semibold leading-none'>
               <span aria-hidden='true'>⚡</span>
               {energyText}
@@ -85,14 +85,14 @@ export const HomeSummaryCards = memo(
 
         <div className='grid grid-cols-2 divide-x divide-slate-300/40 dark:divide-slate-700/60'>
           <div className='flex flex-col items-center bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-            <p className='text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300'>
+            <p className='text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-200'>
               Viento
             </p>
             <p className='mt-0.5 flex flex-col items-center justify-center gap-2 text-slate-900 dark:text-slate-100'>
               <span className='text-lg font-semibold leading-none'>
                 {windSpeedText}
               </span>
-              <span className='inline-flex items-center gap-1 text-sm font-medium leading-none text-slate-700 dark:text-slate-300'>
+              <span className='inline-flex items-center gap-1 text-sm font-medium leading-none text-slate-800 dark:text-slate-200'>
                 <DirectionArrow
                   className='h-4 w-4 text-sky-600'
                   degrees={windAngle}
@@ -103,21 +103,21 @@ export const HomeSummaryCards = memo(
           </div>
 
           <div className='flex flex-col items-center bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-            <p className='text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-300'>
+            <p className='text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-200'>
               Última boya
             </p>
             <p className='mt-0.5 flex flex-col items-center gap-2 text-slate-900 dark:text-slate-100'>
               <span className='text-lg font-semibold leading-none'>
                 {buoyHeightText}
               </span>
-              <span className='text-sm font-medium leading-none text-slate-700 dark:text-slate-300'>
+              <span className='text-sm font-medium leading-none text-slate-800 dark:text-slate-200'>
                 {buoyPeriodText}
               </span>
             </p>
           </div>
         </div>
 
-        <div className='border-t border-slate-300/40 bg-slate-50 px-2.5 py-1 text-center text-[11px] text-slate-600 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-300'>
+        <div className='border-t border-slate-300/40 bg-slate-50 px-2.5 py-1 text-center text-[11px] text-slate-700 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200'>
           <span>Actualizado forecast: {forecastUpdatedText}</span>
           <span className='mx-1 text-slate-400'>•</span>
           <span>boya: {buoyUpdatedText}</span>

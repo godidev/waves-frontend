@@ -38,44 +38,64 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
 
   const roundDown = (v: number) => Math.floor(v / 5) * 5
   const roundUp = (v: number) => Math.ceil(v / 5) * 5
-  const canRenderChart = containerSize.width > 0 && containerSize.height > 0
+  const legendHeight = 24
+  const chartHeight = Math.max(containerSize.height - legendHeight, 0)
+  const canRenderChart = containerSize.width > 0 && chartHeight > 0
 
   return (
     <div
       ref={containerRef}
-      className='h-56 min-h-[220px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'
+      className='h-60 min-h-[236px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'
     >
+      <div className='mb-1 flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200'>
+        <span className='inline-flex items-center gap-1.5'>
+          <span className='h-2 w-2 rounded-full bg-sky-400' aria-hidden='true' />
+          Altura (m)
+        </span>
+        <span className='inline-flex items-center gap-1.5'>
+          <span
+            className='h-0.5 w-4 bg-amber-400'
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(to right, #fbbf24 0 7px, transparent 7px 12px)',
+            }}
+            aria-hidden='true'
+          />
+          Periodo (s)
+        </span>
+      </div>
       {canRenderChart && (
         <LineChart
           width={containerSize.width}
-          height={containerSize.height}
+          height={chartHeight}
           data={chartData}
-          margin={{ top: 0, right: 0, left: -8, bottom: -8 }}
+          margin={{ top: 0, right: 2, left: -6, bottom: -8 }}
         >
           <XAxis
             dataKey='timestamp'
             tickFormatter={(value) => formatHour(value, locale)}
-            stroke='#94a3b8'
+            stroke='#64748b'
             fontSize={10}
           />
           <YAxis
             yAxisId='left'
             orientation='left'
-            stroke='#94a3b8'
+            stroke='#64748b'
             fontSize={10}
-            tickCount={12}
-            tickFormatter={(value) => value.toFixed(1) + 'm'}
-            width={33}
+            tickCount={6}
+            tickFormatter={(value) => `${value.toFixed(1)} m`}
+            width={42}
             padding={{ top: 20, bottom: 0 }}
           />
           <YAxis
             yAxisId='right'
             orientation='right'
-            stroke='#94a3b8'
+            stroke='#64748b'
             fontSize={10}
-            width={32}
+            width={42}
+            tickCount={5}
             padding={{ top: 10, bottom: 10 }}
-            tickFormatter={(value) => value + 's'}
+            tickFormatter={(value) => `${value} s`}
             domain={[
               (dataMin) => roundDown(dataMin),
               (dataMax) => roundUp(dataMax + 2),
