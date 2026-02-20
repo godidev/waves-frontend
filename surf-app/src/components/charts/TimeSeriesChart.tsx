@@ -54,6 +54,16 @@ interface TimeSeriesChartProps {
   tooltipContent?: ReactElement
   chartHeightClass?: string
   showXAxisTicks?: boolean
+  xAxisTickCount?: number
+  xAxisMinTickGap?: number
+  xAxisTickFormatter?: (value: number, locale: string) => string
+  tooltipLabelFormatter?: (value: number, locale: string) => string
+  chartMargin?: {
+    top?: number
+    right?: number
+    left?: number
+    bottom?: number
+  }
   showDaySeparators?: boolean
   showDayLabels?: boolean
   showNowMarker?: boolean
@@ -71,6 +81,13 @@ export const TimeSeriesChart = ({
   tooltipContent,
   chartHeightClass = 'h-80',
   showXAxisTicks = false,
+  xAxisTickCount,
+  xAxisMinTickGap = 28,
+  xAxisTickFormatter = (value, currentLocale) =>
+    formatHour(new Date(value).toISOString(), currentLocale),
+  tooltipLabelFormatter = (value, currentLocale) =>
+    formatHour(new Date(value).toISOString(), currentLocale),
+  chartMargin = { top: 0, right: 0, left: -8, bottom: -12 },
   showDaySeparators = true,
   showDayLabels = true,
   showNowMarker = false,
@@ -204,7 +221,7 @@ export const TimeSeriesChart = ({
             data={data}
             accessibilityLayer={false}
             tabIndex={-1}
-            margin={{ top: 0, right: 0, left: -8, bottom: -12 }}
+            margin={chartMargin}
           >
             <CartesianGrid
               yAxisId='left'
@@ -220,8 +237,10 @@ export const TimeSeriesChart = ({
               domain={['dataMin', 'dataMax']}
               stroke={CHART_THEME.axisStroke}
               opacity={showXAxisTicks ? 1 : 0}
+              tickCount={xAxisTickCount}
+              minTickGap={xAxisMinTickGap}
               tickFormatter={(value) =>
-                formatHour(new Date(Number(value)).toISOString(), locale)
+                xAxisTickFormatter(Number(value), locale)
               }
             />
             <YAxis
@@ -258,7 +277,7 @@ export const TimeSeriesChart = ({
                 borderRadius: `${CHART_THEME.tooltipRadius}px`,
               }}
               labelFormatter={(value) =>
-                formatHour(new Date(Number(value)).toISOString(), locale)
+                tooltipLabelFormatter(Number(value), locale)
               }
             />
 

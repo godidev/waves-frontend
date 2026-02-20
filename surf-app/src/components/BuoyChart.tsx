@@ -21,6 +21,26 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
 
   const roundDown = (v: number) => Math.floor(v / 5) * 5
   const roundUp = (v: number) => Math.ceil(v / 5) * 5
+  const maxHeight = chartData.reduce(
+    (max, item) => Math.max(max, item.height),
+    0,
+  )
+  const leftAxisStep = maxHeight <= 4 ? 0.5 : 1
+  const leftAxisMax = Math.max(
+    leftAxisStep,
+    Math.ceil(maxHeight / leftAxisStep) * leftAxisStep,
+  )
+  const leftAxisTicks: number[] = []
+  for (let value = 0; value <= leftAxisMax; value += leftAxisStep) {
+    leftAxisTicks.push(Number(value.toFixed(2)))
+  }
+  const xAxisTickCount =
+    chartData.length <= 8 ? chartData.length : chartData.length <= 12 ? 6 : 7
+  const formatHourOnly = (value: number) =>
+    new Date(value).toLocaleTimeString(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
 
   return (
     <TimeSeriesChart
@@ -28,8 +48,13 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
       locale={locale}
       chartHeightClass={CHART_LAYOUT.buoyHeightClass}
       showXAxisTicks
+      xAxisTickCount={xAxisTickCount}
+      xAxisMinTickGap={32}
+      xAxisTickFormatter={(value) => formatHourOnly(value)}
+      tooltipLabelFormatter={(value) => formatHourOnly(value)}
+      chartMargin={{ top: 0, right: 2, left: 2, bottom: -8 }}
       showDaySeparators
-      showDayLabels
+      showDayLabels={false}
       showNowMarker={false}
       showFutureArea={false}
       legendItems={[
@@ -42,7 +67,9 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
       ]}
       leftAxis={{
         width: CHART_LAYOUT.leftAxisWidth,
-        tickCount: CHART_LAYOUT.buoyLeftAxisTickCount,
+        ticks: leftAxisTicks,
+        domain: [0, leftAxisMax],
+        allowDecimals: leftAxisStep % 1 !== 0,
         padding: { top: 20, bottom: 0 },
         tickFormatter: (value) => `${value.toFixed(1)} m`,
       }}
