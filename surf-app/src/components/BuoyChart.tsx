@@ -49,7 +49,10 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
     >
       <div className='mb-1 flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200'>
         <span className='inline-flex items-center gap-1.5'>
-          <span className='h-2 w-2 rounded-full bg-sky-400' aria-hidden='true' />
+          <span
+            className='h-2 w-2 rounded-full bg-sky-400'
+            aria-hidden='true'
+          />
           Altura (m)
         </span>
         <span className='inline-flex items-center gap-1.5'>

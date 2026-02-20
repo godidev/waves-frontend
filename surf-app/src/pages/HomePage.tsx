@@ -19,7 +19,6 @@ import { ForecastChart } from '../components/Forecast/ForecastChart'
 import { SearchAutocomplete } from '../components/SearchAutocomplete'
 import { StatusMessage } from '../components/StatusMessage'
 import { BuoyDetailContent } from '../components/BuoyDetailContent'
-import { ForecastTable } from '../components/Forecast/ForecastTable'
 import { SectionHeader } from '../components/SectionHeader'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
 import { BuoySectionHeader } from '../components/BuoySectionHeader'
@@ -51,7 +50,6 @@ export const HomePage = ({
     null,
   )
   const [buoyHours, setBuoyHours] = useState<'6' | '12' | '24'>('6')
-  const forecastInterval = 1
   const activeSpotId = spotSheetOpen ? spotId : defaultSpotId
   const activeStationId = buoySheetOpen ? stationId : defaultStationId
 
@@ -188,11 +186,7 @@ export const HomePage = ({
             setSpotSheetOpen(true)
           }}
         />
-        <ForecastChart
-          forecasts={forecasts}
-          locale={locale}
-          interval={forecastInterval}
-        />
+        <ForecastChart forecasts={forecasts} locale={locale} />
         <div className='mt-2 border-t border-slate-200 pt-5 dark:border-slate-700'>
           <BuoySectionHeader
             stationLabel={stationLabel}
@@ -213,16 +207,6 @@ export const HomePage = ({
             showMetrics={false}
           />
         </div>
-      </div>
-
-      <div className='space-y-3'>
-        <SectionHeader title='Pronóstico Horario' />
-        <ForecastTable
-          forecasts={forecasts}
-          locale={locale}
-          interval={forecastInterval}
-          showIntervalControl={false}
-        />
       </div>
 
       <BottomSheet

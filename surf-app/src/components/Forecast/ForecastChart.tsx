@@ -16,7 +16,6 @@ import { DirectionArrow } from '../Icons'
 interface ForecastChartProps {
   forecasts: SurfForecast[]
   locale: string
-  interval?: 1 | 3
 }
 
 // Custom tooltip component
@@ -80,11 +79,7 @@ const CustomTooltip = ({
   return null
 }
 
-export const ForecastChart = ({
-  forecasts,
-  locale,
-  interval = 1,
-}: ForecastChartProps) => {
+export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
@@ -105,17 +100,8 @@ export const ForecastChart = ({
     return () => observer.disconnect()
   }, [])
 
-  const filteredForecasts = useMemo(() => {
-    if (interval === 1) return forecasts
-
-    return forecasts.filter((forecast) => {
-      const hour = new Date(forecast.date).getHours()
-      return hour % 3 === 0
-    })
-  }, [forecasts, interval])
-
   // Transform data for the chart
-  const chartData = filteredForecasts.map((forecast) => ({
+  const chartData = forecasts.map((forecast) => ({
     date: forecast.date,
     waveHeight: Number((forecast.validSwells[0]?.height ?? 0).toFixed(1)),
     energy: forecast.energy,
@@ -165,7 +151,7 @@ export const ForecastChart = ({
 
       if (reachedEnd || currentDay !== startDay) {
         const pointsInRange = index - rangeStartIndex
-        const visibleHoursInRange = pointsInRange * interval
+        const visibleHoursInRange = pointsInRange
         const startDate = new Date(chartData[rangeStartIndex].date)
 
         if (visibleHoursInRange >= minimumHoursToShowDayLabel) {
@@ -185,7 +171,7 @@ export const ForecastChart = ({
     }
 
     return ranges
-  }, [chartData, interval, locale])
+  }, [chartData, locale])
 
   // Calcular líneas de referencia para cambios de día
   const dayChanges: string[] = []
