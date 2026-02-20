@@ -1,0 +1,351 @@
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceArea,
+  ReferenceLine,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import { formatHour } from '../../utils/time'
+
+interface AxisConfig {
+  width: number
+  tickCount?: number
+  ticks?: number[]
+  padding?: {
+    top?: number
+    bottom?: number
+  }
+  domain?: [
+    number | 'auto' | 'dataMin' | 'dataMax' | ((value: number) => number),
+    number | 'auto' | 'dataMin' | 'dataMax' | ((value: number) => number),
+  ]
+  tickFormatter: (value: number) => string
+  allowDecimals?: boolean
+}
+
+interface SeriesConfig {
+  dataKey: string
+  yAxisId: 'left' | 'right'
+  name: string
+  stroke: string
+  dashed?: boolean
+  hidden?: boolean
+  strokeWidth?: number
+}
+
+interface LegendItem {
+  label: string
+  color: string
+  dashed?: boolean
+}
+
+interface TimeSeriesChartProps {
+  data: Array<{ time: number } & Record<string, number>>
+  locale: string
+  series: SeriesConfig[]
+  leftAxis: AxisConfig
+  rightAxis: AxisConfig
+  legendItems?: LegendItem[]
+  tooltipContent?: ReactElement
+  chartHeightClass?: string
+  showXAxisTicks?: boolean
+  showDaySeparators?: boolean
+  showDayLabels?: boolean
+  showNowMarker?: boolean
+  showFutureArea?: boolean
+  minHoursForDayLabel?: number
+}
+
+export const TimeSeriesChart = ({
+  data,
+  locale,
+  series,
+  leftAxis,
+  rightAxis,
+  legendItems = [],
+  tooltipContent,
+  chartHeightClass = 'h-80',
+  showXAxisTicks = false,
+  showDaySeparators = true,
+  showDayLabels = true,
+  showNowMarker = false,
+  showFutureArea = false,
+  minHoursForDayLabel = 12,
+}: TimeSeriesChartProps) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+
+      const width = Math.floor(entry.contentRect.width)
+      const height = Math.floor(entry.contentRect.height)
+
+      setContainerSize({ width, height })
+    })
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  const dayRanges = useMemo(() => {
+    const ranges: Array<{ x1: number; x2: number; label: string }> = []
+    if (!showDayLabels || !data.length) return ranges
+
+    let rangeStartIndex = 0
+
+    for (let index = 1; index <= data.length; index += 1) {
+      const reachedEnd = index === data.length
+      const currentDay = reachedEnd
+        ? ''
+        : new Date(data[index].time).toDateString()
+      const startDay = new Date(data[rangeStartIndex].time).toDateString()
+
+      if (reachedEnd || currentDay !== startDay) {
+        const x1 = data[rangeStartIndex].time
+        const x2 = data[index - 1].time
+        const visibleHoursInRange = Math.max(
+          1,
+          Math.round((x2 - x1) / (60 * 60 * 1000)) + 1,
+        )
+        const startDate = new Date(x1)
+
+        if (visibleHoursInRange >= minHoursForDayLabel) {
+          ranges.push({
+            x1,
+            x2,
+            label: startDate.toLocaleDateString(locale, {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            }),
+          })
+        }
+
+        rangeStartIndex = index
+      }
+    }
+
+    return ranges
+  }, [data, locale, minHoursForDayLabel, showDayLabels])
+
+  const dayChanges = useMemo(() => {
+    const changes: number[] = []
+    if (!showDaySeparators || data.length < 2) return changes
+
+    let lastDay = ''
+    data.forEach((point) => {
+      const currentDay = new Date(point.time).toDateString()
+      if (lastDay && lastDay !== currentDay) {
+        changes.push(point.time)
+      }
+      lastDay = currentDay
+    })
+
+    return changes
+  }, [data, showDaySeparators])
+
+  const closestToNow = useMemo(() => {
+    if (!showNowMarker || !data.length) return null
+    const now = Date.now()
+
+    return data.reduce(
+      (closest, point) => {
+        if (closest === null) return point.time
+        const currentDiff = Math.abs(point.time - now)
+        const closestDiff = Math.abs(closest - now)
+        return currentDiff < closestDiff ? point.time : closest
+      },
+      null as number | null,
+    )
+  }, [data, showNowMarker])
+
+  const lastTime = data.at(-1)?.time
+  const canRenderChart = containerSize.width > 0 && containerSize.height > 0
+
+  return (
+    <div className='space-y-2 rounded-2xl py-2'>
+      {legendItems.length > 0 && (
+        <div className='flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200'>
+          {legendItems.map((item) => (
+            <span key={item.label} className='inline-flex items-center gap-1.5'>
+              <span
+                className='h-2 w-2 rounded-full'
+                style={{
+                  backgroundColor: item.dashed ? 'transparent' : item.color,
+                  borderTop: item.dashed
+                    ? `2px dashed ${item.color}`
+                    : undefined,
+                  width: item.dashed ? '16px' : '8px',
+                  borderRadius: item.dashed ? 0 : '9999px',
+                }}
+                aria-hidden='true'
+              />
+              {item.label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div ref={containerRef} className={`${chartHeightClass} w-full min-w-0`}>
+        {canRenderChart && (
+          <LineChart
+            width={containerSize.width}
+            height={containerSize.height}
+            data={data}
+            accessibilityLayer={false}
+            tabIndex={-1}
+            margin={{ top: 0, right: 0, left: -8, bottom: -12 }}
+          >
+            <CartesianGrid
+              yAxisId='left'
+              vertical={false}
+              stroke='#64748b'
+              opacity={0.25}
+              strokeDasharray='4 4'
+            />
+            <XAxis
+              dataKey='time'
+              type='number'
+              scale='time'
+              domain={['dataMin', 'dataMax']}
+              stroke='#64748b'
+              opacity={showXAxisTicks ? 1 : 0}
+              tickFormatter={(value) =>
+                formatHour(new Date(Number(value)).toISOString(), locale)
+              }
+            />
+            <YAxis
+              yAxisId='left'
+              stroke='#64748b'
+              fontSize={10}
+              width={leftAxis.width}
+              tickCount={leftAxis.tickCount}
+              ticks={leftAxis.ticks}
+              padding={leftAxis.padding}
+              domain={leftAxis.domain}
+              allowDecimals={leftAxis.allowDecimals}
+              tickFormatter={leftAxis.tickFormatter}
+            />
+            <YAxis
+              yAxisId='right'
+              orientation='right'
+              stroke='#64748b'
+              fontSize={10}
+              width={rightAxis.width}
+              tickCount={rightAxis.tickCount}
+              ticks={rightAxis.ticks}
+              padding={rightAxis.padding}
+              domain={rightAxis.domain}
+              allowDecimals={rightAxis.allowDecimals}
+              tickFormatter={rightAxis.tickFormatter}
+            />
+            <Tooltip
+              content={tooltipContent}
+              cursor={false}
+              contentStyle={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+              }}
+              labelFormatter={(value) =>
+                formatHour(new Date(Number(value)).toISOString(), locale)
+              }
+            />
+
+            {showFutureArea && closestToNow && lastTime && (
+              <ReferenceArea
+                x1={closestToNow}
+                x2={lastTime}
+                yAxisId='left'
+                pointerEvents='none'
+                strokeOpacity={0}
+                fill='#0ea5e9'
+                fillOpacity={0.1}
+              />
+            )}
+
+            {dayRanges.map((range, index) => (
+              <ReferenceArea
+                key={`day-label-${index}`}
+                x1={range.x1}
+                x2={range.x2}
+                yAxisId='left'
+                pointerEvents='none'
+                strokeOpacity={0}
+                fillOpacity={0}
+                label={{
+                  value: range.label,
+                  position: 'insideBottom',
+                  fill: '#475569',
+                  fontSize: 14,
+                  dy: 20,
+                }}
+              />
+            ))}
+
+            {dayChanges.map((time, index) => (
+              <ReferenceLine
+                key={`day-${index}`}
+                x={time}
+                yAxisId='left'
+                stroke='#64748b'
+                strokeDasharray='3 3'
+                strokeWidth={1.5}
+                opacity={0.45}
+              />
+            ))}
+
+            {showNowMarker && closestToNow && (
+              <ReferenceLine
+                x={closestToNow}
+                yAxisId='left'
+                stroke='#0284c7'
+                strokeWidth={3}
+                strokeOpacity={0.9}
+                label={{
+                  value: 'Ahora',
+                  position: 'insideTopLeft',
+                  fill: '#0369a1',
+                  fontSize: 11,
+                  fontWeight: 'bold',
+                }}
+              />
+            )}
+
+            <ReferenceLine
+              y={0}
+              yAxisId='left'
+              stroke='#94a3b8'
+              strokeWidth={1}
+            />
+
+            {series.map((item) => (
+              <Line
+                key={item.dataKey}
+                yAxisId={item.yAxisId}
+                type='natural'
+                dataKey={item.dataKey}
+                stroke={item.hidden ? 'transparent' : item.stroke}
+                strokeWidth={item.strokeWidth ?? 2}
+                dot={false}
+                activeDot={item.hidden ? false : { r: 4 }}
+                name={item.name}
+                strokeDasharray={item.dashed ? '5 5' : undefined}
+                isAnimationActive={!item.hidden}
+              />
+            ))}
+          </LineChart>
+        )}
+      </div>
+    </div>
+  )
+}

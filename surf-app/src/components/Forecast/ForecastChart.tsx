@@ -1,24 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ReferenceArea,
-  Tooltip,
-  XAxis,
-  YAxis,
-  ReferenceLine,
-} from 'recharts'
+import { useMemo } from 'react'
 import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
 import { DirectionArrow } from '../Icons'
+import { TimeSeriesChart } from '../charts/TimeSeriesChart'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
   locale: string
 }
 
-// Custom tooltip component
 const CustomTooltip = ({
   active,
   payload,
@@ -28,8 +18,8 @@ const CustomTooltip = ({
   label?: string | number
 }) => {
   if (active && payload && payload.length) {
-    const date = new Date(label as string)
-    const formattedDate = date.toLocaleDateString('es-ES', {
+    const timestamp = Number(label)
+    const formattedDate = new Date(timestamp).toLocaleDateString('es-ES', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -37,7 +27,6 @@ const CustomTooltip = ({
       minute: '2-digit',
     })
 
-    // Extraer valores originales del payload
     const waveHeight = payload.find((p) => p.dataKey === 'waveHeight')?.value
     const energy = payload.find((p) => p.dataKey === 'energy')?.value
     const wavePeriod = payload.find((p) => p.dataKey === 'wavePeriod')?.value
@@ -80,35 +69,18 @@ const CustomTooltip = ({
 }
 
 export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
-
-  useEffect(() => {
-    if (!containerRef.current) return
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0]
-      if (!entry) return
-
-      const width = Math.floor(entry.contentRect.width)
-      const height = Math.floor(entry.contentRect.height)
-
-      setContainerSize({ width, height })
-    })
-
-    observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [])
-
-  // Transform data for the chart
-  const chartData = forecasts.map((forecast) => ({
-    date: forecast.date,
-    waveHeight: Number((forecast.validSwells[0]?.height ?? 0).toFixed(1)),
-    energy: forecast.energy,
-    wavePeriod: Number((forecast.validSwells[0]?.period ?? 0).toFixed(1)),
-    windSpeed: Number((forecast.wind.speed ?? 0).toFixed(1)),
-    windDirection: Number((forecast.wind.angle ?? 0).toFixed(1)),
-  }))
+  const chartData = useMemo(
+    () =>
+      forecasts.map((forecast) => ({
+        time: new Date(forecast.date).getTime(),
+        waveHeight: Number((forecast.validSwells[0]?.height ?? 0).toFixed(1)),
+        energy: forecast.energy,
+        wavePeriod: Number((forecast.validSwells[0]?.period ?? 0).toFixed(1)),
+        windSpeed: Number((forecast.wind.speed ?? 0).toFixed(1)),
+        windDirection: Number((forecast.wind.angle ?? 0).toFixed(1)),
+      })),
+    [forecasts],
+  )
 
   const maxWaveHeight = useMemo(
     () => chartData.reduce((max, item) => Math.max(max, item.waveHeight), 0),
@@ -134,260 +106,70 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
     return ticks
   }, [leftAxisMax, leftAxisStep])
 
-  const dayRanges = useMemo(() => {
-    const ranges: Array<{ x1: string; x2: string; label: string }> = []
-    if (!chartData.length) return ranges
-
-    const minimumHoursToShowDayLabel = 12
-
-    let rangeStartIndex = 0
-
-    for (let index = 1; index <= chartData.length; index += 1) {
-      const reachedEnd = index === chartData.length
-      const currentDay = reachedEnd
-        ? ''
-        : new Date(chartData[index].date).toDateString()
-      const startDay = new Date(chartData[rangeStartIndex].date).toDateString()
-
-      if (reachedEnd || currentDay !== startDay) {
-        const pointsInRange = index - rangeStartIndex
-        const visibleHoursInRange = pointsInRange
-        const startDate = new Date(chartData[rangeStartIndex].date)
-
-        if (visibleHoursInRange >= minimumHoursToShowDayLabel) {
-          ranges.push({
-            x1: chartData[rangeStartIndex].date,
-            x2: chartData[index - 1].date,
-            label: startDate.toLocaleDateString(locale, {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-            }),
-          })
-        }
-
-        rangeStartIndex = index
-      }
-    }
-
-    return ranges
-  }, [chartData, locale])
-
-  // Calcular líneas de referencia para cambios de día
-  const dayChanges: string[] = []
-  let lastDay = ''
-  chartData.forEach((d) => {
-    const date = new Date(d.date)
-    const currentDay = date.toDateString()
-    if (lastDay && lastDay !== currentDay) {
-      dayChanges.push(d.date)
-    }
-    lastDay = currentDay
-  })
-
-  // Encontrar el punto más cercano a la hora actual
-  const now = new Date()
-  let closestToNow = chartData[0]?.date
-  let minDiff = Infinity
-
-  chartData.forEach((d) => {
-    const diff = Math.abs(new Date(d.date).getTime() - now.getTime())
-    if (diff < minDiff) {
-      minDiff = diff
-      closestToNow = d.date
-    }
-  })
-
-  const canRenderChart = containerSize.width > 0 && containerSize.height > 0
-  const lastForecastDate = chartData.at(-1)?.date
-
   return (
-    <div className='space-y-2 rounded-2xl py-2'>
-      <div className='flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200'>
-        <span className='inline-flex items-center gap-1.5'>
-          <span
-            className='h-2 w-2 rounded-full bg-sky-400'
-            aria-hidden='true'
-          />
-          Altura (m)
-        </span>
-        <span className='inline-flex items-center gap-1.5'>
-          <span
-            className='h-0.5 w-4 bg-amber-400'
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(to right, #fbbf24 0 7px, transparent 7px 12px)',
-            }}
-            aria-hidden='true'
-          />
-          Energía (kJ)
-        </span>
-      </div>
-      <div ref={containerRef} className='h-80 w-full min-w-0'>
-        {canRenderChart && (
-          <LineChart
-            width={containerSize.width}
-            height={containerSize.height}
-            data={chartData}
-            accessibilityLayer={false}
-            tabIndex={-1}
-            margin={{ top: 0, right: 0, left: -8, bottom: -12 }}
-          >
-            <CartesianGrid
-              yAxisId='left'
-              vertical={false}
-              stroke='#64748b'
-              opacity={0.25}
-              strokeDasharray='4 4'
-            />
-            <XAxis dataKey='date' stroke='#64748b' opacity={0} />
-            <YAxis
-              yAxisId='left'
-              stroke='#64748b'
-              fontSize={10}
-              width={42}
-              padding={{ top: 10 }}
-              domain={[0, leftAxisMax]}
-              ticks={leftAxisTicks}
-              allowDecimals={leftAxisStep % 1 !== 0}
-              tickFormatter={(value) =>
-                `${Number.isInteger(value) ? value : value.toFixed(1)} m`
-              }
-            />
-            <YAxis
-              yAxisId='right'
-              orientation='right'
-              stroke='#64748b'
-              fontSize={10}
-              width={35}
-              tickCount={5}
-              tickFormatter={(value) => `${Math.round(value)}`}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={false} />
-
-            {closestToNow && lastForecastDate && (
-              <ReferenceArea
-                x1={closestToNow}
-                x2={lastForecastDate}
-                yAxisId='left'
-                pointerEvents='none'
-                strokeOpacity={0}
-                fill='#0ea5e9'
-                fillOpacity={0.1}
-              />
-            )}
-
-            {/* Etiquetas de día centradas entre líneas de cambio de día */}
-            {dayRanges.map((range, index) => (
-              <ReferenceArea
-                key={`day-label-${index}`}
-                x1={range.x1}
-                x2={range.x2}
-                yAxisId='left'
-                pointerEvents='none'
-                strokeOpacity={0}
-                fillOpacity={0}
-                label={{
-                  value: range.label,
-                  position: 'insideBottom',
-                  fill: '#475569',
-                  fontSize: 14,
-                  dy: 20,
-                }}
-              />
-            ))}
-
-            {/* Líneas verticales para separar días */}
-            {dayChanges.map((date, index) => (
-              <ReferenceLine
-                key={`day-${index}`}
-                x={date}
-                stroke='#64748b'
-                strokeDasharray='3 3'
-                strokeWidth={1.5}
-                opacity={0.45}
-                yAxisId='left'
-              />
-            ))}
-
-            {/* Línea vertical para la hora actual */}
-            <ReferenceLine
-              x={closestToNow}
-              stroke='#0284c7'
-              strokeWidth={3}
-              strokeOpacity={0.9}
-              yAxisId='left'
-              label={{
-                value: 'Ahora',
-                position: 'insideTopLeft',
-                fill: '#0369a1',
-                fontSize: 11,
-                fontWeight: 'bold',
-              }}
-            />
-
-            {/* Base inferior del gráfico (y=0) en línea continua */}
-            <ReferenceLine
-              y={0}
-              yAxisId='left'
-              stroke='#94a3b8'
-              strokeWidth={1}
-            />
-
-            <Line
-              yAxisId='left'
-              type='natural'
-              dataKey='waveHeight'
-              stroke='#38bdf8'
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-              name='Altura'
-            />
-            <Line
-              yAxisId='right'
-              type='natural'
-              dataKey='energy'
-              stroke='#fbbf24'
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-              name='Energía'
-              strokeDasharray='5 5'
-            />
-            <Line
-              yAxisId='right'
-              type='natural'
-              dataKey='wavePeriod'
-              stroke='transparent'
-              name='Periodo'
-              isAnimationActive={false}
-              activeDot={false}
-              dot={false}
-            />
-            <Line
-              yAxisId='right'
-              type='natural'
-              dot={false}
-              dataKey='windSpeed'
-              stroke='transparent'
-              name='Viento (km/h)'
-              isAnimationActive={false}
-              activeDot={false}
-            />
-            <Line
-              yAxisId='right'
-              type='natural'
-              dataKey='windDirection'
-              dot={false}
-              stroke='transparent'
-              activeDot={false}
-              isAnimationActive={false}
-              name='Dirección viento (°)'
-            />
-          </LineChart>
-        )}
-      </div>
-    </div>
+    <TimeSeriesChart
+      data={chartData}
+      locale={locale}
+      chartHeightClass='h-80'
+      legendItems={[
+        { label: 'Altura (m)', color: '#38bdf8' },
+        { label: 'Energía (kJ)', color: '#fbbf24', dashed: true },
+      ]}
+      leftAxis={{
+        width: 42,
+        padding: { top: 10 },
+        domain: [0, leftAxisMax],
+        ticks: leftAxisTicks,
+        allowDecimals: leftAxisStep % 1 !== 0,
+        tickFormatter: (value) =>
+          `${Number.isInteger(value) ? value : value.toFixed(1)} m`,
+      }}
+      rightAxis={{
+        width: 35,
+        tickCount: 5,
+        tickFormatter: (value) => `${Math.round(value)}`,
+      }}
+      series={[
+        {
+          dataKey: 'waveHeight',
+          yAxisId: 'left',
+          name: 'Altura',
+          stroke: '#38bdf8',
+        },
+        {
+          dataKey: 'energy',
+          yAxisId: 'right',
+          name: 'Energía',
+          stroke: '#fbbf24',
+          dashed: true,
+        },
+        {
+          dataKey: 'wavePeriod',
+          yAxisId: 'right',
+          name: 'Periodo',
+          stroke: '#22c55e',
+          hidden: true,
+        },
+        {
+          dataKey: 'windSpeed',
+          yAxisId: 'right',
+          name: 'Viento (km/h)',
+          stroke: '#3b82f6',
+          hidden: true,
+        },
+        {
+          dataKey: 'windDirection',
+          yAxisId: 'right',
+          name: 'Dirección viento (°)',
+          stroke: '#0284c7',
+          hidden: true,
+        },
+      ]}
+      tooltipContent={<CustomTooltip />}
+      showDaySeparators
+      showDayLabels
+      showNowMarker
+      showFutureArea
+    />
   )
 }
