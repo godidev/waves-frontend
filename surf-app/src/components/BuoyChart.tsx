@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { Buoy } from '../types'
+import { CHART_LAYOUT, CHART_SERIES_COLORS } from './charts/chartTheme'
 import { TimeSeriesChart } from './charts/TimeSeriesChart'
 
 interface BuoyChartProps {
@@ -25,25 +26,29 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
     <TimeSeriesChart
       data={chartData}
       locale={locale}
-      chartHeightClass='h-60 min-h-[236px]'
+      chartHeightClass={CHART_LAYOUT.buoyHeightClass}
       showXAxisTicks
       showDaySeparators
       showDayLabels
       showNowMarker={false}
       showFutureArea={false}
       legendItems={[
-        { label: 'Altura (m)', color: '#38bdf8' },
-        { label: 'Periodo (s)', color: '#fbbf24', dashed: true },
+        { label: 'Altura (m)', color: CHART_SERIES_COLORS.height },
+        {
+          label: 'Periodo (s)',
+          color: CHART_SERIES_COLORS.period,
+          dashed: true,
+        },
       ]}
       leftAxis={{
-        width: 42,
-        tickCount: 6,
+        width: CHART_LAYOUT.leftAxisWidth,
+        tickCount: CHART_LAYOUT.buoyLeftAxisTickCount,
         padding: { top: 20, bottom: 0 },
         tickFormatter: (value) => `${value.toFixed(1)} m`,
       }}
       rightAxis={{
-        width: 42,
-        tickCount: 5,
+        width: CHART_LAYOUT.buoyRightAxisWidth,
+        tickCount: CHART_LAYOUT.rightAxisTickCount,
         padding: { top: 10, bottom: 10 },
         tickFormatter: (value) => `${value} s`,
         domain: [
@@ -56,13 +61,13 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
           dataKey: 'height',
           yAxisId: 'left',
           name: 'Altura',
-          stroke: '#38bdf8',
+          stroke: CHART_SERIES_COLORS.height,
         },
         {
           dataKey: 'period',
           yAxisId: 'right',
           name: 'Periodo',
-          stroke: '#fbbf24',
+          stroke: CHART_SERIES_COLORS.period,
           dashed: true,
         },
       ]}

@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { CHART_THEME } from './chartTheme'
 import { formatHour } from '../../utils/time'
 
 interface AxisConfig {
@@ -208,16 +209,16 @@ export const TimeSeriesChart = ({
             <CartesianGrid
               yAxisId='left'
               vertical={false}
-              stroke='#64748b'
-              opacity={0.25}
-              strokeDasharray='4 4'
+              stroke={CHART_THEME.gridStroke}
+              opacity={CHART_THEME.gridOpacity}
+              strokeDasharray={CHART_THEME.gridDasharray}
             />
             <XAxis
               dataKey='time'
               type='number'
               scale='time'
               domain={['dataMin', 'dataMax']}
-              stroke='#64748b'
+              stroke={CHART_THEME.axisStroke}
               opacity={showXAxisTicks ? 1 : 0}
               tickFormatter={(value) =>
                 formatHour(new Date(Number(value)).toISOString(), locale)
@@ -225,8 +226,8 @@ export const TimeSeriesChart = ({
             />
             <YAxis
               yAxisId='left'
-              stroke='#64748b'
-              fontSize={10}
+              stroke={CHART_THEME.axisStroke}
+              fontSize={CHART_THEME.axisFontSize}
               width={leftAxis.width}
               tickCount={leftAxis.tickCount}
               ticks={leftAxis.ticks}
@@ -238,8 +239,8 @@ export const TimeSeriesChart = ({
             <YAxis
               yAxisId='right'
               orientation='right'
-              stroke='#64748b'
-              fontSize={10}
+              stroke={CHART_THEME.axisStroke}
+              fontSize={CHART_THEME.axisFontSize}
               width={rightAxis.width}
               tickCount={rightAxis.tickCount}
               ticks={rightAxis.ticks}
@@ -252,9 +253,9 @@ export const TimeSeriesChart = ({
               content={tooltipContent}
               cursor={false}
               contentStyle={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
+                backgroundColor: CHART_THEME.tooltipBackground,
+                border: `1px solid ${CHART_THEME.tooltipBorder}`,
+                borderRadius: `${CHART_THEME.tooltipRadius}px`,
               }}
               labelFormatter={(value) =>
                 formatHour(new Date(Number(value)).toISOString(), locale)
@@ -268,8 +269,8 @@ export const TimeSeriesChart = ({
                 yAxisId='left'
                 pointerEvents='none'
                 strokeOpacity={0}
-                fill='#0ea5e9'
-                fillOpacity={0.1}
+                fill={CHART_THEME.futureAreaFill}
+                fillOpacity={CHART_THEME.futureAreaOpacity}
               />
             )}
 
@@ -285,8 +286,8 @@ export const TimeSeriesChart = ({
                 label={{
                   value: range.label,
                   position: 'insideBottom',
-                  fill: '#475569',
-                  fontSize: 14,
+                  fill: CHART_THEME.dayLabelColor,
+                  fontSize: CHART_THEME.dayLabelFontSize,
                   dy: 20,
                 }}
               />
@@ -297,10 +298,10 @@ export const TimeSeriesChart = ({
                 key={`day-${index}`}
                 x={time}
                 yAxisId='left'
-                stroke='#64748b'
-                strokeDasharray='3 3'
-                strokeWidth={1.5}
-                opacity={0.45}
+                stroke={CHART_THEME.daySeparatorStroke}
+                strokeDasharray={CHART_THEME.daySeparatorDasharray}
+                strokeWidth={CHART_THEME.daySeparatorWidth}
+                opacity={CHART_THEME.daySeparatorOpacity}
               />
             ))}
 
@@ -308,13 +309,13 @@ export const TimeSeriesChart = ({
               <ReferenceLine
                 x={closestToNow}
                 yAxisId='left'
-                stroke='#0284c7'
-                strokeWidth={3}
-                strokeOpacity={0.9}
+                stroke={CHART_THEME.nowMarkerStroke}
+                strokeWidth={CHART_THEME.nowMarkerWidth}
+                strokeOpacity={CHART_THEME.nowMarkerOpacity}
                 label={{
                   value: 'Ahora',
                   position: 'insideTopLeft',
-                  fill: '#0369a1',
+                  fill: CHART_THEME.nowMarkerLabelColor,
                   fontSize: 11,
                   fontWeight: 'bold',
                 }}
@@ -324,8 +325,8 @@ export const TimeSeriesChart = ({
             <ReferenceLine
               y={0}
               yAxisId='left'
-              stroke='#94a3b8'
-              strokeWidth={1}
+              stroke={CHART_THEME.baselineStroke}
+              strokeWidth={CHART_THEME.baselineWidth}
             />
 
             {series.map((item) => (

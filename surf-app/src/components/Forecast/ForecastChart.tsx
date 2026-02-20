@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
 import { DirectionArrow } from '../Icons'
+import { CHART_LAYOUT, CHART_SERIES_COLORS } from '../charts/chartTheme'
 import { TimeSeriesChart } from '../charts/TimeSeriesChart'
 
 interface ForecastChartProps {
@@ -40,19 +41,31 @@ const CustomTooltip = ({
         <p className='mb-2 font-semibold text-slate-700 dark:text-slate-200'>
           {formattedDate}
         </p>
-        <p className='flex justify-between gap-3' style={{ color: '#38bdf8' }}>
+        <p
+          className='flex justify-between gap-3'
+          style={{ color: CHART_SERIES_COLORS.height }}
+        >
           <span>Altura:</span>
           <span className='font-semibold'>{waveHeight}m</span>
         </p>
-        <p className='flex justify-between gap-3' style={{ color: '#fbbf24' }}>
+        <p
+          className='flex justify-between gap-3'
+          style={{ color: CHART_SERIES_COLORS.energy }}
+        >
           <span>Energía:</span>
           <span className='font-semibold'>{energy}</span>
         </p>
-        <p className='flex justify-between gap-3' style={{ color: '#22c55e' }}>
+        <p
+          className='flex justify-between gap-3'
+          style={{ color: CHART_SERIES_COLORS.wavePeriod }}
+        >
           <span>Periodo:</span>
           <span className='font-semibold'>{wavePeriod}s</span>
         </p>
-        <p className='flex justify-between gap-1' style={{ color: '#3b82f6' }}>
+        <p
+          className='flex justify-between gap-1'
+          style={{ color: CHART_SERIES_COLORS.windSpeed }}
+        >
           <span>Viento:</span>
           <span className='font-semibold'>{windSpeed} km/h </span>
           <span className='font-semibold'>
@@ -110,13 +123,17 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
     <TimeSeriesChart
       data={chartData}
       locale={locale}
-      chartHeightClass='h-80'
+      chartHeightClass={CHART_LAYOUT.forecastHeightClass}
       legendItems={[
-        { label: 'Altura (m)', color: '#38bdf8' },
-        { label: 'Energía (kJ)', color: '#fbbf24', dashed: true },
+        { label: 'Altura (m)', color: CHART_SERIES_COLORS.height },
+        {
+          label: 'Energía (kJ)',
+          color: CHART_SERIES_COLORS.energy,
+          dashed: true,
+        },
       ]}
       leftAxis={{
-        width: 42,
+        width: CHART_LAYOUT.leftAxisWidth,
         padding: { top: 10 },
         domain: [0, leftAxisMax],
         ticks: leftAxisTicks,
@@ -125,8 +142,8 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
           `${Number.isInteger(value) ? value : value.toFixed(1)} m`,
       }}
       rightAxis={{
-        width: 35,
-        tickCount: 5,
+        width: CHART_LAYOUT.forecastRightAxisWidth,
+        tickCount: CHART_LAYOUT.rightAxisTickCount,
         tickFormatter: (value) => `${Math.round(value)}`,
       }}
       series={[
@@ -134,34 +151,34 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
           dataKey: 'waveHeight',
           yAxisId: 'left',
           name: 'Altura',
-          stroke: '#38bdf8',
+          stroke: CHART_SERIES_COLORS.height,
         },
         {
           dataKey: 'energy',
           yAxisId: 'right',
           name: 'Energía',
-          stroke: '#fbbf24',
+          stroke: CHART_SERIES_COLORS.energy,
           dashed: true,
         },
         {
           dataKey: 'wavePeriod',
           yAxisId: 'right',
           name: 'Periodo',
-          stroke: '#22c55e',
+          stroke: CHART_SERIES_COLORS.wavePeriod,
           hidden: true,
         },
         {
           dataKey: 'windSpeed',
           yAxisId: 'right',
           name: 'Viento (km/h)',
-          stroke: '#3b82f6',
+          stroke: CHART_SERIES_COLORS.windSpeed,
           hidden: true,
         },
         {
           dataKey: 'windDirection',
           yAxisId: 'right',
           name: 'Dirección viento (°)',
-          stroke: '#0284c7',
+          stroke: CHART_SERIES_COLORS.windDirection,
           hidden: true,
         },
       ]}
