@@ -32,8 +32,10 @@ const BuoyTooltip = ({
   const period = payload.find((p) => p.dataKey === 'period')?.value
 
   return (
-    <div className='rounded-xl border border-slate-700 bg-slate-900/95 p-3 text-xs shadow-md backdrop-blur'>
-      <p className='mb-2 font-semibold text-slate-100'>{formattedDate}</p>
+    <div className='rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-md dark:border-slate-700 dark:bg-slate-900'>
+      <p className='mb-2 font-semibold text-slate-700 dark:text-slate-200'>
+        {formattedDate}
+      </p>
       <p
         className='flex justify-between gap-3'
         style={{ color: CHART_SERIES_COLORS.height }}
