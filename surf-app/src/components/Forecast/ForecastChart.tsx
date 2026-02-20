@@ -259,9 +259,9 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
               orientation='right'
               stroke='#64748b'
               fontSize={10}
-              width={48}
+              width={35}
               tickCount={5}
-              tickFormatter={(value) => `${Math.round(value)} kJ`}
+              tickFormatter={(value) => `${Math.round(value)}`}
             />
             <Tooltip content={<CustomTooltip />} cursor={false} />
 
