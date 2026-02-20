@@ -1,6 +1,17 @@
-import { memo } from 'react'
+import { memo, useEffect, useState } from 'react'
 import type { BuoyDataDoc } from '../types'
 import { DirectionArrow } from './Icons'
+
+const formatRelativeUpdate = (date: Date, nowMs: number): string => {
+  const diffMs = Math.max(0, nowMs - date.getTime())
+  const minutes = Math.floor(diffMs / 60000)
+
+  if (minutes < 1) return 'hace menos de 1 min'
+  if (minutes < 60) return `hace ${minutes} min`
+
+  const hours = Math.floor(minutes / 60)
+  return `hace ${hours} h`
+}
 
 interface HomeSummaryCardsProps {
   totalHeight: number
@@ -12,7 +23,6 @@ interface HomeSummaryCardsProps {
   windDirection: string
   windSpeed: number
   latestBuoyRecord: BuoyDataDoc | null
-  forecastUpdatedAt: Date | null
 }
 
 export const HomeSummaryCards = memo(
@@ -26,7 +36,6 @@ export const HomeSummaryCards = memo(
     windDirection,
     windSpeed,
     latestBuoyRecord,
-    forecastUpdatedAt,
   }: HomeSummaryCardsProps) => {
     const totalHeightText = `${totalHeight.toFixed(2)}m`
     const primaryPeriodText = `${primaryPeriod ?? '--'}s`
@@ -39,18 +48,20 @@ export const HomeSummaryCards = memo(
       ? `${latestBuoyRecord.period.toFixed(1)}s`
       : '--'
 
-    const timeFormatter = new Intl.DateTimeFormat('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    const [nowMs, setNowMs] = useState(() => Date.now())
 
-    const forecastUpdatedText = forecastUpdatedAt
-      ? timeFormatter.format(forecastUpdatedAt)
-      : '--'
-    const buoyUpdatedText = latestBuoyRecord?.date
-      ? timeFormatter.format(new Date(latestBuoyRecord.date))
+    useEffect(() => {
+      const intervalId = window.setInterval(() => {
+        setNowMs(Date.now())
+      }, 60000)
+
+      return () => {
+        window.clearInterval(intervalId)
+      }
+    }, [])
+
+    const updatedText = latestBuoyRecord?.date
+      ? formatRelativeUpdate(new Date(latestBuoyRecord.date), nowMs)
       : '--'
 
     return (
@@ -118,9 +129,7 @@ export const HomeSummaryCards = memo(
         </div>
 
         <div className='border-t border-slate-300/40 bg-slate-50 px-2.5 py-1 text-center text-[11px] text-slate-800 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-100'>
-          <span>Actualizado forecast: {forecastUpdatedText}</span>
-          <span className='mx-1 text-slate-400'>•</span>
-          <span>boya: {buoyUpdatedText}</span>
+          <span>Datos actualizados: {updatedText}</span>
         </div>
       </div>
     )
