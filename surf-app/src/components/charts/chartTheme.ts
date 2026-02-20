@@ -15,7 +15,7 @@ export const CHART_THEME = {
   nowMarkerWidth: 3,
   nowMarkerOpacity: 0.9,
   futureAreaFill: '#0ea5e9',
-  futureAreaOpacity: 0.1,
+  futureAreaOpacity: 0.06,
   baselineStroke: '#94a3b8',
   baselineWidth: 1,
   tooltipBackground: '#ffffff',
