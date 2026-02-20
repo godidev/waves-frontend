@@ -20,10 +20,18 @@ const BuoyRoute = ({ stationId }: { stationId: string }) => {
 const AppRoutes = () => {
   const { settings, setSettings } = useSettings()
   const navigate = useNavigate()
+  const toggleTheme = () =>
+    setSettings({
+      ...settings,
+      theme: settings.theme === 'dark' ? 'light' : 'dark',
+    })
 
   return (
     <Routes>
-      <Route path='/' element={<Layout />}>
+      <Route
+        path='/'
+        element={<Layout theme={settings.theme} onToggleTheme={toggleTheme} />}
+      >
         <Route
           index
           element={
