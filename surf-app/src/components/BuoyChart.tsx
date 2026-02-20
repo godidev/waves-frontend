@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts'
+import { Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from 'recharts'
 import type { Buoy } from '../types'
 import { formatHour } from '../utils/time'
 
@@ -29,12 +29,31 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
     return () => observer.disconnect()
   }, [])
 
-  // Transform data for the chart - convert timestamp to ISO string
+  // Transform data for the chart
   const chartData = buoys.map(({ date, height, period }) => ({
-    timestamp: new Date(date).toISOString(),
+    time: date,
     height,
     period,
   }))
+
+  const dayChanges: Array<{ time: number; label: string }> = []
+  if (chartData.length > 1) {
+    const start = new Date(chartData[0].time)
+    const end = new Date(chartData[chartData.length - 1].time)
+    const midnight = new Date(start)
+    midnight.setHours(24, 0, 0, 0)
+
+    while (midnight.getTime() < end.getTime()) {
+      dayChanges.push({
+        time: midnight.getTime(),
+        label: midnight.toLocaleDateString(locale, {
+          weekday: 'short',
+          day: 'numeric',
+        }),
+      })
+      midnight.setDate(midnight.getDate() + 1)
+    }
+  }
 
   const roundDown = (v: number) => Math.floor(v / 5) * 5
   const roundUp = (v: number) => Math.ceil(v / 5) * 5
@@ -45,7 +64,7 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
   return (
     <div
       ref={containerRef}
-      className='h-60 min-h-[236px] w-full min-w-0 rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-1 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800'
+      className='h-60 min-h-[236px] w-full min-w-0 rounded-2xl py-2'
     >
       <div className='mb-1 flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200'>
         <span className='inline-flex items-center gap-1.5'>
@@ -75,8 +94,13 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
           margin={{ top: 0, right: 2, left: -6, bottom: -8 }}
         >
           <XAxis
-            dataKey='timestamp'
-            tickFormatter={(value) => formatHour(value, locale)}
+            dataKey='time'
+            type='number'
+            scale='time'
+            domain={['dataMin', 'dataMax']}
+            tickFormatter={(value) =>
+              formatHour(new Date(Number(value)).toISOString(), locale)
+            }
             stroke='#64748b'
             fontSize={10}
           />
@@ -110,8 +134,31 @@ export const BuoyChart = ({ buoys, locale }: BuoyChartProps) => {
               border: '1px solid #e2e8f0',
               borderRadius: '12px',
             }}
-            labelFormatter={(value) => formatHour(String(value), locale)}
+            labelFormatter={(value) =>
+              formatHour(new Date(Number(value)).toISOString(), locale)
+            }
           />
+
+          {dayChanges.map((change, index) => (
+            <ReferenceLine
+              key={`buoy-day-${index}`}
+              x={change.time}
+              yAxisId='left'
+              ifOverflow='extendDomain'
+              stroke='#475569'
+              strokeDasharray='3 3'
+              strokeWidth={2.5}
+              opacity={0.9}
+              label={{
+                value: change.label,
+                position: 'insideTopLeft',
+                fill: '#334155',
+                fontSize: 10,
+                fontWeight: 600,
+              }}
+            />
+          ))}
+
           <Line
             yAxisId='left'
             type='natural'
