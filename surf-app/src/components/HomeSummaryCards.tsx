@@ -56,7 +56,7 @@ export const HomeSummaryCards = memo(
     return (
       <div className='grid grid-cols-1 divide-y divide-slate-300/40 overflow-hidden rounded-3xl border border-slate-200 bg-white p-0 shadow-sm dark:divide-slate-700/60 dark:border-slate-700 dark:bg-slate-900'>
         <div className='bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-          <p className='mb-1 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-200'>
+          <p className='mb-1 text-[10px] uppercase tracking-wide text-slate-700 dark:text-slate-100'>
             Olas
           </p>
           <div className='flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-slate-900 dark:text-slate-100'>
@@ -85,7 +85,7 @@ export const HomeSummaryCards = memo(
 
         <div className='grid grid-cols-2 divide-x divide-slate-300/40 dark:divide-slate-700/60'>
           <div className='flex flex-col items-center bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-            <p className='text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-200'>
+            <p className='text-[10px] uppercase tracking-wide text-slate-700 dark:text-slate-100'>
               Viento
             </p>
             <p className='mt-0.5 flex flex-col items-center justify-center gap-2 text-slate-900 dark:text-slate-100'>
@@ -103,7 +103,7 @@ export const HomeSummaryCards = memo(
           </div>
 
           <div className='flex flex-col items-center bg-slate-50 px-2.5 py-1 text-center dark:bg-slate-800'>
-            <p className='text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-200'>
+            <p className='text-[10px] uppercase tracking-wide text-slate-700 dark:text-slate-100'>
               Última boya
             </p>
             <p className='mt-0.5 flex flex-col items-center gap-2 text-slate-900 dark:text-slate-100'>
@@ -117,7 +117,7 @@ export const HomeSummaryCards = memo(
           </div>
         </div>
 
-        <div className='border-t border-slate-300/40 bg-slate-50 px-2.5 py-1 text-center text-[11px] text-slate-700 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-200'>
+        <div className='border-t border-slate-300/40 bg-slate-50 px-2.5 py-1 text-center text-[11px] text-slate-800 dark:border-slate-700/60 dark:bg-slate-800 dark:text-slate-100'>
           <span>Actualizado forecast: {forecastUpdatedText}</span>
           <span className='mx-1 text-slate-400'>•</span>
           <span>boya: {buoyUpdatedText}</span>

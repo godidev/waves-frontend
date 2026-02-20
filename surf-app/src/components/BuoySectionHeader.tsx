@@ -30,12 +30,12 @@ export const BuoySectionHeader = ({
         onClick={() => {
           onOpenSelector()
         }}
-        className='text-xs font-medium uppercase tracking-wide text-slate-600 transition hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-100'
+        className='text-xs font-medium uppercase tracking-wide text-slate-700 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white'
       >
         {stationLabel || defaultStationId}
       </button>
     </div>
-    <div className='flex items-center gap-3 text-base font-medium text-slate-600 dark:text-slate-300'>
+    <div className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'>
       {(['6', '12', '24'] as const).map((hours) => (
         <button
           key={hours}
@@ -44,7 +44,7 @@ export const BuoySectionHeader = ({
           className={`transition ${
             buoyHours === hours
               ? 'font-semibold text-sky-700 dark:text-sky-300'
-              : 'hover:text-slate-800 dark:hover:text-slate-100'
+              : 'hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           {hours}h
