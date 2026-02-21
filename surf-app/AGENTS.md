@@ -23,11 +23,12 @@ npm run preview        # Serve production build locally
 src/
   components/          # Reusable UI components (PascalCase filenames)
   components/Forecast/ # Forecast-specific components
+  components/charts/   # Shared chart system (theme + base chart)
   pages/               # Route-level page components
   hooks/               # Custom React hooks (camelCase with use prefix)
   services/            # API client and localStorage wrapper
   types/               # TypeScript interfaces and utility type functions
-  utils/               # Pure utility functions (time formatting, sharing)
+  utils/               # Pure utility functions (time formatting)
 ```
 
 Key files:
@@ -87,12 +88,12 @@ No blank-line separation is enforced between groups, but the ordering is consist
 | Service/util files     | camelCase `.ts`      | `api.ts`, `time.ts`              |
 | Directories            | lowercase            | `components/`, `hooks/`          |
 | Components             | PascalCase           | `MetricCard`, `BottomNav`        |
-| Hooks                  | `use` prefix         | `useSettings`, `usePagination`   |
+| Hooks                  | `use` prefix         | `useSettings`                    |
 | Functions              | camelCase            | `getStations`, `formatHour`      |
 | Variables              | camelCase            | `spotId`, `stationLabel`         |
 | Module-level constants | SCREAMING_SNAKE_CASE | `API_BASE_URL`, `SETTINGS_KEY`   |
 | Types/interfaces       | PascalCase           | `SurfForecast`, `SettingsState`  |
-| Props interfaces       | `{Component}Props`   | `HeroProps`, `MetricCardProps`   |
+| Props interfaces       | `{Component}Props`   | `MetricCardProps`                |
 
 ### API and Data Fetching
 
@@ -151,5 +152,6 @@ No blank-line separation is enforced between groups, but the ordering is consist
 ### Environment
 
 - API base URL configured via `VITE_API_URL` env var (falls back to `http://localhost:3000`)
-- Production API: `https://waves-db-backend.vercel.app` (set in `.env.production`)
+- Production frontend uses `VITE_API_URL=/api` with Vercel rewrite proxy to backend
+- Backend target for proxy: `https://waves-db-backend.vercel.app`
 - Vite uses `import.meta.env` for environment variables
