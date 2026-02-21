@@ -8,19 +8,14 @@ import {
   getBuoyData,
 } from '../services/api'
 import './HomePage.css'
-import type {
-  SurfForecast,
-  Station,
-  SelectableItem,
-  BuoyDataDoc,
-} from '../types'
+import type { SurfForecast, Station, BuoyDataDoc } from '../types'
 import { degreesToCardinal } from '../types'
 import { ForecastChart } from '../components/Forecast/ForecastChart'
 import { StatusMessage } from '../components/StatusMessage'
 import { BuoyDetailContent } from '../components/BuoyDetailContent'
 import { SectionHeader } from '../components/SectionHeader'
+import { SelectMenu } from '../components/SelectMenu'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
-import { BuoySectionHeader } from '../components/BuoySectionHeader'
 
 interface HomePageProps {
   defaultSpotId: string
@@ -44,16 +39,22 @@ export const HomePage = ({
   const [latestBuoyRecord, setLatestBuoyRecord] = useState<BuoyDataDoc | null>(
     null,
   )
+  const [forecastRange, setForecastRange] = useState<'48h' | '7d'>('48h')
   const [buoyHours, setBuoyHours] = useState<'6' | '12' | '24'>('6')
   const activeSpotId = defaultSpotId
   const activeStationId = defaultStationId
+  const forecastLimit = forecastRange === '48h' ? 72 : 200
 
   useEffect(() => {
     let mounted = true
     const load = async () => {
       setStatus('loading')
       try {
-        const forecastResponse = await getSurfForecast(activeSpotId, 1, 72)
+        const forecastResponse = await getSurfForecast(
+          activeSpotId,
+          1,
+          forecastLimit,
+        )
         if (!mounted) return
 
         setForecasts(forecastResponse)
@@ -67,7 +68,7 @@ export const HomePage = ({
     return () => {
       mounted = false
     }
-  }, [activeSpotId])
+  }, [activeSpotId, forecastLimit])
 
   useEffect(() => {
     let mounted = true
@@ -132,11 +133,6 @@ export const HomePage = ({
 
   const locale = 'es-ES'
 
-  const stationItems: SelectableItem[] = useMemo(
-    () => stations.map((s) => ({ id: s.buoyId, name: s.name })),
-    [stations],
-  )
-
   const buoyOptions = useMemo(() => {
     const fallback = {
       id: defaultStationId,
@@ -144,10 +140,16 @@ export const HomePage = ({
         stations.find((s) => s.buoyId === defaultStationId)?.name ??
         defaultStationId,
     }
-    const items = stationItems.length > 0 ? stationItems : [fallback]
+    const items =
+      stations.length > 0
+        ? stations.map((station) => ({
+            id: station.buoyId,
+            name: station.name,
+          }))
+        : [fallback]
     if (items.some((item) => item.id === defaultStationId)) return items
     return [fallback, ...items]
-  }, [defaultStationId, stationItems, stations])
+  }, [defaultStationId, stations])
 
   const spotItems = useMemo(() => {
     const unique = Array.from(new Set([defaultSpotId, ...spots]))
@@ -164,6 +166,8 @@ export const HomePage = ({
   const latestReadingText = latestBuoyRecord
     ? `${latestBuoyRecord.height.toFixed(2)}m | ${latestBuoyRecord.period.toFixed(1)}s`
     : '--'
+  const sectionSelectClass =
+    'mb-2 w-full rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-xs font-medium uppercase tracking-wide text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
 
   if (status === 'loading') {
     return <StatusMessage message='Cargando...' />
@@ -187,6 +191,9 @@ export const HomePage = ({
     selected?.wind.angle !== undefined
       ? `${degreesToCardinal(selected.wind.angle)} ${selected.wind.angle.toFixed(0)}°`
       : '--'
+  const forecastCurrentText = selectedPrimarySwell
+    ? `${selectedTotalHeight.toFixed(2)}m | ${selectedPrimarySwell.period.toFixed(1)}s`
+    : `${selectedTotalHeight.toFixed(2)}m | --`
 
   return (
     <div className='space-y-4'>
@@ -207,33 +214,69 @@ export const HomePage = ({
       <div className='rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
         <SectionHeader
           title='Forecast'
-          actionNode={
-            <select
-              id='forecast-spot-select'
-              value={activeSpotId}
-              onChange={(event) => {
-                onSelectSpot(event.target.value)
-              }}
-              className='max-w-[220px] rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:border-slate-600 dark:bg-slate-800 dark:text-sky-300'
-              aria-label='Seleccionar spot'
-            >
-              {spotItems.map((spot) => (
-                <option key={spot} value={spot}>
-                  {capitalizeSpot(spot)}
-                </option>
+          subtitle={forecastCurrentText}
+          rightNode={
+            <div className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'>
+              {(['48h', '7d'] as const).map((range) => (
+                <button
+                  key={range}
+                  type='button'
+                  onClick={() => setForecastRange(range)}
+                  className={`transition ${
+                    forecastRange === range
+                      ? 'font-semibold text-sky-700 dark:text-sky-300'
+                      : 'hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {range}
+                </button>
               ))}
-            </select>
+            </div>
           }
+        />
+        <SelectMenu
+          value={activeSpotId}
+          onChange={onSelectSpot}
+          ariaLabel='Seleccionar spot'
+          className={sectionSelectClass}
+          options={spotItems.map((spot) => ({
+            value: spot,
+            label: capitalizeSpot(spot),
+          }))}
         />
         <ForecastChart forecasts={forecasts} locale={locale} />
         <div className='mt-2 border-t border-slate-200 pt-5 dark:border-slate-700'>
-          <BuoySectionHeader
-            stationOptions={buoyOptions}
-            selectedStationId={activeStationId}
-            onStationChange={onSelectStation}
-            buoyHours={buoyHours}
-            onChangeHours={setBuoyHours}
-            latestReading={latestReadingText}
+          <SectionHeader
+            title='Boyas'
+            subtitle={latestReadingText}
+            rightNode={
+              <div className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'>
+                {(['6', '12', '24'] as const).map((hours) => (
+                  <button
+                    key={hours}
+                    type='button'
+                    onClick={() => setBuoyHours(hours)}
+                    className={`transition ${
+                      buoyHours === hours
+                        ? 'font-semibold text-sky-700 dark:text-sky-300'
+                        : 'hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {hours}h
+                  </button>
+                ))}
+              </div>
+            }
+          />
+          <SelectMenu
+            value={activeStationId}
+            onChange={onSelectStation}
+            ariaLabel='Seleccionar boya'
+            className={sectionSelectClass}
+            options={buoyOptions.map((station) => ({
+              value: station.id,
+              label: station.name,
+            }))}
           />
           <BuoyDetailContent
             stationId={activeStationId}
