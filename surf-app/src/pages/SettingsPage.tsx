@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
-import type { SettingsState, Station, SelectableItem } from '../types'
-import { BottomSheet } from '../components/BottomSheet'
-import { SearchAutocomplete } from '../components/SearchAutocomplete'
-import { getStations } from '../services/api'
+import { useEffect, useMemo, useState } from 'react'
+import type { SettingsState, Station } from '../types'
+import { getForecastSpots, getStations } from '../services/api'
 import { PageHeader } from '../components/PageHeader'
+import { SelectMenu } from '../components/SelectMenu'
 
 interface SettingsPageProps {
   settings: SettingsState
@@ -11,8 +10,7 @@ interface SettingsPageProps {
 }
 
 export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
-  const [spotSheetOpen, setSpotSheetOpen] = useState(false)
-  const [buoySheetOpen, setBuoySheetOpen] = useState(false)
+  const [spots, setSpots] = useState<string[]>([])
   const [stations, setStations] = useState<Station[]>([])
 
   useEffect(() => {
@@ -32,11 +30,55 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
     }
   }, [])
 
-  // Convert stations to selectable items
-  const stationItems: SelectableItem[] = stations.map((s) => ({
-    id: s.buoyId,
-    name: s.name,
-  }))
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const spotData = await getForecastSpots()
+        if (!mounted) return
+        setSpots(spotData)
+      } catch {
+        // Handle error silently
+      }
+    }
+    void load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const capitalizeSpot = (spot: string) =>
+    spot
+      .split(/[-_\s]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+
+  const spotOptions = useMemo(() => {
+    const unique = Array.from(new Set([settings.defaultSpotId, ...spots]))
+    return unique
+      .sort((a, b) => a.localeCompare(b, 'es-ES'))
+      .map((spot) => ({ value: spot, label: capitalizeSpot(spot) }))
+  }, [settings.defaultSpotId, spots])
+
+  const buoyOptions = useMemo(() => {
+    const mapped = stations.map((station) => ({
+      value: station.buoyId,
+      label: station.name,
+    }))
+
+    if (mapped.some((option) => option.value === settings.defaultStationId)) {
+      return mapped
+    }
+
+    return [
+      { value: settings.defaultStationId, label: settings.defaultStationId },
+      ...mapped,
+    ]
+  }, [settings.defaultStationId, stations])
+
+  const selectClass =
+    'w-full max-w-[220px] rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-xs font-medium uppercase tracking-wide text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
 
   return (
     <div className='space-y-6'>
@@ -45,87 +87,48 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
         <div className='mt-2 space-y-4 text-sm text-slate-700 dark:text-slate-200'>
           <div className='flex items-center justify-between'>
             <span>Tema</span>
-            <select
+            <SelectMenu
               value={settings.theme}
-              onChange={(event) =>
+              onChange={(value) =>
                 onUpdate({
                   ...settings,
-                  theme: event.target.value as 'dark' | 'light',
+                  theme: value as 'dark' | 'light',
                 })
               }
-              className='rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
-            >
-              <option value='dark'>Oscuro</option>
-              <option value='light'>Claro</option>
-            </select>
+              ariaLabel='Seleccionar tema'
+              className={selectClass}
+              options={[
+                { value: 'dark', label: 'Oscuro' },
+                { value: 'light', label: 'Claro' },
+              ]}
+            />
           </div>
           <div className='flex items-center justify-between'>
             <span>Spot por defecto</span>
-            <button
-              onClick={() => setSpotSheetOpen(true)}
-              className='rounded-full border border-slate-200 px-3 py-2 text-xs dark:border-slate-700'
-              type='button'
-            >
-              {settings.defaultSpotId || 'sopelana'}
-            </button>
+            <SelectMenu
+              value={settings.defaultSpotId}
+              onChange={(value) =>
+                onUpdate({ ...settings, defaultSpotId: value })
+              }
+              ariaLabel='Seleccionar spot por defecto'
+              className={selectClass}
+              options={spotOptions}
+            />
           </div>
           <div className='flex items-center justify-between'>
             <span>Boya por defecto</span>
-            <button
-              onClick={() => setBuoySheetOpen(true)}
-              className='rounded-full border border-slate-200 px-3 py-2 text-xs dark:border-slate-700'
-              type='button'
-            >
-              {stations.find(
-                (item) => item.buoyId === settings.defaultStationId,
-              )?.name ?? settings.defaultStationId}
-            </button>
+            <SelectMenu
+              value={settings.defaultStationId}
+              onChange={(value) =>
+                onUpdate({ ...settings, defaultStationId: value })
+              }
+              ariaLabel='Seleccionar boya por defecto'
+              className={selectClass}
+              options={buoyOptions}
+            />
           </div>
         </div>
       </div>
-
-      <BottomSheet
-        open={spotSheetOpen}
-        title='Seleccionar spot'
-        onClose={() => setSpotSheetOpen(false)}
-        closeLabel='Cerrar'
-      >
-        <div className='p-4'>
-          <label className='text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400'>
-            ID del spot
-            <input
-              type='text'
-              value={settings.defaultSpotId}
-              onChange={(e) =>
-                onUpdate({ ...settings, defaultSpotId: e.target.value })
-              }
-              className='mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
-              placeholder='sopelana'
-            />
-          </label>
-          <button
-            onClick={() => setSpotSheetOpen(false)}
-            className='mt-4 w-full rounded-2xl bg-sky-600 py-2 text-sm font-semibold text-white'
-          >
-            Confirmar
-          </button>
-        </div>
-      </BottomSheet>
-
-      <BottomSheet
-        open={buoySheetOpen}
-        title='Seleccionar boya'
-        onClose={() => setBuoySheetOpen(false)}
-        closeLabel='Cerrar'
-      >
-        <SearchAutocomplete
-          items={stationItems}
-          onSelect={(id) => {
-            onUpdate({ ...settings, defaultStationId: id })
-            setBuoySheetOpen(false)
-          }}
-        />
-      </BottomSheet>
     </div>
   )
 }
