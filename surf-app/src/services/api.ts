@@ -139,6 +139,17 @@ export const getSurfForecast = async (
   )
 }
 
+export const getForecastSpots = async (): Promise<string[]> => {
+  return withCache(
+    'spots:list:v1',
+    async () => {
+      const spots = await fetchJson<string[]>('/surf-forecast/spots')
+      return spots.map((spot) => spot.trim()).filter((spot) => spot.length > 0)
+    },
+    CACHE_TTL.stations,
+  )
+}
+
 export const getPrimarySwell = (forecast: SurfForecast) => {
   if (!forecast.validSwells.length) return null
   return forecast.validSwells.reduce((max, swell) =>
