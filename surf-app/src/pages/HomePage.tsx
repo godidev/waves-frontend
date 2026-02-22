@@ -211,7 +211,7 @@ export const HomePage = ({
     'mb-2 w-full rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-xs font-medium uppercase tracking-wide text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
 
   if (status === 'loading') {
-    return <StatusMessage message='Cargando...' />
+    return <StatusMessage message='Cargando…' />
   }
 
   if (status === 'error') {
@@ -249,6 +249,7 @@ export const HomePage = ({
           windDirection={selectedWindDirection}
           windSpeed={selected.wind.speed}
           latestBuoyRecord={latestBuoyRecord}
+          nowMs={nowMs}
         />
       )}
 
@@ -257,11 +258,16 @@ export const HomePage = ({
           title='Forecast'
           subtitle={forecastCurrentText}
           rightNode={
-            <div className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'>
+            <div
+              role='group'
+              aria-label='Rango del forecast'
+              className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'
+            >
               {(['48h', '7d'] as const).map((range) => (
                 <button
                   key={range}
                   type='button'
+                  aria-pressed={forecastRange === range}
                   onClick={() => setForecastRange(range)}
                   className={`transition ${
                     forecastRange === range
@@ -295,11 +301,16 @@ export const HomePage = ({
             title='Boyas'
             subtitle={latestReadingText}
             rightNode={
-              <div className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'>
+              <div
+                role='group'
+                aria-label='Rango de horas de boya'
+                className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'
+              >
                 {(['6', '12', '24'] as const).map((hours) => (
                   <button
                     key={hours}
                     type='button'
+                    aria-pressed={buoyHours === hours}
                     onClick={() => setBuoyHours(hours)}
                     className={`transition ${
                       buoyHours === hours

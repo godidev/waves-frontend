@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -52,19 +52,26 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
   }, [])
 
   // Filter buoys that have valid coordinates
-  const buoysWithCoordinates = buoys.filter(
-    (buoy) =>
-      buoy.location?.coordinates && buoy.location.coordinates.length === 2,
+  const buoysWithCoordinates = useMemo(
+    () =>
+      buoys.filter(
+        (buoy) =>
+          buoy.location?.coordinates && buoy.location.coordinates.length === 2,
+      ),
+    [buoys],
   )
 
   // Calculate map center from buoys or use default Spain center
-  const mapCenter: [number, number] =
-    buoysWithCoordinates.length > 0
-      ? [
-          buoysWithCoordinates[0].location!.coordinates[1],
-          buoysWithCoordinates[0].location!.coordinates[0],
-        ]
-      : [40.4, -3.7]
+  const mapCenter: [number, number] = useMemo(
+    () =>
+      buoysWithCoordinates.length > 0
+        ? [
+            buoysWithCoordinates[0].location!.coordinates[1],
+            buoysWithCoordinates[0].location!.coordinates[0],
+          ]
+        : [40.4, -3.7],
+    [buoysWithCoordinates],
+  )
 
   return (
     <div className='relative h-[calc(100vh-80px)]'>
@@ -80,6 +87,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
                 {buoysWithCoordinates.slice(0, 5).map((buoy) => (
                   <li key={buoy.buoyId}>
                     <button
+                      type='button'
                       onClick={() => setSelected(buoy)}
                       className='text-ocean-100 hover:text-white'
                     >

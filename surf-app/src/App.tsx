@@ -31,10 +31,10 @@ const AppRoutes = () => {
               defaultSpotId={settings.defaultSpotId}
               defaultStationId={settings.defaultStationId}
               onSelectSpot={(id) =>
-                setSettings({ ...settings, defaultSpotId: id })
+                setSettings((prev) => ({ ...prev, defaultSpotId: id }))
               }
               onSelectStation={(id) =>
-                setSettings({ ...settings, defaultStationId: id })
+                setSettings((prev) => ({ ...prev, defaultStationId: id }))
               }
             />
           }
@@ -44,7 +44,7 @@ const AppRoutes = () => {
           element={
             <MapPage
               onFocusBuoy={(id) => {
-                setSettings({ ...settings, defaultStationId: id })
+                setSettings((prev) => ({ ...prev, defaultStationId: id }))
                 navigate(`/buoy/${id}`)
               }}
             />

@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo } from 'react'
 import type { BuoyDataDoc } from '../types'
 import { DirectionArrow } from './Icons'
 
@@ -23,6 +23,7 @@ interface HomeSummaryCardsProps {
   windDirection: string
   windSpeed: number
   latestBuoyRecord: BuoyDataDoc | null
+  nowMs: number
 }
 
 export const HomeSummaryCards = memo(
@@ -36,6 +37,7 @@ export const HomeSummaryCards = memo(
     windDirection,
     windSpeed,
     latestBuoyRecord,
+    nowMs,
   }: HomeSummaryCardsProps) => {
     const totalHeightText = `${totalHeight.toFixed(2)}m`
     const primaryPeriodText = `${primaryPeriod ?? '--'}s`
@@ -47,18 +49,6 @@ export const HomeSummaryCards = memo(
     const buoyPeriodText = latestBuoyRecord
       ? `${latestBuoyRecord.period.toFixed(1)}s`
       : '--'
-
-    const [nowMs, setNowMs] = useState(() => Date.now())
-
-    useEffect(() => {
-      const intervalId = window.setInterval(() => {
-        setNowMs(Date.now())
-      }, 60000)
-
-      return () => {
-        window.clearInterval(intervalId)
-      }
-    }, [])
 
     const updatedText = latestBuoyRecord?.date
       ? formatRelativeUpdate(new Date(latestBuoyRecord.date), nowMs)

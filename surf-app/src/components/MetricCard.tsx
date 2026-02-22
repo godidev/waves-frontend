@@ -16,7 +16,7 @@ export const MetricCard = ({
   windAngle,
 }: MetricCardProps) => {
   const [showLabel, setShowLabel] = useState(false)
-  const iconRef = useRef<HTMLDivElement>(null)
+  const iconRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!showLabel) return
@@ -43,8 +43,9 @@ export const MetricCard = ({
           {label}
         </div>
       )}
-      <div
+      <button
         ref={iconRef}
+        type='button'
         className='flex size-7 cursor-pointer items-center justify-center rounded-xl bg-slate-100 text-sky-500 transition-colors hover:bg-slate-200'
         onClick={(e) => {
           e.stopPropagation()
@@ -52,7 +53,7 @@ export const MetricCard = ({
         }}
       >
         {icon}
-      </div>
+      </button>
       <div className='flex min-h-0 items-center justify-center gap-1 text-xl font-semibold text-slate-900'>
         {value}
         {<span className='text-base text-slate-500'>{suffix}</span>}

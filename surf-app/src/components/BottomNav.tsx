@@ -14,6 +14,8 @@ const HomeIcon = ({ className }: { className?: string }) => (
     stroke='currentColor'
     strokeWidth='2'
     className={className}
+    aria-hidden='true'
+    focusable='false'
   >
     <path strokeLinecap='round' strokeLinejoin='round' d='M3 10.5 12 3l9 7.5' />
     <path
@@ -31,6 +33,8 @@ const MapIcon = ({ className }: { className?: string }) => (
     stroke='currentColor'
     strokeWidth='2'
     className={className}
+    aria-hidden='true'
+    focusable='false'
   >
     <path
       strokeLinecap='round'
@@ -52,6 +56,8 @@ const SettingsIcon = ({ className }: { className?: string }) => (
     stroke='currentColor'
     strokeWidth='2'
     className={className}
+    aria-hidden='true'
+    focusable='false'
   >
     <path
       strokeLinecap='round'
@@ -77,7 +83,10 @@ const navItems: NavItem[] = [
 ]
 
 export const BottomNav = () => (
-  <nav className='fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90'>
+  <nav
+    aria-label='Navegación principal'
+    className='fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90'
+  >
     <div className='mx-auto flex max-w-md items-center justify-around px-4 py-2.5 text-xs'>
       {navItems.map((item) => (
         <NavLink

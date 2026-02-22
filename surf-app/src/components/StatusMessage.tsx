@@ -8,6 +8,8 @@ export const StatusMessage = ({
   variant = 'info',
 }: StatusMessageProps) => (
   <div
+    role={variant === 'error' ? 'alert' : 'status'}
+    aria-live={variant === 'error' ? 'assertive' : 'polite'}
     className={`rounded-2xl border p-6 text-center text-sm ${
       variant === 'error'
         ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300'

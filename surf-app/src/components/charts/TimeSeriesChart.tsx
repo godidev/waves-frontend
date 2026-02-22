@@ -298,9 +298,9 @@ export const TimeSeriesChart = ({
               />
             )}
 
-            {dayRanges.map((range, index) => (
+            {dayRanges.map((range) => (
               <ReferenceArea
-                key={`day-label-${index}`}
+                key={`day-label-${range.x1}-${range.x2}`}
                 x1={range.x1}
                 x2={range.x2}
                 yAxisId='left'
@@ -318,9 +318,9 @@ export const TimeSeriesChart = ({
               />
             ))}
 
-            {dayChanges.map((time, index) => (
+            {dayChanges.map((time) => (
               <ReferenceLine
-                key={`day-${index}`}
+                key={`day-${time}`}
                 x={time}
                 yAxisId='left'
                 stroke={CHART_THEME.daySeparatorStroke}
