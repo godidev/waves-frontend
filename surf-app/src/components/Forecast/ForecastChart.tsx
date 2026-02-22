@@ -28,6 +28,19 @@ const mix = (start: number, end: number, ratio: number) =>
 const toRgb = (red: number, green: number, blue: number) =>
   `rgb(${red} ${green} ${blue})`
 
+const getNiceEnergyStep = (rawStep: number): number => {
+  if (!Number.isFinite(rawStep) || rawStep <= 0) return 50
+
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep))
+  const normalized = rawStep / magnitude
+
+  if (normalized <= 1) return 1 * magnitude
+  if (normalized <= 2) return 2 * magnitude
+  if (normalized <= 2.5) return 2.5 * magnitude
+  if (normalized <= 5) return 5 * magnitude
+  return 10 * magnitude
+}
+
 const mixColor = (
   start: [number, number, number],
   end: [number, number, number],
@@ -245,24 +258,121 @@ export const ForecastChart = ({
     [chartData],
   )
 
+  const minWaveHeight = useMemo(
+    () =>
+      chartData.reduce((min, item) => Math.min(min, item.waveHeight), Infinity),
+    [chartData],
+  )
+
+  const maxEnergy = useMemo(
+    () => chartData.reduce((max, item) => Math.max(max, item.energy), 0),
+    [chartData],
+  )
+
+  const minEnergy = useMemo(
+    () => chartData.reduce((min, item) => Math.min(min, item.energy), Infinity),
+    [chartData],
+  )
+
   const leftAxisStep = useMemo(() => {
     if (maxWaveHeight > 7) return 2
     if (maxWaveHeight < 4) return 0.5
     return 1
   }, [maxWaveHeight])
 
+  const firstWaveTick = useMemo(() => {
+    if (!Number.isFinite(minWaveHeight) || minWaveHeight <= 0)
+      return leftAxisStep
+    return Math.max(
+      leftAxisStep,
+      Math.floor(minWaveHeight / leftAxisStep) * leftAxisStep,
+    )
+  }, [leftAxisStep, minWaveHeight])
+
+  const leftAxisMin = useMemo(
+    () => Math.max(0, Number((firstWaveTick - leftAxisStep * 0.5).toFixed(2))),
+    [firstWaveTick, leftAxisStep],
+  )
+
   const leftAxisMax = useMemo(() => {
-    const rounded = Math.ceil(maxWaveHeight / leftAxisStep) * leftAxisStep
+    const target = Math.max(
+      maxWaveHeight * 1.1,
+      maxWaveHeight + leftAxisStep * 0.5,
+    )
+    const rounded = Math.ceil(target / leftAxisStep) * leftAxisStep
     return Number(Math.max(leftAxisStep, rounded).toFixed(2))
   }, [leftAxisStep, maxWaveHeight])
 
   const leftAxisTicks = useMemo(() => {
     const ticks: number[] = []
-    for (let value = 0; value <= leftAxisMax; value += leftAxisStep) {
+    for (
+      let value = firstWaveTick;
+      value <= leftAxisMax;
+      value += leftAxisStep
+    ) {
       ticks.push(Number(value.toFixed(2)))
     }
     return ticks
-  }, [leftAxisMax, leftAxisStep])
+  }, [firstWaveTick, leftAxisMax, leftAxisStep])
+
+  const rightTickCount = Math.max(2, leftAxisTicks.length)
+
+  const rightEnergyScale = useMemo(() => {
+    const anchorStep = getNiceEnergyStep((maxEnergy - minEnergy) / 8)
+    const first = Number(
+      (Math.floor(minEnergy / anchorStep) * anchorStep).toFixed(2),
+    )
+    const last = Number(
+      (Math.ceil(maxEnergy / anchorStep) * anchorStep).toFixed(2),
+    )
+    const safeLast = last <= first ? first + anchorStep : last
+
+    const ticks = Array.from({ length: rightTickCount }, (_, index) => {
+      const ratio = rightTickCount === 1 ? 0 : index / (rightTickCount - 1)
+      return Number((first + (safeLast - first) * ratio).toFixed(2))
+    })
+
+    return {
+      first,
+      last: safeLast,
+      ticks,
+    }
+  }, [maxEnergy, minEnergy, rightTickCount])
+
+  const leftFirstTick = leftAxisTicks[0] ?? firstWaveTick
+  const leftLastTick = leftAxisTicks[leftAxisTicks.length - 1] ?? leftAxisMax
+  const leftTickSpan = Math.max(0.0001, leftLastTick - leftFirstTick)
+  const rightTickSpan = Math.max(
+    0.0001,
+    rightEnergyScale.last - rightEnergyScale.first,
+  )
+
+  const mappedChartData = useMemo(
+    () =>
+      chartData.map((point) => ({
+        ...point,
+        energyMapped:
+          leftFirstTick +
+          ((point.energy - rightEnergyScale.first) / rightTickSpan) *
+            leftTickSpan,
+      })),
+    [
+      chartData,
+      leftFirstTick,
+      leftTickSpan,
+      rightEnergyScale.first,
+      rightTickSpan,
+    ],
+  )
+
+  const rightTickLabelMap = useMemo(() => {
+    const map = new Map<string, string>()
+    leftAxisTicks.forEach((tick, index) => {
+      const label = rightEnergyScale.ticks[index]
+      map.set(tick.toFixed(4), `${Math.round(label ?? 0)}`)
+    })
+    return map
+  }, [leftAxisTicks, rightEnergyScale.ticks])
 
   const snapshotItems = useMemo(() => {
     if (!chartData.length) return []
@@ -359,7 +469,7 @@ export const ForecastChart = ({
       </div>
 
       <TimeSeriesChart
-        data={chartData}
+        data={mappedChartData}
         locale={locale}
         chartHeightClass={CHART_LAYOUT.forecastHeightClass}
         chartMargin={chartMargin}
@@ -373,8 +483,9 @@ export const ForecastChart = ({
         ]}
         leftAxis={{
           width: CHART_LAYOUT.leftAxisWidth,
+          interval: 0,
           padding: { top: 10 },
-          domain: [0, leftAxisMax],
+          domain: [leftAxisMin, leftAxisMax],
           ticks: leftAxisTicks,
           allowDecimals: leftAxisStep % 1 !== 0,
           tickFormatter: (value) =>
@@ -382,8 +493,12 @@ export const ForecastChart = ({
         }}
         rightAxis={{
           width: CHART_LAYOUT.forecastRightAxisWidth,
-          tickCount: CHART_LAYOUT.rightAxisTickCount,
-          tickFormatter: (value) => `${Math.round(value)}`,
+          interval: 0,
+          padding: { top: 10 },
+          domain: [leftAxisMin, leftAxisMax],
+          ticks: leftAxisTicks,
+          tickFormatter: (value) =>
+            rightTickLabelMap.get(Number(value).toFixed(4)) ?? '',
         }}
         series={[
           {
@@ -393,18 +508,11 @@ export const ForecastChart = ({
             stroke: CHART_SERIES_COLORS.height,
           },
           {
-            dataKey: 'energy',
+            dataKey: 'energyMapped',
             yAxisId: 'right',
             name: 'Energía',
             stroke: CHART_SERIES_COLORS.energy,
             dashed: true,
-          },
-          {
-            dataKey: 'windDirection',
-            yAxisId: 'right',
-            name: 'Dirección viento (°)',
-            stroke: CHART_SERIES_COLORS.windDirection,
-            hidden: true,
           },
         ]}
         tooltipContent={<CustomTooltip />}
@@ -422,6 +530,7 @@ export const ForecastChart = ({
         showDayLabels
         showNowMarker
         showFutureArea
+        baselineLabel='0 m'
       />
 
       <div className='space-y-2 rounded-2xl border border-slate-200 bg-slate-50 py-3 dark:border-slate-700 dark:bg-slate-800/50'>

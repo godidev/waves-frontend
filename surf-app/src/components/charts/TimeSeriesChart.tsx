@@ -16,6 +16,7 @@ interface AxisConfig {
   width: number
   tickCount?: number
   ticks?: number[]
+  interval?: number | 'preserveStart' | 'preserveEnd' | 'preserveStartEnd'
   padding?: {
     top?: number
     bottom?: number
@@ -24,7 +25,7 @@ interface AxisConfig {
     number | 'auto' | 'dataMin' | 'dataMax' | ((value: number) => number),
     number | 'auto' | 'dataMin' | 'dataMax' | ((value: number) => number),
   ]
-  tickFormatter: (value: number) => string
+  tickFormatter: (value: number, index?: number) => string
   allowDecimals?: boolean
 }
 
@@ -68,6 +69,7 @@ interface TimeSeriesChartProps {
   showDayLabels?: boolean
   showNowMarker?: boolean
   showFutureArea?: boolean
+  baselineLabel?: string
   minHoursForDayLabel?: number
   dayLabelFormatter?: (date: Date, locale: string) => string
   dayLabelDx?: number
@@ -94,6 +96,7 @@ export const TimeSeriesChart = ({
   showDayLabels = true,
   showNowMarker = false,
   showFutureArea = false,
+  baselineLabel,
   minHoursForDayLabel = 12,
   dayLabelFormatter = (date, currentLocale) =>
     date.toLocaleDateString(currentLocale, {
@@ -193,6 +196,8 @@ export const TimeSeriesChart = ({
 
   const lastTime = data.at(-1)?.time
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
+  const baselineY =
+    typeof leftAxis.domain?.[0] === 'number' ? leftAxis.domain[0] : 0
 
   return (
     <div className='space-y-2 rounded-2xl py-2'>
@@ -255,6 +260,7 @@ export const TimeSeriesChart = ({
               width={leftAxis.width}
               tickCount={leftAxis.tickCount}
               ticks={leftAxis.ticks}
+              interval={leftAxis.interval}
               padding={leftAxis.padding}
               domain={leftAxis.domain}
               allowDecimals={leftAxis.allowDecimals}
@@ -268,6 +274,7 @@ export const TimeSeriesChart = ({
               width={rightAxis.width}
               tickCount={rightAxis.tickCount}
               ticks={rightAxis.ticks}
+              interval={rightAxis.interval}
               padding={rightAxis.padding}
               domain={rightAxis.domain}
               allowDecimals={rightAxis.allowDecimals}
@@ -348,10 +355,20 @@ export const TimeSeriesChart = ({
             )}
 
             <ReferenceLine
-              y={0}
+              y={baselineY}
               yAxisId='left'
               stroke={CHART_THEME.baselineStroke}
               strokeWidth={CHART_THEME.baselineWidth}
+              label={
+                baselineLabel
+                  ? {
+                      value: baselineLabel,
+                      position: 'left',
+                      fill: CHART_THEME.axisStroke,
+                      fontSize: CHART_THEME.axisFontSize,
+                    }
+                  : undefined
+              }
             />
 
             {series.map((item) => (
