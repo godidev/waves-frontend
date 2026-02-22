@@ -89,7 +89,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
                     <button
                       type='button'
                       onClick={() => setSelected(buoy)}
-                      className='text-ocean-100 hover:text-white'
+                      className='touch-manipulation text-ocean-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300'
                     >
                       {buoy.buoyName} ({buoy.buoyId})
                     </button>
@@ -156,7 +156,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
                 onFocusBuoy(selected.buoyId)
                 setSelected(null)
               }}
-              className='w-full rounded-xl bg-ocean-500 px-4 py-3 text-sm text-white'
+              className='w-full touch-manipulation rounded-xl bg-ocean-500 px-4 py-3 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300'
               type='button'
             >
               Ver detalle

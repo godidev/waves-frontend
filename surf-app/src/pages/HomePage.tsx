@@ -269,7 +269,7 @@ export const HomePage = ({
                   type='button'
                   aria-pressed={forecastRange === range}
                   onClick={() => setForecastRange(range)}
-                  className={`transition ${
+                  className={`touch-manipulation transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                     forecastRange === range
                       ? 'font-semibold text-sky-700 dark:text-sky-300'
                       : 'hover:text-slate-900 dark:hover:text-white'
@@ -312,7 +312,7 @@ export const HomePage = ({
                     type='button'
                     aria-pressed={buoyHours === hours}
                     onClick={() => setBuoyHours(hours)}
-                    className={`transition ${
+                    className={`touch-manipulation transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                       buoyHours === hours
                         ? 'font-semibold text-sky-700 dark:text-sky-300'
                         : 'hover:text-slate-900 dark:hover:text-white'

@@ -46,7 +46,8 @@ export const MetricCard = ({
       <button
         ref={iconRef}
         type='button'
-        className='flex size-7 cursor-pointer items-center justify-center rounded-xl bg-slate-100 text-sky-500 transition-colors hover:bg-slate-200'
+        aria-label={label}
+        className='flex size-7 cursor-pointer touch-manipulation items-center justify-center rounded-xl bg-slate-100 text-sky-500 transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500'
         onClick={(e) => {
           e.stopPropagation()
           setShowLabel(true)

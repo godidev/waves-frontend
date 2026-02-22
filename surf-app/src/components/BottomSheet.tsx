@@ -96,7 +96,7 @@ export const BottomSheet = ({
             ref={closeButtonRef}
             type='button'
             onClick={onClose}
-            className='rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:bg-slate-800 dark:text-slate-300'
+            className='touch-manipulation rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:bg-slate-800 dark:text-slate-300'
           >
             {closeLabel}
           </button>

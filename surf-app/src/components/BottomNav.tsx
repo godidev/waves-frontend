@@ -93,7 +93,7 @@ export const BottomNav = () => (
           key={item.to}
           to={item.to}
           className={({ isActive }) =>
-            `flex min-w-20 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition ${
+            `flex min-w-20 touch-manipulation flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
               isActive
                 ? 'bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300'
                 : 'text-slate-400 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'

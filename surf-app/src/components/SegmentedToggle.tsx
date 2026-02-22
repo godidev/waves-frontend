@@ -26,7 +26,7 @@ export const SegmentedToggle = ({
         key={option.value}
         onClick={() => onChange(option.value)}
         aria-pressed={value === option.value}
-        className={`flex-1 rounded-full px-2 py-1.5 leading-tight transition ${
+        className={`flex-1 rounded-full px-2 py-1.5 leading-tight transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
           value === option.value
             ? 'bg-white font-semibold text-sky-600 shadow-sm'
             : 'text-slate-500 hover:bg-white/80'
