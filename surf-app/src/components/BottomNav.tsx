@@ -1,15 +1,10 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 interface NavItem {
   label: string
   to: string
   icon: ReactNode
-}
-
-interface BottomNavProps {
-  theme: 'dark' | 'light'
-  onToggleTheme: () => void
 }
 
 const HomeIcon = ({ className }: { className?: string }) => (
@@ -71,40 +66,6 @@ const SettingsIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
-const MoonIcon = ({ className }: { className?: string }) => (
-  <svg
-    viewBox='0 0 24 24'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth='2'
-    className={className}
-  >
-    <path
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z'
-    />
-  </svg>
-)
-
-const SunIcon = ({ className }: { className?: string }) => (
-  <svg
-    viewBox='0 0 24 24'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth='2'
-    className={className}
-  >
-    <circle cx='12' cy='12' r='4' />
-    <path strokeLinecap='round' strokeLinejoin='round' d='M12 2v2M12 20v2' />
-    <path strokeLinecap='round' strokeLinejoin='round' d='m4.9 4.9 1.4 1.4' />
-    <path strokeLinecap='round' strokeLinejoin='round' d='m17.7 17.7 1.4 1.4' />
-    <path strokeLinecap='round' strokeLinejoin='round' d='M2 12h2M20 12h2' />
-    <path strokeLinecap='round' strokeLinejoin='round' d='m4.9 19.1 1.4-1.4' />
-    <path strokeLinecap='round' strokeLinejoin='round' d='m17.7 6.3 1.4-1.4' />
-  </svg>
-)
-
 const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/', icon: <HomeIcon className='h-5 w-5' /> },
   { label: 'Mapa', to: '/map', icon: <MapIcon className='h-5 w-5' /> },
@@ -115,46 +76,25 @@ const navItems: NavItem[] = [
   },
 ]
 
-export const BottomNav = ({ theme, onToggleTheme }: BottomNavProps) => {
-  const location = useLocation()
-  const showThemeToggle = location.pathname === '/'
-
-  return (
-    <nav className='fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90'>
-      <div className='mx-auto flex max-w-md items-center justify-around px-4 py-2.5 text-xs'>
-        {navItems.map((item, index) => (
-          <div key={item.to} className='flex items-center gap-2'>
-            <NavLink
-              to={item.to}
-              className={({ isActive }) =>
-                `flex min-w-20 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition ${
-                  isActive
-                    ? 'bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300'
-                    : 'text-slate-400 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
-                }`
-              }
-            >
-              {item.icon}
-              {item.label}
-            </NavLink>
-
-            {index === 0 && showThemeToggle && (
-              <button
-                onClick={onToggleTheme}
-                className='flex min-w-20 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 text-slate-400 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
-                type='button'
-              >
-                {theme === 'dark' ? (
-                  <SunIcon className='h-5 w-5' />
-                ) : (
-                  <MoonIcon className='h-5 w-5' />
-                )}
-                {theme === 'dark' ? 'Claro' : 'Oscuro'}
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-    </nav>
-  )
-}
+export const BottomNav = () => (
+  <nav className='fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90'>
+    <div className='mx-auto flex max-w-md items-center justify-around px-4 py-2.5 text-xs'>
+      {navItems.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          className={({ isActive }) =>
+            `flex min-w-20 flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition ${
+              isActive
+                ? 'bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300'
+                : 'text-slate-400 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
+            }`
+          }
+        >
+          {item.icon}
+          {item.label}
+        </NavLink>
+      ))}
+    </div>
+  </nav>
+)
