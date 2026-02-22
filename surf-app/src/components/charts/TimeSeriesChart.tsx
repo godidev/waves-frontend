@@ -69,6 +69,8 @@ interface TimeSeriesChartProps {
   showNowMarker?: boolean
   showFutureArea?: boolean
   minHoursForDayLabel?: number
+  dayLabelFormatter?: (date: Date, locale: string) => string
+  dayLabelDx?: number
 }
 
 export const TimeSeriesChart = ({
@@ -93,6 +95,13 @@ export const TimeSeriesChart = ({
   showNowMarker = false,
   showFutureArea = false,
   minHoursForDayLabel = 12,
+  dayLabelFormatter = (date, currentLocale) =>
+    date.toLocaleDateString(currentLocale, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    }),
+  dayLabelDx = 0,
 }: TimeSeriesChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -140,11 +149,7 @@ export const TimeSeriesChart = ({
           ranges.push({
             x1,
             x2,
-            label: startDate.toLocaleDateString(locale, {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-            }),
+            label: dayLabelFormatter(startDate, locale),
           })
         }
 
@@ -153,7 +158,7 @@ export const TimeSeriesChart = ({
     }
 
     return ranges
-  }, [data, locale, minHoursForDayLabel, showDayLabels])
+  }, [data, dayLabelFormatter, locale, minHoursForDayLabel, showDayLabels])
 
   const dayChanges = useMemo(() => {
     const changes: number[] = []
@@ -307,6 +312,7 @@ export const TimeSeriesChart = ({
                   position: 'insideBottom',
                   fill: CHART_THEME.dayLabelColor,
                   fontSize: CHART_THEME.dayLabelFontSize,
+                  dx: dayLabelDx,
                   dy: 20,
                 }}
               />

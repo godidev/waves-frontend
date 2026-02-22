@@ -8,6 +8,7 @@ import { TimeSeriesChart } from '../charts/TimeSeriesChart'
 interface ForecastChartProps {
   forecasts: SurfForecast[]
   locale: string
+  range: '48h' | '7d'
 }
 
 const CustomTooltip = ({
@@ -81,7 +82,11 @@ const CustomTooltip = ({
   return null
 }
 
-export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
+export const ForecastChart = ({
+  forecasts,
+  locale,
+  range,
+}: ForecastChartProps) => {
   const chartData = useMemo(
     () =>
       forecasts.map((forecast) => ({
@@ -183,6 +188,16 @@ export const ForecastChart = ({ forecasts, locale }: ForecastChartProps) => {
         },
       ]}
       tooltipContent={<CustomTooltip />}
+      dayLabelFormatter={(date, currentLocale) =>
+        range === '7d'
+          ? String(date.getDate())
+          : date.toLocaleDateString(currentLocale, {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+            })
+      }
+      dayLabelDx={range === '7d' ? 8 : 0}
       showDaySeparators
       showDayLabels
       showNowMarker

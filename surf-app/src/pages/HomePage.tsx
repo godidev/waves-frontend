@@ -31,6 +31,8 @@ export const HomePage = ({
   onSelectStation,
 }: HomePageProps) => {
   const [forecasts, setForecasts] = useState<SurfForecast[]>([])
+  const [hourlyForecasts, setHourlyForecasts] = useState<SurfForecast[]>([])
+  const [nowMs, setNowMs] = useState(() => Date.now())
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   )
@@ -43,7 +45,8 @@ export const HomePage = ({
   const [buoyHours, setBuoyHours] = useState<'6' | '12' | '24'>('6')
   const activeSpotId = defaultSpotId
   const activeStationId = defaultStationId
-  const forecastLimit = forecastRange === '48h' ? 72 : 200
+  const forecastVariant = forecastRange === '48h' ? 'hourly' : 'general'
+  const forecastLimit = forecastRange === '48h' ? 72 : 21
 
   useEffect(() => {
     let mounted = true
@@ -52,12 +55,33 @@ export const HomePage = ({
       try {
         const forecastResponse = await getSurfForecast(
           activeSpotId,
+          forecastVariant,
           1,
           forecastLimit,
         )
         if (!mounted) return
 
         setForecasts(forecastResponse)
+
+        if (forecastVariant === 'hourly') {
+          setHourlyForecasts(forecastResponse)
+        } else {
+          try {
+            const hourlyResponse = await getSurfForecast(
+              activeSpotId,
+              'hourly',
+              1,
+              72,
+            )
+            if (!mounted) return
+            setHourlyForecasts(hourlyResponse)
+          } catch (err) {
+            console.error('Failed to load hourly forecast summary data:', err)
+            if (!mounted) return
+            setHourlyForecasts([])
+          }
+        }
+
         setStatus('success')
       } catch {
         if (!mounted) return
@@ -68,7 +92,17 @@ export const HomePage = ({
     return () => {
       mounted = false
     }
-  }, [activeSpotId, forecastLimit])
+  }, [activeSpotId, forecastLimit, forecastVariant])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNowMs(Date.now())
+    }, 60000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -126,10 +160,17 @@ export const HomePage = ({
     }
   }, [activeStationId])
 
-  const selected = useMemo(
-    () => forecasts[2] ?? forecasts[0] ?? null,
-    [forecasts],
-  )
+  const selected = useMemo(() => {
+    if (!hourlyForecasts.length) return null
+
+    return hourlyForecasts.reduce((closest, forecast) => {
+      const forecastTime = new Date(forecast.date).getTime()
+      const closestTime = new Date(closest.date).getTime()
+      return Math.abs(forecastTime - nowMs) < Math.abs(closestTime - nowMs)
+        ? forecast
+        : closest
+    })
+  }, [hourlyForecasts, nowMs])
 
   const locale = 'es-ES'
 
@@ -244,7 +285,11 @@ export const HomePage = ({
             label: capitalizeSpot(spot),
           }))}
         />
-        <ForecastChart forecasts={forecasts} locale={locale} />
+        <ForecastChart
+          forecasts={forecasts}
+          locale={locale}
+          range={forecastRange}
+        />
         <div className='mt-2 border-t border-slate-200 pt-5 dark:border-slate-700'>
           <SectionHeader
             title='Boyas'

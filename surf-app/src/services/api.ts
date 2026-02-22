@@ -1,6 +1,8 @@
 import type { Station, SurfForecast, BuoyInfoDoc, BuoyDataDoc } from '../types'
 import { CACHE_TTL, getCachedResource, setCachedResource } from './storage'
 
+type SurfForecastVariant = 'hourly' | 'general'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const REQUEST_TIMEOUT_MS = 12000
 const inFlightRequests = new Map<string, Promise<unknown>>()
@@ -120,11 +122,12 @@ export const getBuoyData = async (
 
 export const getSurfForecast = async (
   spot: string,
+  variant: SurfForecastVariant,
   page = 1,
   limit = 50,
 ): Promise<SurfForecast[]> => {
   const scrapeBucket = getScrapeCycleBucket()
-  const cacheKey = `spot:forecast:${spot}:page:${page}:limit:${limit}:bucket:${scrapeBucket}:v1`
+  const cacheKey = `spot:forecast:${spot}:variant:${variant}:page:${page}:limit:${limit}:bucket:${scrapeBucket}:v1`
 
   return withCache(
     cacheKey,
@@ -133,7 +136,9 @@ export const getSurfForecast = async (
         page: String(page),
         limit: String(limit),
       })
-      return fetchJson<SurfForecast[]>(`/surf-forecast/${spot}?${params}`)
+      return fetchJson<SurfForecast[]>(
+        `/surf-forecast/${spot}/${variant}?${params}`,
+      )
     },
     CACHE_TTL.forecast,
   )
