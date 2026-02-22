@@ -306,6 +306,7 @@ export const HomePage = ({
             forecasts={forecasts}
             locale={locale}
             range={forecastRange}
+            nowMs={nowMs}
           />
         </Suspense>
         <div className='mt-2 border-t border-slate-200 pt-5 dark:border-slate-700'>
