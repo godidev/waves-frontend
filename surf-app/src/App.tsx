@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import {
   BrowserRouter,
   Route,
@@ -8,9 +9,23 @@ import {
 import { useSettings } from './hooks/useSettings'
 import { Layout } from './pages/Layout'
 import { HomePage } from './pages/HomePage'
-import { MapPage } from './pages/MapPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { BuoyDetailPage } from './pages/BuoyDetailPage'
+import { StatusMessage } from './components/StatusMessage'
+
+const MapPage = lazy(() =>
+  import('./pages/MapPage').then((module) => ({ default: module.MapPage })),
+)
+const SettingsPage = lazy(() =>
+  import('./pages/SettingsPage').then((module) => ({
+    default: module.SettingsPage,
+  })),
+)
+const BuoyDetailPage = lazy(() =>
+  import('./pages/BuoyDetailPage').then((module) => ({
+    default: module.BuoyDetailPage,
+  })),
+)
+
+const RouteLoading = () => <StatusMessage message='Cargando…' />
 
 const BuoyRoute = ({ stationId }: { stationId: string }) => {
   const params = useParams()
@@ -42,26 +57,34 @@ const AppRoutes = () => {
         <Route
           path='map'
           element={
-            <MapPage
-              onFocusBuoy={(id) => {
-                setSettings((prev) => ({ ...prev, defaultStationId: id }))
-                navigate(`/buoy/${id}`)
-              }}
-            />
+            <Suspense fallback={<RouteLoading />}>
+              <MapPage
+                onFocusBuoy={(id) => {
+                  setSettings((prev) => ({ ...prev, defaultStationId: id }))
+                  navigate(`/buoy/${id}`)
+                }}
+              />
+            </Suspense>
           }
         />
         <Route
           path='settings'
           element={
-            <SettingsPage
-              settings={settings}
-              onUpdate={(next) => setSettings(next)}
-            />
+            <Suspense fallback={<RouteLoading />}>
+              <SettingsPage
+                settings={settings}
+                onUpdate={(next) => setSettings(next)}
+              />
+            </Suspense>
           }
         />
         <Route
           path='buoy/:id'
-          element={<BuoyRoute stationId={settings.defaultStationId} />}
+          element={
+            <Suspense fallback={<RouteLoading />}>
+              <BuoyRoute stationId={settings.defaultStationId} />
+            </Suspense>
+          }
         />
       </Route>
     </Routes>

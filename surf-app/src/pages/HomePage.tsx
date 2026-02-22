@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import {
   getSurfForecast,
   getForecastSpots,
@@ -10,12 +10,22 @@ import {
 import './HomePage.css'
 import type { SurfForecast, Station, BuoyDataDoc } from '../types'
 import { degreesToCardinal } from '../types'
-import { ForecastChart } from '../components/Forecast/ForecastChart'
 import { StatusMessage } from '../components/StatusMessage'
-import { BuoyDetailContent } from '../components/BuoyDetailContent'
 import { SectionHeader } from '../components/SectionHeader'
 import { SelectMenu } from '../components/SelectMenu'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
+
+const ForecastChart = lazy(() =>
+  import('../components/Forecast/ForecastChart').then((module) => ({
+    default: module.ForecastChart,
+  })),
+)
+
+const BuoyDetailContent = lazy(() =>
+  import('../components/BuoyDetailContent').then((module) => ({
+    default: module.BuoyDetailContent,
+  })),
+)
 
 interface HomePageProps {
   defaultSpotId: string
@@ -291,11 +301,13 @@ export const HomePage = ({
             label: capitalizeSpot(spot),
           }))}
         />
-        <ForecastChart
-          forecasts={forecasts}
-          locale={locale}
-          range={forecastRange}
-        />
+        <Suspense fallback={<StatusMessage message='Cargando…' />}>
+          <ForecastChart
+            forecasts={forecasts}
+            locale={locale}
+            range={forecastRange}
+          />
+        </Suspense>
         <div className='mt-2 border-t border-slate-200 pt-5 dark:border-slate-700'>
           <SectionHeader
             title='Boyas'
@@ -334,13 +346,15 @@ export const HomePage = ({
               label: station.name,
             }))}
           />
-          <BuoyDetailContent
-            stationId={activeStationId}
-            viewMode='chart'
-            hours={buoyHours}
-            showRangeSelector={false}
-            showMetrics={false}
-          />
+          <Suspense fallback={<StatusMessage message='Cargando…' />}>
+            <BuoyDetailContent
+              stationId={activeStationId}
+              viewMode='chart'
+              hours={buoyHours}
+              showRangeSelector={false}
+              showMetrics={false}
+            />
+          </Suspense>
         </div>
       </div>
     </div>
