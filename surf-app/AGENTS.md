@@ -101,6 +101,10 @@ No blank-line separation is enforced between groups, but the ordering is consist
 - Pattern: `const fn = async (...): Promise<T> => { fetch -> check response.ok -> throw Error -> return json }`
 - Use `URLSearchParams` for query strings; `String()` for number conversion
 - Default parameter values for optional params (e.g., `limit = 6`)
+- Forecast data has two endpoints by variant:
+  - `hourly` -> `/surf-forecast/:spot/hourly`
+  - `general` -> `/surf-forecast/:spot/general`
+  - `getSurfForecast` receives variant as the second argument
 - Error messages in thrown errors are in **English**: `'Failed to fetch stations'`
 - Helper/derived functions (e.g., `getPrimarySwell`) are co-located in `api.ts`
 
@@ -131,7 +135,7 @@ No blank-line separation is enforced between groups, but the ordering is consist
 - React `useState`/`useEffect` for all state
 - `useMemo` for derived/computed values
 - Settings persisted to `localStorage` via `src/services/storage.ts`
-- Props drilling from `App.tsx` down to pages
+- Theme switching is controlled from `SettingsPage` (no theme toggle in footer nav)
 
 ### Styling
 

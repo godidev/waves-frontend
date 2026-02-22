@@ -1,8 +1,8 @@
 # Waves Frontend
 
-Frontend app for surf and buoy conditions, built with React + Vite + TypeScript.
+Aplicación frontend para consultar condiciones de surf y boyas, construida con React + Vite + TypeScript.
 
-## Stack
+## Tecnologías
 
 - React 19
 - Vite 7
@@ -22,23 +22,33 @@ npm run format:check
 npm run preview
 ```
 
-## Environment
+## Entorno
 
-The app reads the API base URL from `VITE_API_URL`.
+La app lee la URL base de la API desde `VITE_API_URL`.
 
-- Local default fallback: `http://localhost:3000`
-- Production setup in this repo uses `VITE_API_URL=/api`
+- Fallback local por defecto: `http://localhost:3000`
+- En producción, este repositorio usa `VITE_API_URL=/api`
 
-In production, Vercel rewrites `/api/*` to the backend (`https://waves-db-backend.vercel.app/*`) to avoid browser CORS issues.
+En producción, Vercel reescribe `/api/*` al backend (`https://waves-db-backend.vercel.app/*`) para evitar problemas de CORS en el navegador.
 
-## Main Features
+## API de Forecast
 
-- Forecast chart with spot dropdown and range selector (`48h` / `7d`)
-- Buoy chart with station dropdown and hour range selector (`6h` / `12h` / `24h`)
-- Shared chart system (`src/components/charts`) and shared dropdown component (`src/components/SelectMenu.tsx`)
-- Persisted user settings (theme, default spot, default station)
+El frontend usa dos endpoints de forecast según el rango seleccionado:
 
-## Project Structure
+- `GET /surf-forecast/:spot/hourly?page=1&limit=72` para `48h`
+- `GET /surf-forecast/:spot/general?page=1&limit=21` para `7d` (hasta 3 puntos por día)
+
+La tarjeta de resumen superior usa siempre datos hourly y selecciona el punto más cercano a la hora actual.
+
+## Funcionalidades principales
+
+- Gráfico de forecast con selector de spot y selector de rango (`48h` / `7d`)
+- Gráfico de boyas con selector de estación y selector de horas (`6h` / `12h` / `24h`)
+- Sistema de gráficos compartido (`src/components/charts`) y componente de select compartido (`src/components/SelectMenu.tsx`)
+- Ajustes persistidos del usuario (tema, spot por defecto, estación por defecto)
+- El tema solo se cambia desde Ajustes (el footer ya no incluye toggle de tema)
+
+## Estructura del proyecto
 
 ```text
 src/
