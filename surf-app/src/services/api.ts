@@ -150,13 +150,6 @@ export const getSurfForecast = async (
   )
 }
 
-export const getForecastSpots = async (): Promise<string[]> => {
-  const spots = await getSpots()
-  return spots
-    .map((spot) => spot.spotId.trim())
-    .filter((spot) => spot.length > 0)
-}
-
 export const getSpots = async (): Promise<Spot[]> => {
   return withCache(
     'spots:list:v2',

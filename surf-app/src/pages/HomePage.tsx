@@ -65,6 +65,9 @@ export const HomePage = ({
   const [spots, setSpots] = useState<Spot[]>([])
   const [spotsLoaded, setSpotsLoaded] = useState(false)
   const [stations, setStations] = useState<Station[]>([])
+  const [nearbyBuoysStatus, setNearbyBuoysStatus] = useState<
+    'idle' | 'loading' | 'success' | 'error'
+  >('idle')
   const [latestBuoyRecord, setLatestBuoyRecord] = useState<BuoyDataDoc | null>(
     null,
   )
@@ -229,12 +232,15 @@ export const HomePage = ({
     const coordinates = resolvedSpot?.location?.coordinates
     if (!coordinates || coordinates.length < 2) {
       setStations([])
+      setNearbyBuoysStatus('error')
       return () => {
         mounted = false
       }
     }
 
     const [longitude, latitude] = coordinates
+    setNearbyBuoysStatus('loading')
+    setStations([])
 
     const loadNearbyStations = async () => {
       try {
@@ -245,10 +251,12 @@ export const HomePage = ({
         )
         if (!mounted) return
         setStations(stationData)
+        setNearbyBuoysStatus('success')
       } catch (err) {
         console.error('Failed to load nearby buoys:', err)
         if (!mounted) return
         setStations([])
+        setNearbyBuoysStatus('error')
       }
     }
 
@@ -315,6 +323,23 @@ export const HomePage = ({
   }, [stations])
 
   const hasActiveBuoy = buoyOptions.some((item) => item.id === activeStationId)
+  const isBuoySelectorDisabled =
+    nearbyBuoysStatus === 'loading' || buoyOptions.length === 0
+  const buoySelectOptions =
+    nearbyBuoysStatus === 'loading'
+      ? [{ value: activeStationId || 'loading', label: 'Buscando boyas...' }]
+      : buoyOptions.length > 0
+        ? buoyOptions.map((station) => ({
+            value: station.id,
+            label: station.name,
+          }))
+        : [{ value: 'none', label: 'Sin boyas cercanas' }]
+  const buoySelectValue =
+    nearbyBuoysStatus === 'loading'
+      ? activeStationId || 'loading'
+      : hasActiveBuoy
+        ? activeStationId
+        : (buoyOptions[0]?.id ?? 'none')
 
   const spotItems = useMemo(() => {
     const map = new Map<string, { value: string; label: string }>()
@@ -480,22 +505,18 @@ export const HomePage = ({
             subtitle={latestReadingText}
             rightNode={
               <div className='shrink-0'>
-                {buoyOptions.length > 0 ? (
-                  <SelectMenu
-                    value={hasActiveBuoy ? activeStationId : buoyOptions[0].id}
-                    onChange={onSelectStation}
-                    ariaLabel='Seleccionar boya'
-                    className={headerSelectClass}
-                    options={buoyOptions.map((station) => ({
-                      value: station.id,
-                      label: station.name,
-                    }))}
-                  />
-                ) : (
-                  <span className='text-xs font-medium text-slate-500 dark:text-slate-300'>
-                    Sin boyas cercanas
-                  </span>
-                )}
+                <SelectMenu
+                  value={buoySelectValue}
+                  onChange={onSelectStation}
+                  ariaLabel='Seleccionar boya'
+                  disabled={isBuoySelectorDisabled}
+                  className={`${headerSelectClass} ${
+                    isBuoySelectorDisabled
+                      ? 'cursor-not-allowed opacity-60'
+                      : ''
+                  }`}
+                  options={buoySelectOptions}
+                />
               </div>
             }
           />
@@ -585,13 +606,20 @@ export const HomePage = ({
             </div>
           </div>
           <Suspense fallback={<StatusMessage message='Cargando…' />}>
-            {hasActiveBuoy ? (
+            {nearbyBuoysStatus === 'loading' ? (
+              <StatusMessage message='Buscando boyas cercanas…' />
+            ) : hasActiveBuoy ? (
               <BuoyDetailContent
                 stationId={activeStationId}
                 viewMode={buoyViewMode}
                 hours={buoyHours}
                 showRangeSelector={false}
                 showMetrics={false}
+              />
+            ) : nearbyBuoysStatus === 'error' ? (
+              <StatusMessage
+                message='Error al cargar boyas cercanas'
+                variant='error'
               />
             ) : (
               <StatusMessage
