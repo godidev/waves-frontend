@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import {
   getSurfForecast,
   getSpots,
-  getStations,
+  getBuoysNear,
   getTotalWaveHeight,
   getPrimarySwell,
   getBuoyData,
@@ -69,6 +69,7 @@ export const HomePage = ({
   const [buoyViewMode, setBuoyViewMode] = useState<'chart' | 'table'>('chart')
   const activeSpotId = defaultSpotId
   const activeStationId = defaultStationId
+  const defaultBuoySearchKm = 200
   const forecastVariant = forecastRange === '48h' ? 'hourly' : 'general'
   const forecastLimit = forecastRange === '48h' ? 72 : 21
 
@@ -88,6 +89,11 @@ export const HomePage = ({
 
     return spots[0].spotId
   }, [activeSpotId, spots])
+
+  const resolvedSpot = useMemo(
+    () => spots.find((spot) => spot.spotId === resolvedSpotId) ?? null,
+    [resolvedSpotId, spots],
+  )
 
   useEffect(() => {
     let mounted = true
@@ -194,23 +200,54 @@ export const HomePage = ({
 
   useEffect(() => {
     let mounted = true
-    const loadStations = async () => {
-      try {
-        const stationData = await getStations()
-        if (!mounted) return
-        setStations(stationData)
-      } catch (err) {
-        console.error('Failed to load stations:', err)
+    const coordinates = resolvedSpot?.location?.coordinates
+    if (!coordinates || coordinates.length < 2) {
+      setStations([])
+      return () => {
+        mounted = false
       }
     }
 
-    void loadStations()
+    const [longitude, latitude] = coordinates
+
+    const loadNearbyStations = async () => {
+      try {
+        const stationData = await getBuoysNear(
+          longitude,
+          latitude,
+          defaultBuoySearchKm,
+        )
+        if (!mounted) return
+        setStations(stationData)
+      } catch (err) {
+        console.error('Failed to load nearby buoys:', err)
+        if (!mounted) return
+        setStations([])
+      }
+    }
+
+    void loadNearbyStations()
     return () => {
       mounted = false
     }
-  }, [])
+  }, [defaultBuoySearchKm, resolvedSpot])
 
   useEffect(() => {
+    if (!stations.length) return
+    if (stations.some((station) => station.buoyId === activeStationId)) return
+    onSelectStation(stations[0].buoyId)
+  }, [activeStationId, onSelectStation, stations])
+
+  useEffect(() => {
+    if (!activeStationId) {
+      setLatestBuoyRecord(null)
+      return
+    }
+    if (!stations.some((station) => station.buoyId === activeStationId)) {
+      setLatestBuoyRecord(null)
+      return
+    }
+
     let mounted = true
     const loadLatestBuoy = async () => {
       try {
@@ -228,7 +265,7 @@ export const HomePage = ({
     return () => {
       mounted = false
     }
-  }, [activeStationId])
+  }, [activeStationId, stations])
 
   const selected = useMemo(() => {
     if (!hourlyForecasts.length) return null
@@ -245,22 +282,13 @@ export const HomePage = ({
   const locale = 'es-ES'
 
   const buoyOptions = useMemo(() => {
-    const fallback = {
-      id: defaultStationId,
-      name:
-        stations.find((s) => s.buoyId === defaultStationId)?.name ??
-        defaultStationId,
-    }
-    const items =
-      stations.length > 0
-        ? stations.map((station) => ({
-            id: station.buoyId,
-            name: station.name,
-          }))
-        : [fallback]
-    if (items.some((item) => item.id === defaultStationId)) return items
-    return [fallback, ...items]
-  }, [defaultStationId, stations])
+    return stations.map((station) => ({
+      id: station.buoyId,
+      name: station.name,
+    }))
+  }, [stations])
+
+  const hasActiveBuoy = buoyOptions.some((item) => item.id === activeStationId)
 
   const spotItems = useMemo(() => {
     const map = new Map<string, { value: string; label: string }>()
@@ -426,16 +454,22 @@ export const HomePage = ({
             subtitle={latestReadingText}
             rightNode={
               <div className='shrink-0'>
-                <SelectMenu
-                  value={activeStationId}
-                  onChange={onSelectStation}
-                  ariaLabel='Seleccionar boya'
-                  className={headerSelectClass}
-                  options={buoyOptions.map((station) => ({
-                    value: station.id,
-                    label: station.name,
-                  }))}
-                />
+                {buoyOptions.length > 0 ? (
+                  <SelectMenu
+                    value={hasActiveBuoy ? activeStationId : buoyOptions[0].id}
+                    onChange={onSelectStation}
+                    ariaLabel='Seleccionar boya'
+                    className={headerSelectClass}
+                    options={buoyOptions.map((station) => ({
+                      value: station.id,
+                      label: station.name,
+                    }))}
+                  />
+                ) : (
+                  <span className='text-xs font-medium text-slate-500 dark:text-slate-300'>
+                    Sin boyas cercanas
+                  </span>
+                )}
               </div>
             }
           />
@@ -500,13 +534,19 @@ export const HomePage = ({
             </div>
           </div>
           <Suspense fallback={<StatusMessage message='Cargando…' />}>
-            <BuoyDetailContent
-              stationId={activeStationId}
-              viewMode={buoyViewMode}
-              hours={buoyHours}
-              showRangeSelector={false}
-              showMetrics={false}
-            />
+            {hasActiveBuoy ? (
+              <BuoyDetailContent
+                stationId={activeStationId}
+                viewMode={buoyViewMode}
+                hours={buoyHours}
+                showRangeSelector={false}
+                showMetrics={false}
+              />
+            ) : (
+              <StatusMessage
+                message={`No hay boyas cercanas en ${defaultBuoySearchKm} km`}
+              />
+            )}
           </Suspense>
         </div>
       </div>
