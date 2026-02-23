@@ -56,6 +56,7 @@ export const HomePage = ({
     'loading',
   )
   const [spots, setSpots] = useState<Spot[]>([])
+  const [spotsLoaded, setSpotsLoaded] = useState(false)
   const [stations, setStations] = useState<Station[]>([])
   const [latestBuoyRecord, setLatestBuoyRecord] = useState<BuoyDataDoc | null>(
     null,
@@ -71,13 +72,32 @@ export const HomePage = ({
   const forecastVariant = forecastRange === '48h' ? 'hourly' : 'general'
   const forecastLimit = forecastRange === '48h' ? 72 : 21
 
+  const resolvedSpotId = useMemo(() => {
+    if (!spots.length) return activeSpotId
+
+    const byId = spots.find(
+      (spot) => normalizeSpotId(spot.spotId) === normalizeSpotId(activeSpotId),
+    )
+    if (byId) return byId.spotId
+
+    const byName = spots.find(
+      (spot) =>
+        normalizeSpotId(spot.spotName) === normalizeSpotId(activeSpotId),
+    )
+    if (byName) return byName.spotId
+
+    return spots[0].spotId
+  }, [activeSpotId, spots])
+
   useEffect(() => {
     let mounted = true
     const load = async () => {
+      if (!spotsLoaded) return
+
       setStatus('loading')
       try {
         const forecastResponse = await getSurfForecast(
-          activeSpotId,
+          resolvedSpotId,
           forecastVariant,
           1,
           forecastLimit,
@@ -91,7 +111,7 @@ export const HomePage = ({
         } else {
           try {
             const hourlyResponse = await getSurfForecast(
-              activeSpotId,
+              resolvedSpotId,
               'hourly',
               1,
               72,
@@ -115,7 +135,7 @@ export const HomePage = ({
     return () => {
       mounted = false
     }
-  }, [activeSpotId, forecastLimit, forecastVariant])
+  }, [forecastLimit, forecastVariant, resolvedSpotId, spotsLoaded])
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -136,6 +156,8 @@ export const HomePage = ({
         setSpots(spotData)
       } catch (err) {
         console.error('Failed to load forecast spots:', err)
+      } finally {
+        if (mounted) setSpotsLoaded(true)
       }
     }
 
@@ -320,7 +342,7 @@ export const HomePage = ({
           rightNode={
             <div className='shrink-0'>
               <SelectMenu
-                value={activeSpotId}
+                value={resolvedSpotId}
                 onChange={onSelectSpot}
                 ariaLabel='Seleccionar spot'
                 className={headerSelectClass}
