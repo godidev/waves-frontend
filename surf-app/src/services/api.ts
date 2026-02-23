@@ -1,4 +1,10 @@
-import type { Station, SurfForecast, BuoyInfoDoc, BuoyDataDoc } from '../types'
+import type {
+  Station,
+  SurfForecast,
+  BuoyInfoDoc,
+  BuoyDataDoc,
+  Spot,
+} from '../types'
 import { CACHE_TTL, getCachedResource, setCachedResource } from './storage'
 
 type SurfForecastVariant = 'hourly' | 'general'
@@ -145,11 +151,46 @@ export const getSurfForecast = async (
 }
 
 export const getForecastSpots = async (): Promise<string[]> => {
+  const spots = await getSpots()
+  return spots
+    .map((spot) => spot.spotId.trim())
+    .filter((spot) => spot.length > 0)
+}
+
+export const getSpots = async (): Promise<Spot[]> => {
   return withCache(
-    'spots:list:v1',
+    'spots:list:v2',
     async () => {
-      const spots = await fetchJson<string[]>('/surf-forecast/spots')
-      return spots.map((spot) => spot.trim()).filter((spot) => spot.length > 0)
+      const spots = await fetchJson<Spot[]>('/spots')
+      return spots.filter((spot) => spot.spotId.trim().length > 0)
+    },
+    CACHE_TTL.stations,
+  )
+}
+
+export const getBuoysNear = async (
+  longitude: number,
+  latitude: number,
+  maxDistanceKm: number,
+): Promise<Station[]> => {
+  const roundedLongitude = Number(longitude.toFixed(4))
+  const roundedLatitude = Number(latitude.toFixed(4))
+  const roundedDistance = Math.round(maxDistanceKm)
+  const cacheKey = `buoys:near:lng:${roundedLongitude}:lat:${roundedLatitude}:km:${roundedDistance}:v1`
+
+  return withCache(
+    cacheKey,
+    async () => {
+      const params = new URLSearchParams({
+        longitude: String(longitude),
+        latitude: String(latitude),
+        maxDistanceKm: String(maxDistanceKm),
+      })
+      const buoys = await fetchJson<BuoyInfoDoc[]>(`/buoys/near?${params}`)
+      return buoys.map((buoy) => ({
+        name: buoy.buoyName,
+        buoyId: buoy.buoyId,
+      }))
     },
     CACHE_TTL.stations,
   )

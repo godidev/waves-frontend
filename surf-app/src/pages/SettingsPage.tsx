@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { SettingsState, Station } from '../types'
-import { getForecastSpots, getStations } from '../services/api'
+import type { SettingsState, Spot, Station } from '../types'
+import { getSpots, getStations } from '../services/api'
 import { PageHeader } from '../components/PageHeader'
 import { SelectMenu } from '../components/SelectMenu'
+
+const normalizeSpotId = (spotId: string): string =>
+  spotId.trim().toLocaleLowerCase('es-ES')
 
 interface SettingsPageProps {
   settings: SettingsState
@@ -10,7 +13,7 @@ interface SettingsPageProps {
 }
 
 export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
-  const [spots, setSpots] = useState<string[]>([])
+  const [spots, setSpots] = useState<Spot[]>([])
   const [stations, setStations] = useState<Station[]>([])
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
     let mounted = true
     const load = async () => {
       try {
-        const spotData = await getForecastSpots()
+        const spotData = await getSpots()
         if (!mounted) return
         setSpots(spotData)
       } catch {
@@ -47,18 +50,27 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
     }
   }, [])
 
-  const capitalizeSpot = (spot: string) =>
-    spot
-      .split(/[-_\s]+/)
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ')
-
   const spotOptions = useMemo(() => {
-    const unique = Array.from(new Set([settings.defaultSpotId, ...spots]))
-    return unique
-      .sort((a, b) => a.localeCompare(b, 'es-ES'))
-      .map((spot) => ({ value: spot, label: capitalizeSpot(spot) }))
+    const map = new Map<string, { value: string; label: string }>()
+
+    spots.forEach((spot) => {
+      map.set(normalizeSpotId(spot.spotId), {
+        value: spot.spotId,
+        label: spot.spotName,
+      })
+    })
+
+    if (!spots.length) {
+      const normalizedDefault = normalizeSpotId(settings.defaultSpotId)
+      map.set(normalizedDefault, {
+        value: settings.defaultSpotId,
+        label: settings.defaultSpotId,
+      })
+    }
+
+    return Array.from(map.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, 'es-ES'),
+    )
   }, [settings.defaultSpotId, spots])
 
   const buoyOptions = useMemo(() => {

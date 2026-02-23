@@ -1,14 +1,14 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import {
   getSurfForecast,
-  getForecastSpots,
+  getSpots,
   getStations,
   getTotalWaveHeight,
   getPrimarySwell,
   getBuoyData,
 } from '../services/api'
 import './HomePage.css'
-import type { SurfForecast, Station, BuoyDataDoc } from '../types'
+import type { SurfForecast, Station, BuoyDataDoc, Spot } from '../types'
 import { degreesToCardinal } from '../types'
 import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
@@ -20,6 +20,9 @@ const formatNumber = (value: number, locale: string, digits = 0): string =>
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
+
+const normalizeSpotId = (spotId: string): string =>
+  spotId.trim().toLocaleLowerCase('es-ES')
 
 const ForecastChart = lazy(() =>
   import('../components/Forecast/ForecastChart').then((module) => ({
@@ -52,7 +55,7 @@ export const HomePage = ({
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   )
-  const [spots, setSpots] = useState<string[]>([])
+  const [spots, setSpots] = useState<Spot[]>([])
   const [stations, setStations] = useState<Station[]>([])
   const [latestBuoyRecord, setLatestBuoyRecord] = useState<BuoyDataDoc | null>(
     null,
@@ -128,7 +131,7 @@ export const HomePage = ({
     let mounted = true
     const loadSpots = async () => {
       try {
-        const spotData = await getForecastSpots()
+        const spotData = await getSpots()
         if (!mounted) return
         setSpots(spotData)
       } catch (err) {
@@ -141,6 +144,31 @@ export const HomePage = ({
       mounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!spots.length) return
+
+    const byId = spots.find(
+      (spot) => normalizeSpotId(spot.spotId) === normalizeSpotId(activeSpotId),
+    )
+    if (byId && byId.spotId !== activeSpotId) {
+      onSelectSpot(byId.spotId)
+      return
+    }
+
+    if (!byId) {
+      const byName = spots.find(
+        (spot) =>
+          normalizeSpotId(spot.spotName) === normalizeSpotId(activeSpotId),
+      )
+      if (byName) {
+        onSelectSpot(byName.spotId)
+        return
+      }
+
+      onSelectSpot(spots[0].spotId)
+    }
+  }, [activeSpotId, onSelectSpot, spots])
 
   useEffect(() => {
     let mounted = true
@@ -213,16 +241,26 @@ export const HomePage = ({
   }, [defaultStationId, stations])
 
   const spotItems = useMemo(() => {
-    const unique = Array.from(new Set([defaultSpotId, ...spots]))
-    return unique.sort((a, b) => a.localeCompare(b, locale))
-  }, [defaultSpotId, locale, spots])
+    const map = new Map<string, { value: string; label: string }>()
 
-  const capitalizeSpot = (spot: string) =>
-    spot
-      .split(/[-_\s]+/)
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ')
+    spots.forEach((spot) => {
+      map.set(normalizeSpotId(spot.spotId), {
+        value: spot.spotId,
+        label: spot.spotName,
+      })
+    })
+
+    if (!spots.length) {
+      map.set(normalizeSpotId(defaultSpotId), {
+        value: defaultSpotId,
+        label: defaultSpotId,
+      })
+    }
+
+    return Array.from(map.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, locale),
+    )
+  }, [defaultSpotId, locale, spots])
 
   const latestReadingText = latestBuoyRecord
     ? `${formatNumber(latestBuoyRecord.height, locale, 2)} m · ${formatNumber(latestBuoyRecord.period, locale, 1)} s`
@@ -286,10 +324,7 @@ export const HomePage = ({
                 onChange={onSelectSpot}
                 ariaLabel='Seleccionar spot'
                 className={headerSelectClass}
-                options={spotItems.map((spot) => ({
-                  value: spot,
-                  label: capitalizeSpot(spot),
-                }))}
+                options={spotItems}
               />
             </div>
           }

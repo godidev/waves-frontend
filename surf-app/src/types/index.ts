@@ -90,6 +90,20 @@ export interface SurfForecast {
   energy: number
 }
 
+/** Representa un spot de surf disponible */
+export interface Spot {
+  /** Identificador único del spot */
+  spotId: string
+  /** Nombre visible del spot */
+  spotName: string
+  /** Ubicación geográfica del spot en formato GeoJSON */
+  location: {
+    type: 'Point'
+    /** [longitud, latitud] en grados decimales */
+    coordinates: [number, number]
+  }
+}
+
 /** Respuesta de error de la API */
 export interface ErrorResponse {
   error: string
