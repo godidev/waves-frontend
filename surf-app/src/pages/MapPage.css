@@ -10,3 +10,41 @@
   padding: 2px 8px;
   font-size: 10px;
 }
+
+.spot-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #06b6d4, #0284c7);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.45);
+  font-size: 16px;
+  position: relative;
+}
+
+.spot-marker::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  border: 2px solid rgba(34, 211, 238, 0.45);
+  animation: spotPulse 2.2s ease-out infinite;
+}
+
+@keyframes spotPulse {
+  0% {
+    transform: scale(0.88);
+    opacity: 0.65;
+  }
+  70% {
+    transform: scale(1.16);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.16);
+    opacity: 0;
+  }
+}

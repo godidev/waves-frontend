@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
-import { Icon } from 'leaflet'
+import { DivIcon, Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './MapPage.css'
-import type { BuoyInfoDoc } from '../types'
-import { getBuoysList } from '../services/api'
+import type { BuoyInfoDoc, Spot } from '../types'
+import { getBuoysList, getSpots } from '../services/api'
 import { BottomSheet } from '../components/BottomSheet'
 import { PageHeader } from '../components/PageHeader'
 
@@ -24,8 +24,17 @@ const buoyIcon = new Icon({
   shadowSize: [41, 41],
 })
 
+const spotIcon = new DivIcon({
+  className: 'spot-marker',
+  html: '<span aria-hidden="true">🌊</span>',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16],
+})
+
 export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
   const [buoys, setBuoys] = useState<BuoyInfoDoc[]>([])
+  const [spots, setSpots] = useState<Spot[]>([])
   const [selected, setSelected] = useState<BuoyInfoDoc | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -34,11 +43,15 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     const load = async () => {
       try {
         setLoading(true)
-        const buoyData = await getBuoysList()
+        const [buoyData, spotData] = await Promise.all([
+          getBuoysList(),
+          getSpots(),
+        ])
         if (!mounted) return
         setBuoys(buoyData)
+        setSpots(spotData)
       } catch (error) {
-        console.error('Failed to load buoys:', error)
+        console.error('Failed to load map data:', error)
       } finally {
         if (mounted) {
           setLoading(false)
@@ -61,7 +74,16 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     [buoys],
   )
 
-  // Calculate map center from buoys or use default Spain center
+  const spotsWithCoordinates = useMemo(
+    () =>
+      spots.filter(
+        (spot) =>
+          spot.location?.coordinates && spot.location.coordinates.length === 2,
+      ),
+    [spots],
+  )
+
+  // Calculate map center from buoys/spots or use default Spain center
   const mapCenter: [number, number] = useMemo(
     () =>
       buoysWithCoordinates.length > 0
@@ -69,8 +91,13 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
             buoysWithCoordinates[0].location!.coordinates[1],
             buoysWithCoordinates[0].location!.coordinates[0],
           ]
-        : [40.4, -3.7],
-    [buoysWithCoordinates],
+        : spotsWithCoordinates.length > 0
+          ? [
+              spotsWithCoordinates[0].location.coordinates[1],
+              spotsWithCoordinates[0].location.coordinates[0],
+            ]
+          : [40.4, -3.7],
+    [buoysWithCoordinates, spotsWithCoordinates],
   )
 
   return (
@@ -79,10 +106,11 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
         <PageHeader title='Mapa' />
         <div className='rounded-xl bg-ocean-800/90 p-3 text-xs text-ocean-200'>
           {loading ? (
-            <p>Cargando boyas...</p>
+            <p>Cargando mapa...</p>
           ) : (
             <>
               <p>Boyas: {buoysWithCoordinates.length}</p>
+              <p>Spots: {spotsWithCoordinates.length}</p>
               <ul className='mt-2 space-y-1'>
                 {buoysWithCoordinates.slice(0, 5).map((buoy) => (
                   <li key={buoy.buoyId}>
@@ -126,6 +154,21 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
                   <h3 className='font-semibold'>{buoy.buoyName}</h3>
                   <p className='text-xs text-gray-600'>ID: {buoy.buoyId}</p>
                   {buoy.body && <p className='mt-1 text-xs'>{buoy.body}</p>}
+                </div>
+              </Popup>
+            </Marker>
+          )
+        })}
+        {spotsWithCoordinates.map((spot) => {
+          const [lng, lat] = spot.location.coordinates
+          return (
+            <Marker key={spot.spotId} position={[lat, lng]} icon={spotIcon}>
+              <Popup>
+                <div className='text-sm'>
+                  <h3 className='font-semibold'>{spot.spotName}</h3>
+                  <p className='text-xs text-gray-600'>
+                    Spot ID: {spot.spotId}
+                  </p>
                 </div>
               </Popup>
             </Marker>
