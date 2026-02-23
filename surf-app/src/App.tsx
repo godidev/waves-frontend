@@ -45,11 +45,15 @@ const AppRoutes = () => {
             <HomePage
               defaultSpotId={settings.defaultSpotId}
               defaultStationId={settings.defaultStationId}
+              buoySearchRadiusKm={settings.buoySearchRadiusKm}
               onSelectSpot={(id) =>
                 setSettings((prev) => ({ ...prev, defaultSpotId: id }))
               }
               onSelectStation={(id) =>
                 setSettings((prev) => ({ ...prev, defaultStationId: id }))
+              }
+              onSelectBuoySearchRadiusKm={(value) =>
+                setSettings((prev) => ({ ...prev, buoySearchRadiusKm: value }))
               }
             />
           }

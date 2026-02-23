@@ -23,6 +23,7 @@ export const defaultSettings: SettingsState = {
   theme: 'dark',
   defaultSpotId: 'sopelana',
   defaultStationId: '2136',
+  buoySearchRadiusKm: 200,
 }
 
 /** Obtiene la configuración de la aplicación desde localStorage */

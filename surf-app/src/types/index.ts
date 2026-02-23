@@ -135,6 +135,7 @@ export interface SettingsState {
   theme: 'dark' | 'light'
   defaultSpotId: string
   defaultStationId: string
+  buoySearchRadiusKm: number
 }
 
 // ============================================

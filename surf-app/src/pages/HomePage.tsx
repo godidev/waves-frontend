@@ -24,6 +24,9 @@ const formatNumber = (value: number, locale: string, digits = 0): string =>
 const normalizeSpotId = (spotId: string): string =>
   spotId.trim().toLocaleLowerCase('es-ES')
 
+const clampBuoySearchRadiusKm = (value: number): number =>
+  Math.min(1000, Math.max(10, Math.round(value)))
+
 const ForecastChart = lazy(() =>
   import('../components/Forecast/ForecastChart').then((module) => ({
     default: module.ForecastChart,
@@ -39,15 +42,19 @@ const BuoyDetailContent = lazy(() =>
 interface HomePageProps {
   defaultSpotId: string
   defaultStationId: string
+  buoySearchRadiusKm: number
   onSelectSpot: (id: string) => void
   onSelectStation: (id: string) => void
+  onSelectBuoySearchRadiusKm: (value: number) => void
 }
 
 export const HomePage = ({
   defaultSpotId,
   defaultStationId,
+  buoySearchRadiusKm,
   onSelectSpot,
   onSelectStation,
+  onSelectBuoySearchRadiusKm,
 }: HomePageProps) => {
   const [forecasts, setForecasts] = useState<SurfForecast[]>([])
   const [hourlyForecasts, setHourlyForecasts] = useState<SurfForecast[]>([])
@@ -67,11 +74,30 @@ export const HomePage = ({
   )
   const [buoyHours, setBuoyHours] = useState<'6' | '12' | '24'>('6')
   const [buoyViewMode, setBuoyViewMode] = useState<'chart' | 'table'>('chart')
+  const safeBuoySearchRadiusKm = clampBuoySearchRadiusKm(buoySearchRadiusKm)
+  const [draftBuoySearchRadiusKm, setDraftBuoySearchRadiusKm] = useState(
+    safeBuoySearchRadiusKm,
+  )
   const activeSpotId = defaultSpotId
   const activeStationId = defaultStationId
-  const defaultBuoySearchKm = 200
   const forecastVariant = forecastRange === '48h' ? 'hourly' : 'general'
   const forecastLimit = forecastRange === '48h' ? 72 : 21
+
+  useEffect(() => {
+    if (safeBuoySearchRadiusKm !== buoySearchRadiusKm) {
+      onSelectBuoySearchRadiusKm(safeBuoySearchRadiusKm)
+    }
+  }, [buoySearchRadiusKm, onSelectBuoySearchRadiusKm, safeBuoySearchRadiusKm])
+
+  useEffect(() => {
+    setDraftBuoySearchRadiusKm(safeBuoySearchRadiusKm)
+  }, [safeBuoySearchRadiusKm])
+
+  const commitBuoySearchRadiusKm = () => {
+    if (draftBuoySearchRadiusKm !== safeBuoySearchRadiusKm) {
+      onSelectBuoySearchRadiusKm(draftBuoySearchRadiusKm)
+    }
+  }
 
   const resolvedSpotId = useMemo(() => {
     if (!spots.length) return activeSpotId
@@ -215,7 +241,7 @@ export const HomePage = ({
         const stationData = await getBuoysNear(
           longitude,
           latitude,
-          defaultBuoySearchKm,
+          safeBuoySearchRadiusKm,
         )
         if (!mounted) return
         setStations(stationData)
@@ -230,7 +256,7 @@ export const HomePage = ({
     return () => {
       mounted = false
     }
-  }, [defaultBuoySearchKm, resolvedSpot])
+  }, [resolvedSpot, safeBuoySearchRadiusKm])
 
   useEffect(() => {
     if (!stations.length) return
@@ -473,6 +499,31 @@ export const HomePage = ({
               </div>
             }
           />
+          <div className='mb-2 rounded-xl border border-slate-200/80 bg-white/70 px-2.5 py-2 dark:border-slate-700/70 dark:bg-slate-800/50'>
+            <div className='mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
+              <span>Radio de búsqueda</span>
+              <span className='text-slate-700 dark:text-slate-100'>
+                {draftBuoySearchRadiusKm} km
+              </span>
+            </div>
+            <input
+              type='range'
+              min={10}
+              max={1000}
+              step={10}
+              value={draftBuoySearchRadiusKm}
+              onChange={(event) =>
+                setDraftBuoySearchRadiusKm(
+                  clampBuoySearchRadiusKm(Number(event.target.value)),
+                )
+              }
+              onMouseUp={commitBuoySearchRadiusKm}
+              onTouchEnd={commitBuoySearchRadiusKm}
+              onBlur={commitBuoySearchRadiusKm}
+              aria-label='Rango de búsqueda de boyas en kilómetros'
+              className='h-1.5 w-full cursor-pointer accent-sky-600'
+            />
+          </div>
           <div className='mb-2 flex flex-wrap items-center justify-center gap-4'>
             <div className='inline-flex items-center gap-1.5'>
               <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
@@ -544,7 +595,7 @@ export const HomePage = ({
               />
             ) : (
               <StatusMessage
-                message={`No hay boyas cercanas en ${defaultBuoySearchKm} km`}
+                message={`No hay boyas cercanas en ${safeBuoySearchRadiusKm} km`}
               />
             )}
           </Suspense>
