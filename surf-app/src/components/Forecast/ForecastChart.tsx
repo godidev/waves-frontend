@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { TooltipProps } from 'recharts'
 import type { SurfForecast } from '../../types'
 import { DirectionArrow } from '../Icons'
@@ -10,7 +10,10 @@ interface ForecastChartProps {
   locale: string
   range: '48h' | '7d'
   nowMs: number
+  viewMode?: 'chart' | 'table'
 }
+
+type Trend = 'up' | 'down' | 'flat' | null
 
 const PERIOD_THRESHOLDS = {
   min: 6,
@@ -27,6 +30,22 @@ const mix = (start: number, end: number, ratio: number) =>
 
 const toRgb = (red: number, green: number, blue: number) =>
   `rgb(${red} ${green} ${blue})`
+
+const formatNumber = (value: number, locale: string, digits = 0): string =>
+  value.toLocaleString(locale, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })
+
+const getTrend = (
+  current: number,
+  baseline: number,
+  tolerance: number,
+): Trend => {
+  const delta = current - baseline
+  if (Math.abs(delta) <= tolerance) return 'flat'
+  return delta > 0 ? 'up' : 'down'
+}
 
 const getNiceEnergyStep = (rawStep: number): number => {
   if (!Number.isFinite(rawStep) || rawStep <= 0) return 50
@@ -188,7 +207,9 @@ const CustomTooltip = ({
         >
           <span>Altura:</span>
           <span className='font-semibold'>
-            {waveHeight !== undefined ? `${waveHeight.toFixed(1)}m` : '--'}
+            {waveHeight !== undefined
+              ? `${formatNumber(waveHeight, 'es-ES', 1)} m`
+              : '--'}
           </span>
         </p>
         <p
@@ -197,7 +218,9 @@ const CustomTooltip = ({
         >
           <span>Energía:</span>
           <span className='font-semibold'>
-            {energy !== undefined ? Math.round(energy) : '--'}
+            {energy !== undefined
+              ? `${formatNumber(Math.round(energy), 'es-ES')} kJ`
+              : '--'}
           </span>
         </p>
         <p
@@ -206,7 +229,9 @@ const CustomTooltip = ({
         >
           <span>Periodo:</span>
           <span className='font-semibold'>
-            {wavePeriod !== undefined ? `${wavePeriod.toFixed(1)}s` : '--'}
+            {wavePeriod !== undefined
+              ? `${formatNumber(wavePeriod, 'es-ES', 1)} s`
+              : '--'}
           </span>
         </p>
         <p
@@ -215,7 +240,9 @@ const CustomTooltip = ({
         >
           <span>Viento:</span>
           <span className='font-semibold'>
-            {windSpeed !== undefined ? `${windSpeed.toFixed(0)} km/h` : '--'}
+            {windSpeed !== undefined
+              ? `${formatNumber(windSpeed, 'es-ES')} km/h`
+              : '--'}
           </span>
           <span className='font-semibold'>
             {windDirection !== undefined && (
@@ -237,7 +264,9 @@ export const ForecastChart = ({
   locale,
   range,
   nowMs,
+  viewMode = 'chart',
 }: ForecastChartProps) => {
+  const [selectedSnapshotLabel, setSelectedSnapshotLabel] = useState('Ahora')
   const chartMargin = { top: 0, right: 0, left: -8, bottom: -12 }
 
   const chartData = useMemo(
@@ -377,11 +406,49 @@ export const ForecastChart = ({
   const snapshotItems = useMemo(() => {
     if (!chartData.length) return []
 
-    const targets = [
-      { label: 'Ahora', timestamp: nowMs },
-      { label: '+6h', timestamp: nowMs + 6 * 60 * 60 * 1000 },
-      { label: '+24h', timestamp: nowMs + 24 * 60 * 60 * 1000 },
-    ]
+    const baselinePoint = chartData.reduce(
+      (best, point) => {
+        if (!best) return point
+        return Math.abs(point.time - nowMs) < Math.abs(best.time - nowMs)
+          ? point
+          : best
+      },
+      null as (typeof chartData)[number] | null,
+    )
+
+    const targets =
+      range === '7d'
+        ? (() => {
+            const dayTargets = new Map<
+              string,
+              {
+                label: string
+                timestamp: number
+              }
+            >()
+
+            chartData.forEach((point) => {
+              const date = new Date(point.time)
+              const dayKey = date.toDateString()
+              if (dayTargets.has(dayKey)) return
+
+              dayTargets.set(dayKey, {
+                label: date.toLocaleDateString(locale, {
+                  weekday: 'short',
+                  day: 'numeric',
+                }),
+                timestamp: point.time,
+              })
+            })
+
+            return Array.from(dayTargets.values())
+          })()
+        : [
+            { label: 'Ahora', timestamp: nowMs },
+            { label: '+6h', timestamp: nowMs + 6 * 60 * 60 * 1000 },
+            { label: '+24h', timestamp: nowMs + 24 * 60 * 60 * 1000 },
+            { label: '+36h', timestamp: nowMs + 36 * 60 * 60 * 1000 },
+          ]
 
     return targets.map((target) => {
       const closest = chartData.reduce(
@@ -398,28 +465,55 @@ export const ForecastChart = ({
       if (!closest) {
         return {
           label: target.label,
+          time: null,
           hour: '--',
           waveHeight: '--',
+          waveHeightTrend: null,
           wavePeriod: '--',
+          energy: '--',
+          energyTrend: null,
           windSpeed: '--',
           windDirection: null,
         }
       }
 
+      const showTrend =
+        baselinePoint !== null &&
+        Math.abs(closest.time - baselinePoint.time) > 1
+
       return {
         label: target.label,
+        time: closest.time,
         hour: new Date(closest.time).toLocaleTimeString(locale, {
           hour: '2-digit',
           minute: '2-digit',
         }),
-        waveHeight: `${closest.waveHeight.toFixed(1)}m`,
-        energy: `${Math.round(closest.energy)}`,
-        wavePeriod: `${closest.wavePeriod.toFixed(1)}s`,
-        windSpeed: `${closest.windSpeed.toFixed(0)} km/h`,
+        waveHeight: formatNumber(closest.waveHeight, locale, 1),
+        waveHeightTrend: showTrend
+          ? getTrend(closest.waveHeight, baselinePoint.waveHeight, 0.05)
+          : null,
+        energy: formatNumber(Math.round(closest.energy), locale),
+        energyTrend: showTrend
+          ? getTrend(closest.energy, baselinePoint.energy, 25)
+          : null,
+        wavePeriod: formatNumber(closest.wavePeriod, locale, 1),
+        windSpeed: formatNumber(closest.windSpeed, locale),
         windDirection: closest.windDirection,
       }
     })
-  }, [chartData, locale, nowMs])
+  }, [chartData, locale, nowMs, range])
+
+  const activeSnapshotLabel = snapshotItems.some(
+    (item) => item.label === selectedSnapshotLabel,
+  )
+    ? selectedSnapshotLabel
+    : (snapshotItems.find((item) => item.label === 'Ahora')?.label ??
+      snapshotItems[0]?.label ??
+      'Ahora')
+
+  const selectedSnapshot = snapshotItems.find(
+    (item) => item.label === activeSnapshotLabel,
+  )
 
   const chartContentPadding = {
     paddingLeft: `${Math.max(0, CHART_LAYOUT.leftAxisWidth + chartMargin.left)}px`,
@@ -427,165 +521,303 @@ export const ForecastChart = ({
   }
 
   return (
-    <div className='space-y-1'>
-      <div className='grid grid-cols-3 gap-2'>
-        {snapshotItems.map((item) => (
-          <div
-            key={item.label}
-            className='rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-700 dark:bg-slate-800/60'
-          >
-            <div className='mb-0.5 flex items-center justify-between text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-300'>
-              <span>{item.label}</span>
-              <span className='font-semibold'>{item.hour}</span>
-            </div>
-            <div className='space-y-0.5 text-xs text-slate-700 dark:text-slate-200'>
-              <p className='flex items-center justify-between'>
-                <span>Altura</span>
-                <span className='font-semibold'>{item.waveHeight}</span>
+    <div className='space-y-3'>
+      {viewMode === 'table' && (
+        <div className='rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/70'>
+          <table className='w-full border-collapse text-[11px] text-slate-700 dark:text-slate-200'>
+            <thead>
+              <tr className='border-b border-slate-200/90 dark:border-slate-700/90'>
+                <th className='w-px whitespace-nowrap px-1.5 py-2 pr-1 text-left text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-300'>
+                  Métrica
+                </th>
+                {snapshotItems.map((item) => (
+                  <th
+                    key={`header-${item.label}`}
+                    className={`px-1 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-300 ${
+                      item.label === activeSnapshotLabel
+                        ? 'bg-sky-100/60 dark:bg-sky-900/20'
+                        : ''
+                    }`}
+                  >
+                    <button
+                      type='button'
+                      onClick={() => setSelectedSnapshotLabel(item.label)}
+                      className='w-full rounded-md px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500'
+                    >
+                      <span className='block'>{item.label}</span>
+                      <span className='mt-0.5 block text-[10px] font-semibold normal-case tracking-normal text-slate-700 dark:text-slate-200'>
+                        {item.hour}
+                      </span>
+                    </button>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr className='border-b border-slate-200/70 dark:border-slate-700/70'>
+                <th className='whitespace-nowrap px-1.5 py-2 pr-1 text-left font-medium text-slate-600 dark:text-slate-300'>
+                  Altura (m)
+                </th>
+                {snapshotItems.map((item) => (
+                  <td
+                    key={`height-${item.label}`}
+                    className={`px-1 py-2 text-center ${
+                      item.label === activeSnapshotLabel
+                        ? 'bg-sky-100/60 dark:bg-sky-900/20'
+                        : ''
+                    }`}
+                  >
+                    <span className='inline-flex items-center gap-0.5 text-[11px] font-semibold'>
+                      {item.waveHeight}
+                      {item.waveHeightTrend === 'up' && (
+                        <span
+                          className='text-emerald-500 dark:text-emerald-400'
+                          aria-label='Altura sube respecto a ahora'
+                        >
+                          ↑
+                        </span>
+                      )}
+                      {item.waveHeightTrend === 'down' && (
+                        <span
+                          className='text-rose-500 dark:text-rose-400'
+                          aria-label='Altura baja respecto a ahora'
+                        >
+                          ↓
+                        </span>
+                      )}
+                      {item.waveHeightTrend === 'flat' && (
+                        <span
+                          className='text-slate-500 dark:text-slate-300'
+                          aria-label='Altura estable respecto a ahora'
+                        >
+                          =
+                        </span>
+                      )}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+
+              <tr className='border-b border-slate-200/70 dark:border-slate-700/70'>
+                <th className='whitespace-nowrap px-1.5 py-2 pr-1 text-left font-medium text-slate-600 dark:text-slate-300'>
+                  Energía (kJ)
+                </th>
+                {snapshotItems.map((item) => (
+                  <td
+                    key={`energy-${item.label}`}
+                    className={`px-1 py-2 text-center ${
+                      item.label === activeSnapshotLabel
+                        ? 'bg-sky-100/60 dark:bg-sky-900/20'
+                        : ''
+                    }`}
+                  >
+                    <span className='inline-flex items-center gap-0.5 font-semibold'>
+                      {item.energy}
+                      {item.energyTrend === 'up' && (
+                        <span
+                          className='text-emerald-500 dark:text-emerald-400'
+                          aria-label='Energía sube respecto a ahora'
+                        >
+                          ↑
+                        </span>
+                      )}
+                      {item.energyTrend === 'down' && (
+                        <span
+                          className='text-rose-500 dark:text-rose-400'
+                          aria-label='Energía baja respecto a ahora'
+                        >
+                          ↓
+                        </span>
+                      )}
+                      {item.energyTrend === 'flat' && (
+                        <span
+                          className='text-slate-500 dark:text-slate-300'
+                          aria-label='Energía estable respecto a ahora'
+                        >
+                          =
+                        </span>
+                      )}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+
+              <tr className='border-b border-slate-200/70 dark:border-slate-700/70'>
+                <th className='whitespace-nowrap px-1.5 py-2 pr-1 text-left font-medium text-slate-600 dark:text-slate-300'>
+                  Periodo (s)
+                </th>
+                {snapshotItems.map((item) => (
+                  <td
+                    key={`period-${item.label}`}
+                    className={`px-1 py-2 text-center ${
+                      item.label === activeSnapshotLabel
+                        ? 'bg-sky-100/60 dark:bg-sky-900/20'
+                        : ''
+                    }`}
+                  >
+                    {item.wavePeriod}
+                  </td>
+                ))}
+              </tr>
+
+              <tr>
+                <th className='whitespace-nowrap px-1.5 py-2 pr-1 text-left font-medium text-slate-600 dark:text-slate-300'>
+                  Viento (km/h)
+                </th>
+                {snapshotItems.map((item) => (
+                  <td
+                    key={`wind-${item.label}`}
+                    className={`px-1 py-2 text-center ${
+                      item.label === activeSnapshotLabel
+                        ? 'bg-sky-100/60 dark:bg-sky-900/20'
+                        : ''
+                    }`}
+                  >
+                    <span className='inline-flex items-center gap-0.5'>
+                      {item.windSpeed}
+                      {item.windDirection !== null && (
+                        <DirectionArrow
+                          className='h-2.5 w-2.5 text-sky-600'
+                          degrees={item.windDirection}
+                        />
+                      )}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {viewMode === 'chart' && (
+        <>
+          <TimeSeriesChart
+            data={mappedChartData}
+            locale={locale}
+            chartHeightClass={CHART_LAYOUT.forecastHeightClass}
+            chartMargin={chartMargin}
+            legendItems={[
+              { label: 'Altura (m)', color: CHART_SERIES_COLORS.height },
+              {
+                label: 'Energía (kJ)',
+                color: CHART_SERIES_COLORS.energy,
+                dashed: true,
+              },
+            ]}
+            leftAxis={{
+              width: CHART_LAYOUT.leftAxisWidth,
+              interval: 0,
+              padding: { top: 10 },
+              domain: [leftAxisMin, leftAxisMax],
+              ticks: leftAxisTicks,
+              allowDecimals: leftAxisStep % 1 !== 0,
+              tickFormatter: (value) =>
+                `${Number.isInteger(value) ? value : value.toFixed(1)} m`,
+            }}
+            rightAxis={{
+              width: CHART_LAYOUT.forecastRightAxisWidth,
+              interval: 0,
+              padding: { top: 10 },
+              domain: [leftAxisMin, leftAxisMax],
+              ticks: leftAxisTicks,
+              tickFormatter: (value) =>
+                rightTickLabelMap.get(Number(value).toFixed(4)) ?? '',
+            }}
+            series={[
+              {
+                dataKey: 'waveHeight',
+                yAxisId: 'left',
+                name: 'Altura',
+                stroke: CHART_SERIES_COLORS.height,
+              },
+              {
+                dataKey: 'energyMapped',
+                yAxisId: 'right',
+                name: 'Energía',
+                stroke: CHART_SERIES_COLORS.energy,
+                dashed: true,
+              },
+            ]}
+            tooltipContent={<CustomTooltip />}
+            dayLabelFormatter={(date, currentLocale) =>
+              range === '7d'
+                ? String(date.getDate())
+                : date.toLocaleDateString(currentLocale, {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                  })
+            }
+            dayLabelDx={range === '7d' ? 8 : 0}
+            showDaySeparators
+            showDayLabels
+            showNowMarker
+            showFutureArea
+            selectedTimeMarker={
+              selectedSnapshot?.time
+                ? { time: selectedSnapshot.time, label: activeSnapshotLabel }
+                : undefined
+            }
+            baselineLabel='0 m'
+          />
+
+          <div className='space-y-2.5 rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 py-3 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/70'>
+            <div>
+              <p className='mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
+                Periodo
               </p>
-              <p className='flex items-center justify-between'>
-                <span>Energía</span>
-                <span className='font-semibold'>{item.energy}</span>
-              </p>
-              <p className='flex items-center justify-between'>
-                <span>Periodo</span>
-                <span>{item.wavePeriod}</span>
-              </p>
-              <p className='flex items-center justify-between'>
-                <span>Viento</span>
-                <span className='inline-flex items-center gap-1'>
-                  {item.windSpeed}
-                  {item.windDirection !== null && (
-                    <DirectionArrow
-                      className='h-2.5 w-2.5 text-sky-600'
-                      degrees={item.windDirection}
+              <div style={chartContentPadding}>
+                <div className='flex h-2 w-full overflow-hidden rounded-full'>
+                  {chartData.map((point) => (
+                    <span
+                      key={`period-${point.time}`}
+                      className='h-full flex-1'
+                      style={getPeriodToneStyle(point.wavePeriod)}
                     />
-                  )}
-                </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <p className='mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
+                Dirección de viento
               </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <TimeSeriesChart
-        data={mappedChartData}
-        locale={locale}
-        chartHeightClass={CHART_LAYOUT.forecastHeightClass}
-        chartMargin={chartMargin}
-        legendItems={[
-          { label: 'Altura (m)', color: CHART_SERIES_COLORS.height },
-          {
-            label: 'Energía (kJ)',
-            color: CHART_SERIES_COLORS.energy,
-            dashed: true,
-          },
-        ]}
-        leftAxis={{
-          width: CHART_LAYOUT.leftAxisWidth,
-          interval: 0,
-          padding: { top: 10 },
-          domain: [leftAxisMin, leftAxisMax],
-          ticks: leftAxisTicks,
-          allowDecimals: leftAxisStep % 1 !== 0,
-          tickFormatter: (value) =>
-            `${Number.isInteger(value) ? value : value.toFixed(1)} m`,
-        }}
-        rightAxis={{
-          width: CHART_LAYOUT.forecastRightAxisWidth,
-          interval: 0,
-          padding: { top: 10 },
-          domain: [leftAxisMin, leftAxisMax],
-          ticks: leftAxisTicks,
-          tickFormatter: (value) =>
-            rightTickLabelMap.get(Number(value).toFixed(4)) ?? '',
-        }}
-        series={[
-          {
-            dataKey: 'waveHeight',
-            yAxisId: 'left',
-            name: 'Altura',
-            stroke: CHART_SERIES_COLORS.height,
-          },
-          {
-            dataKey: 'energyMapped',
-            yAxisId: 'right',
-            name: 'Energía',
-            stroke: CHART_SERIES_COLORS.energy,
-            dashed: true,
-          },
-        ]}
-        tooltipContent={<CustomTooltip />}
-        dayLabelFormatter={(date, currentLocale) =>
-          range === '7d'
-            ? String(date.getDate())
-            : date.toLocaleDateString(currentLocale, {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })
-        }
-        dayLabelDx={range === '7d' ? 8 : 0}
-        showDaySeparators
-        showDayLabels
-        showNowMarker
-        showFutureArea
-        baselineLabel='0 m'
-      />
-
-      <div className='space-y-2 rounded-2xl border border-slate-200 bg-slate-50 py-3 dark:border-slate-700 dark:bg-slate-800/50'>
-        <div>
-          <p className='mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300'>
-            Periodo
-          </p>
-          <div style={chartContentPadding}>
-            <div className='flex h-2 w-full overflow-hidden rounded-full'>
-              {chartData.map((point) => (
-                <span
-                  key={`period-${point.time}`}
-                  className='h-full flex-1'
-                  style={getPeriodToneStyle(point.wavePeriod)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <p className='mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300'>
-            Dirección de viento
-          </p>
-          <div style={chartContentPadding}>
-            <div className='flex h-2 w-full overflow-hidden rounded-full'>
-              {chartData.map((point) => (
-                <span
-                  key={`wind-${point.time}`}
-                  className='h-full flex-1'
-                  style={getWindDirectionToneStyle(point.windDirection)}
-                />
-              ))}
-            </div>
-            <div
-              className='mt-1.5 grid w-full items-center text-center'
-              style={{
-                gridTemplateColumns: `repeat(${Math.max(chartData.length, 1)}, minmax(0, 1fr))`,
-              }}
-            >
-              {chartData.map((point) => (
-                <span
-                  key={`wind-arrow-${point.time}`}
-                  className='inline-flex h-3.5 w-full items-center justify-center'
+              <div style={chartContentPadding}>
+                <div className='flex h-2 w-full overflow-hidden rounded-full'>
+                  {chartData.map((point) => (
+                    <span
+                      key={`wind-${point.time}`}
+                      className='h-full flex-1'
+                      style={getWindDirectionToneStyle(point.windDirection)}
+                    />
+                  ))}
+                </div>
+                <div
+                  className='mt-1.5 grid w-full items-center text-center'
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.max(chartData.length, 1)}, minmax(0, 1fr))`,
+                  }}
                 >
-                  <DirectionArrow
-                    className='h-2.5 w-2.5 text-sky-600'
-                    degrees={point.windDirection}
-                  />
-                </span>
-              ))}
+                  {chartData.map((point) => (
+                    <span
+                      key={`wind-arrow-${point.time}`}
+                      className='inline-flex h-3.5 w-full items-center justify-center'
+                    >
+                      <DirectionArrow
+                        className='h-2.5 w-2.5 text-sky-600'
+                        degrees={point.windDirection}
+                      />
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   )
 }

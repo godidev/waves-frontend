@@ -73,6 +73,10 @@ interface TimeSeriesChartProps {
   minHoursForDayLabel?: number
   dayLabelFormatter?: (date: Date, locale: string) => string
   dayLabelDx?: number
+  selectedTimeMarker?: {
+    time: number
+    label?: string
+  }
 }
 
 export const TimeSeriesChart = ({
@@ -105,6 +109,7 @@ export const TimeSeriesChart = ({
       month: 'short',
     }),
   dayLabelDx = 0,
+  selectedTimeMarker,
 }: TimeSeriesChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -202,7 +207,7 @@ export const TimeSeriesChart = ({
   return (
     <div className='space-y-2 rounded-2xl py-2'>
       {legendItems.length > 0 && (
-        <div className='flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-700 dark:text-slate-200'>
+        <div className='flex items-center justify-center gap-4 px-2 text-[11px] font-medium text-slate-600 dark:text-slate-300'>
           {legendItems.map((item) => (
             <span key={item.label} className='inline-flex items-center gap-1.5'>
               <span
@@ -212,7 +217,7 @@ export const TimeSeriesChart = ({
                   borderTop: item.dashed
                     ? `2px dashed ${item.color}`
                     : undefined,
-                  width: item.dashed ? '16px' : '8px',
+                  width: item.dashed ? '14px' : '8px',
                   borderRadius: item.dashed ? 0 : '9999px',
                 }}
                 aria-hidden='true'
@@ -351,6 +356,28 @@ export const TimeSeriesChart = ({
                   fontSize: 11,
                   fontWeight: 'bold',
                 }}
+              />
+            )}
+
+            {selectedTimeMarker && (
+              <ReferenceLine
+                x={selectedTimeMarker.time}
+                yAxisId='left'
+                stroke={CHART_THEME.selectedMarkerStroke}
+                strokeWidth={CHART_THEME.selectedMarkerWidth}
+                strokeOpacity={CHART_THEME.selectedMarkerOpacity}
+                strokeDasharray='4 4'
+                label={
+                  selectedTimeMarker.label
+                    ? {
+                        value: selectedTimeMarker.label,
+                        position: 'insideTopRight',
+                        fill: CHART_THEME.nowMarkerLabelColor,
+                        fontSize: 10,
+                        fontWeight: 600,
+                      }
+                    : undefined
+                }
               />
             )}
 

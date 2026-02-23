@@ -15,6 +15,12 @@ import { SectionHeader } from '../components/SectionHeader'
 import { SelectMenu } from '../components/SelectMenu'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
 
+const formatNumber = (value: number, locale: string, digits = 0): string =>
+  value.toLocaleString(locale, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })
+
 const ForecastChart = lazy(() =>
   import('../components/Forecast/ForecastChart').then((module) => ({
     default: module.ForecastChart,
@@ -52,7 +58,11 @@ export const HomePage = ({
     null,
   )
   const [forecastRange, setForecastRange] = useState<'48h' | '7d'>('48h')
+  const [forecastViewMode, setForecastViewMode] = useState<'chart' | 'table'>(
+    'chart',
+  )
   const [buoyHours, setBuoyHours] = useState<'6' | '12' | '24'>('6')
+  const [buoyViewMode, setBuoyViewMode] = useState<'chart' | 'table'>('chart')
   const activeSpotId = defaultSpotId
   const activeStationId = defaultStationId
   const forecastVariant = forecastRange === '48h' ? 'hourly' : 'general'
@@ -215,10 +225,12 @@ export const HomePage = ({
       .join(' ')
 
   const latestReadingText = latestBuoyRecord
-    ? `${latestBuoyRecord.height.toFixed(2)}m | ${latestBuoyRecord.period.toFixed(1)}s`
+    ? `${formatNumber(latestBuoyRecord.height, locale, 2)} m · ${formatNumber(latestBuoyRecord.period, locale, 1)} s`
     : '--'
-  const sectionSelectClass =
-    'mb-2 w-full rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-xs font-medium uppercase tracking-wide text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
+  const headerSelectClass =
+    'w-[48vw] min-w-[170px] max-w-[220px] rounded-lg border border-slate-200 bg-white/80 px-2 py-1 text-xs font-medium text-slate-700 focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100'
+  const compactGroupClass =
+    'inline-flex items-center rounded-full border border-slate-200 bg-white/90 p-0.5 text-xs font-medium dark:border-slate-700 dark:bg-slate-800/80'
 
   if (status === 'loading') {
     return <StatusMessage message='Cargando…' />
@@ -243,8 +255,8 @@ export const HomePage = ({
       ? `${degreesToCardinal(selected.wind.angle)} ${selected.wind.angle.toFixed(0)}°`
       : '--'
   const forecastCurrentText = selectedPrimarySwell
-    ? `${selectedTotalHeight.toFixed(2)}m | ${selectedPrimarySwell.period.toFixed(1)}s`
-    : `${selectedTotalHeight.toFixed(2)}m | --`
+    ? `${formatNumber(selectedTotalHeight, locale, 2)} m · ${formatNumber(selectedPrimarySwell.period, locale, 1)} s`
+    : `${formatNumber(selectedTotalHeight, locale, 2)} m · --`
 
   return (
     <div className='space-y-4'>
@@ -263,15 +275,34 @@ export const HomePage = ({
         />
       )}
 
-      <div className='rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900'>
+      <div className='space-y-4 rounded-3xl border border-slate-200/90 bg-gradient-to-b from-white via-slate-50/80 to-slate-100/70 p-2.5 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800/70'>
         <SectionHeader
-          title='Forecast'
+          title='Previsión'
           subtitle={forecastCurrentText}
           rightNode={
+            <div className='shrink-0'>
+              <SelectMenu
+                value={activeSpotId}
+                onChange={onSelectSpot}
+                ariaLabel='Seleccionar spot'
+                className={headerSelectClass}
+                options={spotItems.map((spot) => ({
+                  value: spot,
+                  label: capitalizeSpot(spot),
+                }))}
+              />
+            </div>
+          }
+        />
+        <div className='mb-2 flex flex-wrap items-center justify-center gap-4'>
+          <div className='inline-flex items-center gap-1.5'>
+            <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
+              Tiempo
+            </span>
             <div
               role='group'
               aria-label='Rango del forecast'
-              className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'
+              className={compactGroupClass}
             >
               {(['48h', '7d'] as const).map((range) => (
                 <button
@@ -279,45 +310,87 @@ export const HomePage = ({
                   type='button'
                   aria-pressed={forecastRange === range}
                   onClick={() => setForecastRange(range)}
-                  className={`touch-manipulation transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                  className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                     forecastRange === range
-                      ? 'font-semibold text-sky-700 dark:text-sky-300'
-                      : 'hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-sky-100 font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-200'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
                   }`}
                 >
                   {range}
                 </button>
               ))}
             </div>
-          }
-        />
-        <SelectMenu
-          value={activeSpotId}
-          onChange={onSelectSpot}
-          ariaLabel='Seleccionar spot'
-          className={sectionSelectClass}
-          options={spotItems.map((spot) => ({
-            value: spot,
-            label: capitalizeSpot(spot),
-          }))}
-        />
+          </div>
+
+          <div className='inline-flex items-center gap-1.5'>
+            <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
+              Tipo
+            </span>
+            <div
+              role='group'
+              aria-label='Vista de previsión'
+              className={compactGroupClass}
+            >
+              {(
+                [
+                  { label: 'Gráfico', value: 'chart' },
+                  { label: 'Tabla', value: 'table' },
+                ] as const
+              ).map((option) => (
+                <button
+                  key={option.value}
+                  type='button'
+                  aria-pressed={forecastViewMode === option.value}
+                  onClick={() => setForecastViewMode(option.value)}
+                  className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                    forecastViewMode === option.value
+                      ? 'bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         <Suspense fallback={<StatusMessage message='Cargando…' />}>
           <ForecastChart
             forecasts={forecasts}
             locale={locale}
             range={forecastRange}
             nowMs={nowMs}
+            viewMode={forecastViewMode}
           />
         </Suspense>
-        <div className='mt-2 border-t border-slate-200 pt-5 dark:border-slate-700'>
+        <div className='rounded-2xl p-2.5'>
           <SectionHeader
             title='Boyas'
             subtitle={latestReadingText}
             rightNode={
+              <div className='shrink-0'>
+                <SelectMenu
+                  value={activeStationId}
+                  onChange={onSelectStation}
+                  ariaLabel='Seleccionar boya'
+                  className={headerSelectClass}
+                  options={buoyOptions.map((station) => ({
+                    value: station.id,
+                    label: station.name,
+                  }))}
+                />
+              </div>
+            }
+          />
+          <div className='mb-2 flex flex-wrap items-center justify-center gap-4'>
+            <div className='inline-flex items-center gap-1.5'>
+              <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
+                Tiempo
+              </span>
               <div
                 role='group'
                 aria-label='Rango de horas de boya'
-                className='flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200'
+                className={compactGroupClass}
               >
                 {(['6', '12', '24'] as const).map((hours) => (
                   <button
@@ -325,32 +398,54 @@ export const HomePage = ({
                     type='button'
                     aria-pressed={buoyHours === hours}
                     onClick={() => setBuoyHours(hours)}
-                    className={`touch-manipulation transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                    className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                       buoyHours === hours
-                        ? 'font-semibold text-sky-700 dark:text-sky-300'
-                        : 'hover:text-slate-900 dark:hover:text-white'
+                        ? 'bg-sky-100 font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-200'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
                     }`}
                   >
                     {hours}h
                   </button>
                 ))}
               </div>
-            }
-          />
-          <SelectMenu
-            value={activeStationId}
-            onChange={onSelectStation}
-            ariaLabel='Seleccionar boya'
-            className={sectionSelectClass}
-            options={buoyOptions.map((station) => ({
-              value: station.id,
-              label: station.name,
-            }))}
-          />
+            </div>
+
+            <div className='inline-flex items-center gap-1.5'>
+              <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
+                Tipo
+              </span>
+              <div
+                role='group'
+                aria-label='Vista de boyas'
+                className={compactGroupClass}
+              >
+                {(
+                  [
+                    { label: 'Gráfico', value: 'chart' },
+                    { label: 'Tabla', value: 'table' },
+                  ] as const
+                ).map((option) => (
+                  <button
+                    key={option.value}
+                    type='button'
+                    aria-pressed={buoyViewMode === option.value}
+                    onClick={() => setBuoyViewMode(option.value)}
+                    className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                      buoyViewMode === option.value
+                        ? 'bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           <Suspense fallback={<StatusMessage message='Cargando…' />}>
             <BuoyDetailContent
               stationId={activeStationId}
-              viewMode='chart'
+              viewMode={buoyViewMode}
               hours={buoyHours}
               showRangeSelector={false}
               showMetrics={false}
