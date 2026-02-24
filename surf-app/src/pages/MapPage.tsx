@@ -29,6 +29,7 @@ import {
   getInactiveSpotsSorted,
   getInactiveSpotsWithCoordinates,
 } from './mapPageSelectors'
+import { getBuoysWithCoordinates, getMapStats } from './mapPageBuoys'
 import { deriveMapLoadingState, deriveMapStatus } from './mapPageQueryState'
 import { getMapCenter, getSopelanaSpotCenter } from './mapPageCenter'
 
@@ -252,11 +253,7 @@ export const MapPage = () => {
 
   // Filter buoys that have valid coordinates
   const buoysWithCoordinates = useMemo(
-    () =>
-      buoys.filter(
-        (buoy) =>
-          buoy.location?.coordinates && buoy.location.coordinates.length === 2,
-      ),
+    () => getBuoysWithCoordinates(buoys),
     [buoys],
   )
 
@@ -308,6 +305,20 @@ export const MapPage = () => {
     [activeSpotsWithCoordinates, buoysWithCoordinates, sopelanaSpotCenter],
   )
 
+  const mapStats = useMemo(
+    () =>
+      getMapStats({
+        buoysCount: buoysWithCoordinates.length,
+        activeSpotsCount: activeSpotsWithCoordinates.length,
+        inactiveSpotsCount: inactiveSpotsWithCoordinates.length,
+      }),
+    [
+      activeSpotsWithCoordinates.length,
+      buoysWithCoordinates.length,
+      inactiveSpotsWithCoordinates.length,
+    ],
+  )
+
   return (
     <div className='relative h-[calc(100vh-80px)]'>
       <div className='absolute left-4 top-4 z-10'>
@@ -321,9 +332,9 @@ export const MapPage = () => {
             <p>Error al cargar datos del mapa</p>
           ) : (
             <div className='space-y-0.5'>
-              <p>Boyas: {buoysWithCoordinates.length}</p>
-              <p>Spots activos: {activeSpotsWithCoordinates.length}</p>
-              <p>Spots inactivos: {inactiveSpotsWithCoordinates.length}</p>
+              {mapStats.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
             </div>
           )}
         </div>
