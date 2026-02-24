@@ -1,5 +1,54 @@
 import '@testing-library/jest-dom/vitest'
 
+class ResizeObserverMock {
+  private callback: ResizeObserverCallback
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback
+  }
+
+  observe(target: Element) {
+    const width = 960
+    const height = 320
+    this.callback(
+      [
+        {
+          target,
+          contentRect: {
+            width,
+            height,
+            x: 0,
+            y: 0,
+            top: 0,
+            left: 0,
+            right: width,
+            bottom: height,
+            toJSON: () => ({}),
+          },
+          borderBoxSize: [],
+          contentBoxSize: [],
+          devicePixelContentBoxSize: [],
+        } as ResizeObserverEntry,
+      ],
+      this as unknown as ResizeObserver,
+    )
+  }
+
+  unobserve() {}
+
+  disconnect() {}
+}
+
+if (
+  typeof window !== 'undefined' &&
+  typeof window.ResizeObserver === 'undefined'
+) {
+  Object.defineProperty(window, 'ResizeObserver', {
+    value: ResizeObserverMock,
+    configurable: true,
+  })
+}
+
 const createMemoryStorage = (): Storage => {
   const store = new Map<string, string>()
 
