@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-  type MouseEvent,
-} from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -21,7 +15,6 @@ import { getBuoysList, getSpots, updateSpotInfo } from '../services/api'
 import { validateSpainSeaOrBeachLocation } from '../utils/spainCoastValidation'
 import { BottomSheet } from '../components/BottomSheet'
 import { PageHeader } from '../components/PageHeader'
-import { SelectMenu } from '../components/SelectMenu'
 
 interface MapPageProps {
   onFocusBuoy: (id: string) => void
@@ -102,13 +95,81 @@ const runPopupAction = (
   action()
 }
 
+const normalizeText = (value: string): string =>
+  value
+    .toLocaleLowerCase('es-ES')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+
+const SEARCH_STOP_WORDS = new Set([
+  'playa',
+  'de',
+  'del',
+  'la',
+  'el',
+  'los',
+  'las',
+])
+
+const tokenize = (value: string): string[] =>
+  normalizeText(value)
+    .split(/\s+/)
+    .filter((token) => token.length > 0 && !SEARCH_STOP_WORDS.has(token))
+
+const isSubsequence = (needle: string, haystack: string): boolean => {
+  if (!needle) return true
+  let index = 0
+  for (const char of haystack) {
+    if (char === needle[index]) index += 1
+    if (index === needle.length) return true
+  }
+  return false
+}
+
+const getSpotSearchScore = (query: string, spotName: string): number => {
+  const normalizedQuery = normalizeText(query)
+  const normalizedName = normalizeText(spotName)
+  if (!normalizedQuery) return 1
+
+  let score = 0
+  if (normalizedName === normalizedQuery) score += 120
+  if (normalizedName.startsWith(normalizedQuery)) score += 90
+  if (normalizedName.includes(normalizedQuery)) score += 65
+
+  const queryTokens = tokenize(normalizedQuery)
+  const nameTokens = tokenize(normalizedName)
+
+  if (
+    queryTokens.length > 0 &&
+    queryTokens.every((token) =>
+      nameTokens.some((nameToken) => nameToken === token),
+    )
+  ) {
+    score += 55
+  }
+
+  if (
+    queryTokens.length > 0 &&
+    queryTokens.every((token) =>
+      nameTokens.some((nameToken) => nameToken.startsWith(token)),
+    )
+  ) {
+    score += 35
+  }
+
+  if (isSubsequence(normalizedQuery, normalizedName)) score += 12
+
+  return score
+}
+
 export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
   const [buoys, setBuoys] = useState<BuoyInfoDoc[]>([])
   const [spots, setSpots] = useState<Spot[]>([])
   const [selected, setSelected] = useState<BuoyInfoDoc | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isSpotFormOpen, setIsSpotFormOpen] = useState(false)
-  const [draftSpotId, setDraftSpotId] = useState('')
+  const [draftSpotId, setDraftSpotId] = useState<string | null>(null)
+  const [draftSpotQuery, setDraftSpotQuery] = useState('')
   const [draftSpotPosition, setDraftSpotPosition] = useState<
     [number, number] | null
   >(null)
@@ -119,6 +180,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     nextActive: boolean
   } | null>(null)
   const [updatingSpotId, setUpdatingSpotId] = useState<string | null>(null)
+  const draftMarkerRef = useRef<LeafletMarker | null>(null)
 
   const getLocationErrorMessage = (reason: 'outside_spain' | 'inland') => {
     if (reason === 'outside_spain') {
@@ -127,24 +189,20 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     return `Solo puedes colocar spots en el mar o hasta ${(COAST_BEACH_BAND_METERS / 1000).toFixed(1)} km desde la costa.`
   }
 
-  const closeAddSpot = () => {
-    setIsSpotFormOpen(false)
-    setDraftSpotId('')
+  const clearDraftSpot = () => {
+    setDraftSpotId(null)
+    setDraftSpotQuery('')
+    setDraftSpotPosition(null)
     setCreateSpotError(null)
     setIsSavingSpot(false)
   }
 
-  const openSpotForm = () => {
-    if (!draftSpotPosition) {
-      setCreateSpotError('Selecciona una ubicación en el mapa')
-      return
-    }
-    setIsSpotFormOpen(true)
+  const handlePickSpotPosition = (position: [number, number]) => {
+    setDraftSpotPosition(position)
     setCreateSpotError(null)
   }
 
-  const handleCreateSpot = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const handleActivateDraftSpot = async () => {
     if (!draftSpotPosition) {
       setCreateSpotError('Selecciona una ubicación en el mapa')
       return
@@ -164,8 +222,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
       })
       const updatedSpots = await getSpots()
       setSpots(updatedSpots)
-      setDraftSpotPosition(null)
-      closeAddSpot()
+      clearDraftSpot()
     } catch (error) {
       console.error('Failed to update spot:', error)
       setCreateSpotError('No se pudo activar el spot seleccionado.')
@@ -246,15 +303,11 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     [spots],
   )
 
-  const inactiveSpotOptions = useMemo(
+  const inactiveSpots = useMemo(
     () =>
       spots
         .filter((spot) => spot.active !== true)
-        .sort((a, b) => a.spotName.localeCompare(b.spotName, 'es-ES'))
-        .map((spot) => ({
-          value: spot.spotId,
-          label: spot.spotName,
-        })),
+        .sort((a, b) => a.spotName.localeCompare(b.spotName, 'es-ES')),
     [spots],
   )
 
@@ -269,12 +322,34 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     [spots],
   )
 
+  const draftSpotSuggestions = useMemo(() => {
+    if (!draftSpotQuery.trim()) {
+      return inactiveSpots.slice(0, 8)
+    }
+
+    return inactiveSpots
+      .map((spot) => ({
+        spot,
+        score: getSpotSearchScore(draftSpotQuery, spot.spotName),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map((entry) => entry.spot)
+  }, [draftSpotQuery, inactiveSpots])
+
   useEffect(() => {
-    if (!isSpotFormOpen) return
-    if (inactiveSpotOptions.length === 0) return
-    if (inactiveSpotOptions.some((spot) => spot.value === draftSpotId)) return
-    setDraftSpotId(inactiveSpotOptions[0].value)
-  }, [draftSpotId, inactiveSpotOptions, isSpotFormOpen])
+    if (!draftSpotId) return
+    if (inactiveSpots.some((spot) => spot.spotId === draftSpotId)) return
+    setDraftSpotId(null)
+  }, [draftSpotId, inactiveSpots])
+
+  useEffect(() => {
+    if (!draftSpotPosition) return
+    window.setTimeout(() => {
+      draftMarkerRef.current?.openPopup()
+    }, 0)
+  }, [draftSpotPosition, draftSpotSuggestions.length])
 
   // Calculate map center from buoys/spots or use default Spain center
   const mapCenter: [number, number] = useMemo(
@@ -295,47 +370,25 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
 
   return (
     <div className='relative h-[calc(100vh-80px)]'>
-      <div className='absolute left-4 top-4 z-10 space-y-3'>
+      <div className='absolute left-4 top-4 z-10'>
         <PageHeader title='Mapa' />
-        <div className='rounded-xl bg-ocean-800/90 p-3 text-xs text-ocean-200'>
-          <p className='mb-2 text-[11px] text-ocean-100'>
-            Click en el mapa para colocar un pin nuevo
-          </p>
+      </div>
+      {!draftSpotPosition && (
+        <div className='absolute bottom-4 left-4 z-10 rounded-xl bg-ocean-800/80 px-3 py-2 text-[11px] text-ocean-200 backdrop-blur'>
           {loading ? (
             <p>Cargando mapa...</p>
           ) : (
-            <>
+            <div className='space-y-0.5'>
               <p>Boyas: {buoysWithCoordinates.length}</p>
               <p>Spots activos: {activeSpotsWithCoordinates.length}</p>
               <p>Spots inactivos: {inactiveSpotsWithCoordinates.length}</p>
-              <ul className='mt-2 space-y-1'>
-                {buoysWithCoordinates.slice(0, 5).map((buoy) => (
-                  <li key={buoy.buoyId}>
-                    <button
-                      type='button'
-                      onClick={() => setSelected(buoy)}
-                      className='touch-manipulation text-ocean-100 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300'
-                    >
-                      {buoy.buoyName} ({buoy.buoyId})
-                    </button>
-                  </li>
-                ))}
-                {buoysWithCoordinates.length > 5 && (
-                  <li className='text-ocean-300'>
-                    +{buoysWithCoordinates.length - 5} more
-                  </li>
-                )}
-              </ul>
-            </>
+            </div>
           )}
         </div>
-      </div>
+      )}
       <MapContainer center={mapCenter} zoom={6} className='h-full w-full'>
         <SpotPlacementHandler
-          onPick={(position) => {
-            setDraftSpotPosition(position)
-            setCreateSpotError(null)
-          }}
+          onPick={handlePickSpotPosition}
           onInvalidPick={(reason) => {
             setCreateSpotError(getLocationErrorMessage(reason))
           }}
@@ -516,6 +569,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
         })}
         {draftSpotPosition && (
           <Marker
+            ref={draftMarkerRef}
             position={draftSpotPosition}
             icon={spotIcon}
             draggable
@@ -539,79 +593,103 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
               },
             }}
           >
-            <Popup>Nuevo spot (pendiente)</Popup>
+            <Popup
+              autoClose={false}
+              closeOnClick={false}
+              closeButton={false}
+              className='draft-spot-popup'
+            >
+              <div
+                className='w-[230px] space-y-2 text-xs'
+                onClick={(event) => event.stopPropagation()}
+              >
+                <p className='font-semibold text-slate-700'>Nuevo spot</p>
+                <div className='max-h-28 overflow-y-auto rounded-md border border-slate-200'>
+                  {draftSpotSuggestions.length > 0 ? (
+                    <ul>
+                      {draftSpotSuggestions.map((spot) => (
+                        <li key={spot.spotId}>
+                          <button
+                            type='button'
+                            onClick={(event) =>
+                              runPopupAction(event, () => {
+                                setDraftSpotId(spot.spotId)
+                                setDraftSpotQuery(spot.spotName)
+                              })
+                            }
+                            className={`w-full px-2 py-1.5 text-left text-xs hover:bg-slate-100 ${
+                              draftSpotId === spot.spotId
+                                ? 'bg-sky-100 text-sky-800'
+                                : 'text-slate-700'
+                            }`}
+                          >
+                            {spot.spotName}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className='px-2 py-2 text-[11px] text-slate-500'>
+                      Sin coincidencias
+                    </p>
+                  )}
+                </div>
+
+                <input
+                  type='text'
+                  value={draftSpotQuery}
+                  onChange={(event) => {
+                    setDraftSpotQuery(event.target.value)
+                    setDraftSpotId(null)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return
+                    event.preventDefault()
+                    const firstSuggestion = draftSpotSuggestions[0]
+                    if (!firstSuggestion) return
+                    setDraftSpotId(firstSuggestion.spotId)
+                    setDraftSpotQuery(firstSuggestion.spotName)
+                  }}
+                  placeholder='Buscar spot (ej: somo)'
+                  className='w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-800 focus:border-sky-500 focus:outline-none'
+                />
+
+                <div className='flex gap-2'>
+                  <button
+                    type='button'
+                    onClick={(event) =>
+                      runPopupAction(event, () => {
+                        void handleActivateDraftSpot()
+                      })
+                    }
+                    disabled={isSavingSpot || !draftSpotId}
+                    className='flex-1 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60'
+                  >
+                    {isSavingSpot ? 'Guardando…' : 'Activar'}
+                  </button>
+                  <button
+                    type='button'
+                    onClick={(event) =>
+                      runPopupAction(event, () => {
+                        clearDraftSpot()
+                      })
+                    }
+                    className='flex-1 rounded-md bg-slate-200 px-2 py-1.5 text-xs font-semibold text-slate-700'
+                  >
+                    Cancelar
+                  </button>
+                </div>
+
+                {createSpotError && (
+                  <p className='text-[11px] font-medium text-rose-600'>
+                    {createSpotError}
+                  </p>
+                )}
+              </div>
+            </Popup>
           </Marker>
         )}
       </MapContainer>
-
-      {draftSpotPosition && !isSpotFormOpen && (
-        <div className='pointer-events-none absolute bottom-4 left-0 right-0 z-20 flex justify-center'>
-          <button
-            type='button'
-            onClick={openSpotForm}
-            className='pointer-events-auto touch-manipulation rounded-xl bg-ocean-500 px-5 py-3 text-sm font-semibold text-white shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300'
-          >
-            Añadir spot aquí
-          </button>
-        </div>
-      )}
-
-      <BottomSheet
-        open={isSpotFormOpen}
-        title='Añadir spot'
-        onClose={closeAddSpot}
-        closeLabel='Cancelar'
-      >
-        <form className='space-y-4' onSubmit={handleCreateSpot}>
-          <p className='text-sm text-slate-700 dark:text-slate-200'>
-            Haz click en el mapa para colocar el pin y selecciona un spot de la
-            lista para activarlo.
-          </p>
-
-          <div className='space-y-1'>
-            <span className='text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300'>
-              Spot de forecast
-            </span>
-            <SelectMenu
-              value={draftSpotId || inactiveSpotOptions[0]?.value || 'none'}
-              onChange={setDraftSpotId}
-              ariaLabel='Seleccionar spot de forecast'
-              disabled={inactiveSpotOptions.length === 0}
-              className='w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 focus:border-sky-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
-              options={
-                inactiveSpotOptions.length > 0
-                  ? inactiveSpotOptions
-                  : [{ value: 'none', label: 'No hay spots disponibles' }]
-              }
-            />
-          </div>
-
-          <div className='rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'>
-            {draftSpotPosition
-              ? `Coordenadas: ${draftSpotPosition[1].toFixed(4)}, ${draftSpotPosition[0].toFixed(4)}`
-              : 'Selecciona una ubicación en el mapa'}
-          </div>
-
-          {createSpotError && (
-            <p className='text-xs font-medium text-rose-600 dark:text-rose-300'>
-              {createSpotError}
-            </p>
-          )}
-
-          <button
-            type='submit'
-            disabled={
-              isSavingSpot ||
-              !draftSpotPosition ||
-              !draftSpotId ||
-              inactiveSpotOptions.length === 0
-            }
-            className='w-full touch-manipulation rounded-xl bg-ocean-500 px-4 py-3 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 disabled:cursor-not-allowed disabled:opacity-50'
-          >
-            {isSavingSpot ? 'Guardando…' : 'Activar spot'}
-          </button>
-        </form>
-      </BottomSheet>
 
       <BottomSheet
         open={Boolean(selected)}
