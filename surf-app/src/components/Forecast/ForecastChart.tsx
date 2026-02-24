@@ -14,6 +14,7 @@ import {
   resolveActiveSnapshotLabel,
   type ForecastChartPoint,
 } from './forecastSnapshots'
+import { buildForecastAxes, mapEnergyToLeftAxis } from './forecastAxes'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -45,19 +46,6 @@ const formatNumber = (value: number, locale: string, digits = 0): string =>
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
-
-const getNiceEnergyStep = (rawStep: number): number => {
-  if (!Number.isFinite(rawStep) || rawStep <= 0) return 50
-
-  const magnitude = 10 ** Math.floor(Math.log10(rawStep))
-  const normalized = rawStep / magnitude
-
-  if (normalized <= 1) return 1 * magnitude
-  if (normalized <= 2) return 2 * magnitude
-  if (normalized <= 2.5) return 2.5 * magnitude
-  if (normalized <= 5) return 5 * magnitude
-  return 10 * magnitude
-}
 
 const mixColor = (
   start: [number, number, number],
@@ -312,126 +300,21 @@ export const ForecastChart = ({
     [forecasts],
   )
 
-  const maxWaveHeight = useMemo(
-    () => chartData.reduce((max, item) => Math.max(max, item.waveHeight), 0),
-    [chartData],
-  )
-
-  const minWaveHeight = useMemo(
-    () =>
-      chartData.reduce((min, item) => Math.min(min, item.waveHeight), Infinity),
-    [chartData],
-  )
-
-  const maxEnergy = useMemo(
-    () => chartData.reduce((max, item) => Math.max(max, item.energy), 0),
-    [chartData],
-  )
-
-  const minEnergy = useMemo(
-    () => chartData.reduce((min, item) => Math.min(min, item.energy), Infinity),
-    [chartData],
-  )
-
-  const leftAxisStep = useMemo(() => {
-    if (maxWaveHeight > 7) return 2
-    if (maxWaveHeight < 4) return 0.5
-    return 1
-  }, [maxWaveHeight])
-
-  const firstWaveTick = useMemo(() => {
-    if (!Number.isFinite(minWaveHeight) || minWaveHeight <= 0)
-      return leftAxisStep
-    return Math.max(
-      leftAxisStep,
-      Math.floor(minWaveHeight / leftAxisStep) * leftAxisStep,
-    )
-  }, [leftAxisStep, minWaveHeight])
-
-  const leftAxisMin = useMemo(
-    () => Math.max(0, Number((firstWaveTick - leftAxisStep * 0.5).toFixed(2))),
-    [firstWaveTick, leftAxisStep],
-  )
-
-  const leftAxisMax = useMemo(() => {
-    const target = Math.max(
-      maxWaveHeight * 1.1,
-      maxWaveHeight + leftAxisStep * 0.5,
-    )
-    const rounded = Math.ceil(target / leftAxisStep) * leftAxisStep
-    return Number(Math.max(leftAxisStep, rounded).toFixed(2))
-  }, [leftAxisStep, maxWaveHeight])
-
-  const leftAxisTicks = useMemo(() => {
-    const ticks: number[] = []
-    for (
-      let value = firstWaveTick;
-      value <= leftAxisMax;
-      value += leftAxisStep
-    ) {
-      ticks.push(Number(value.toFixed(2)))
-    }
-    return ticks
-  }, [firstWaveTick, leftAxisMax, leftAxisStep])
-
-  const rightTickCount = Math.max(2, leftAxisTicks.length)
-
-  const rightEnergyScale = useMemo(() => {
-    const anchorStep = getNiceEnergyStep((maxEnergy - minEnergy) / 8)
-    const first = Number(
-      (Math.floor(minEnergy / anchorStep) * anchorStep).toFixed(2),
-    )
-    const last = Number(
-      (Math.ceil(maxEnergy / anchorStep) * anchorStep).toFixed(2),
-    )
-    const safeLast = last <= first ? first + anchorStep : last
-
-    const ticks = Array.from({ length: rightTickCount }, (_, index) => {
-      const ratio = rightTickCount === 1 ? 0 : index / (rightTickCount - 1)
-      return Number((first + (safeLast - first) * ratio).toFixed(2))
-    })
-
-    return {
-      first,
-      last: safeLast,
-      ticks,
-    }
-  }, [maxEnergy, minEnergy, rightTickCount])
-
-  const leftFirstTick = leftAxisTicks[0] ?? firstWaveTick
-  const leftLastTick = leftAxisTicks[leftAxisTicks.length - 1] ?? leftAxisMax
-  const leftTickSpan = Math.max(0.0001, leftLastTick - leftFirstTick)
-  const rightTickSpan = Math.max(
-    0.0001,
-    rightEnergyScale.last - rightEnergyScale.first,
-  )
+  const axes = useMemo(() => buildForecastAxes(chartData), [chartData])
 
   const mappedChartData = useMemo(
-    () =>
-      chartData.map((point) => ({
-        ...point,
-        energyMapped:
-          leftFirstTick +
-          ((point.energy - rightEnergyScale.first) / rightTickSpan) *
-            leftTickSpan,
-      })),
-    [
-      chartData,
-      leftFirstTick,
-      leftTickSpan,
-      rightEnergyScale.first,
-      rightTickSpan,
-    ],
+    () => mapEnergyToLeftAxis(chartData, axes),
+    [axes, chartData],
   )
 
   const rightTickLabelMap = useMemo(() => {
     const map = new Map<string, string>()
-    leftAxisTicks.forEach((tick, index) => {
-      const label = rightEnergyScale.ticks[index]
+    axes.leftAxisTicks.forEach((tick, index) => {
+      const label = axes.rightEnergyScale.ticks[index]
       map.set(tick.toFixed(4), `${Math.round(label ?? 0)}`)
     })
     return map
-  }, [leftAxisTicks, rightEnergyScale.ticks])
+  }, [axes.leftAxisTicks, axes.rightEnergyScale.ticks])
 
   const snapshotItems = useMemo(
     () => buildSnapshotItems(chartData, range, locale, nowMs),
@@ -649,9 +532,9 @@ export const ForecastChart = ({
               width: CHART_LAYOUT.leftAxisWidth,
               interval: 0,
               padding: { top: 10 },
-              domain: [leftAxisMin, leftAxisMax],
-              ticks: leftAxisTicks,
-              allowDecimals: leftAxisStep % 1 !== 0,
+              domain: [axes.leftAxisMin, axes.leftAxisMax],
+              ticks: axes.leftAxisTicks,
+              allowDecimals: axes.leftAxisStep % 1 !== 0,
               tickFormatter: (value) =>
                 `${Number.isInteger(value) ? value : value.toFixed(1)} m`,
             }}
@@ -659,8 +542,8 @@ export const ForecastChart = ({
               width: CHART_LAYOUT.forecastRightAxisWidth,
               interval: 0,
               padding: { top: 10 },
-              domain: [leftAxisMin, leftAxisMax],
-              ticks: leftAxisTicks,
+              domain: [axes.leftAxisMin, axes.leftAxisMax],
+              ticks: axes.leftAxisTicks,
               tickFormatter: (value) =>
                 rightTickLabelMap.get(Number(value).toFixed(4)) ?? '',
             }}
