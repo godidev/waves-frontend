@@ -4,6 +4,11 @@ import type { Spot, SurfForecast } from '../../types'
 import { DirectionArrow } from '../Icons'
 import { CHART_LAYOUT, CHART_SERIES_COLORS } from '../charts/chartTheme'
 import { TimeSeriesChart } from '../charts/TimeSeriesChart'
+import {
+  getSpotSwellPeriodQuality,
+  getSpotWindQuality,
+  hasConditionRanges,
+} from './forecastConditions'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -113,33 +118,6 @@ const getDefaultPeriodToneStyle = (period: number) => {
   }
 }
 
-const isValueInRange = (
-  value: number,
-  range: { from: number; to: number },
-): boolean => {
-  if (!Number.isFinite(value)) return false
-  if (!Number.isFinite(range.from) || !Number.isFinite(range.to)) return false
-  const min = Math.min(range.from, range.to)
-  const max = Math.max(range.from, range.to)
-  return value >= min && value <= max
-}
-
-const getSpotSwellPeriodQuality = (
-  period: number,
-  spot?: Spot | null,
-): 'epic' | 'limit' | 'poor' | null => {
-  const ranges = spot?.optimalConditions?.swellPeriod
-  if (!ranges) return null
-
-  if (ranges.epic.some((range) => isValueInRange(period, range))) return 'epic'
-  if (ranges.limit.some((range) => isValueInRange(period, range))) {
-    return 'limit'
-  }
-  if (ranges.poor.some((range) => isValueInRange(period, range))) return 'poor'
-
-  return 'poor'
-}
-
 const getSpotPeriodToneStyle = (period: number, spot?: Spot | null) => {
   const periodQuality = getSpotSwellPeriodQuality(period, spot)
   if (periodQuality === 'epic') {
@@ -153,19 +131,6 @@ const getSpotPeriodToneStyle = (period: number, spot?: Spot | null) => {
   }
 
   return getDefaultPeriodToneStyle(period)
-}
-
-const hasConditionRanges = (
-  ranges?: {
-    epic: Array<{ from: number; to: number }>
-    limit: Array<{ from: number; to: number }>
-    poor: Array<{ from: number; to: number }>
-  } | null,
-): boolean => {
-  if (!ranges) return false
-  return (
-    ranges.epic.length > 0 || ranges.limit.length > 0 || ranges.poor.length > 0
-  )
 }
 
 const getWindDirectionToneStyle = (angle: number) => {
@@ -207,46 +172,6 @@ const getWindDirectionToneStyle = (angle: number) => {
   }
 
   return { backgroundColor: toRgb(RED[0], RED[1], RED[2]) }
-}
-
-const normalizeAngle = (value: number): number => ((value % 360) + 360) % 360
-
-const normalizeRangeBound = (value: number): number => {
-  if (!Number.isFinite(value)) return 0
-  if (value === 360) return 360
-  return normalizeAngle(value)
-}
-
-const isAngleInRange = (
-  angle: number,
-  range: { from: number; to: number },
-): boolean => {
-  const normalizedAngle = normalizeAngle(angle)
-  const from = normalizeRangeBound(range.from)
-  const to = normalizeRangeBound(range.to)
-
-  const effectiveFrom = from === 360 ? 0 : from
-  const effectiveTo = to === 360 ? 359.999999 : to
-
-  if (effectiveFrom <= effectiveTo) {
-    return normalizedAngle >= effectiveFrom && normalizedAngle <= effectiveTo
-  }
-
-  return normalizedAngle >= effectiveFrom || normalizedAngle <= effectiveTo
-}
-
-const getSpotWindQuality = (
-  angle: number,
-  spot?: Spot | null,
-): 'epic' | 'limit' | 'poor' | null => {
-  const ranges = spot?.optimalConditions?.windDirection
-  if (!ranges) return null
-
-  if (ranges.epic.some((range) => isAngleInRange(angle, range))) return 'epic'
-  if (ranges.limit.some((range) => isAngleInRange(angle, range))) return 'limit'
-  if (ranges.poor.some((range) => isAngleInRange(angle, range))) return 'poor'
-
-  return 'poor'
 }
 
 const getSpotWindDirectionToneStyle = (angle: number, spot?: Spot | null) => {
