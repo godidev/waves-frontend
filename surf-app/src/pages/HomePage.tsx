@@ -498,6 +498,7 @@ export const HomePage = ({
             range={forecastRange}
             nowMs={nowMs}
             viewMode={forecastViewMode}
+            spot={resolvedSpot}
           />
         </Suspense>
         <div className='rounded-2xl p-2.5'>

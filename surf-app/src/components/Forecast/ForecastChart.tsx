@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { TooltipProps } from 'recharts'
-import type { SurfForecast } from '../../types'
+import type { Spot, SurfForecast } from '../../types'
 import { DirectionArrow } from '../Icons'
 import { CHART_LAYOUT, CHART_SERIES_COLORS } from '../charts/chartTheme'
 import { TimeSeriesChart } from '../charts/TimeSeriesChart'
@@ -11,6 +11,7 @@ interface ForecastChartProps {
   range: '48h' | '7d'
   nowMs: number
   viewMode?: 'chart' | 'table'
+  spot?: Spot | null
 }
 
 type Trend = 'up' | 'down' | 'flat' | null
@@ -71,7 +72,7 @@ const mixColor = (
     mix(start[2], end[2], ratio),
   )
 
-const getPeriodToneStyle = (period: number) => {
+const getDefaultPeriodToneStyle = (period: number) => {
   const value = clamp(period, PERIOD_THRESHOLDS.min, PERIOD_THRESHOLDS.max)
 
   if (value <= PERIOD_THRESHOLDS.yellowStart) {
@@ -110,6 +111,61 @@ const getPeriodToneStyle = (period: number) => {
       mix(8, 94, ratio),
     ),
   }
+}
+
+const isValueInRange = (
+  value: number,
+  range: { from: number; to: number },
+): boolean => {
+  if (!Number.isFinite(value)) return false
+  if (!Number.isFinite(range.from) || !Number.isFinite(range.to)) return false
+  const min = Math.min(range.from, range.to)
+  const max = Math.max(range.from, range.to)
+  return value >= min && value <= max
+}
+
+const getSpotSwellPeriodQuality = (
+  period: number,
+  spot?: Spot | null,
+): 'epic' | 'limit' | 'poor' | null => {
+  const ranges = spot?.optimalConditions?.swellPeriod
+  if (!ranges) return null
+
+  if (ranges.epic.some((range) => isValueInRange(period, range))) return 'epic'
+  if (ranges.limit.some((range) => isValueInRange(period, range))) {
+    return 'limit'
+  }
+  if (ranges.poor.some((range) => isValueInRange(period, range))) return 'poor'
+
+  return 'poor'
+}
+
+const getSpotPeriodToneStyle = (period: number, spot?: Spot | null) => {
+  const periodQuality = getSpotSwellPeriodQuality(period, spot)
+  if (periodQuality === 'epic') {
+    return { backgroundColor: toRgb(34, 197, 94) }
+  }
+  if (periodQuality === 'limit') {
+    return { backgroundColor: toRgb(250, 204, 21) }
+  }
+  if (periodQuality === 'poor') {
+    return { backgroundColor: toRgb(239, 68, 68) }
+  }
+
+  return getDefaultPeriodToneStyle(period)
+}
+
+const hasConditionRanges = (
+  ranges?: {
+    epic: Array<{ from: number; to: number }>
+    limit: Array<{ from: number; to: number }>
+    poor: Array<{ from: number; to: number }>
+  } | null,
+): boolean => {
+  if (!ranges) return false
+  return (
+    ranges.epic.length > 0 || ranges.limit.length > 0 || ranges.poor.length > 0
+  )
 }
 
 const getWindDirectionToneStyle = (angle: number) => {
@@ -151,6 +207,61 @@ const getWindDirectionToneStyle = (angle: number) => {
   }
 
   return { backgroundColor: toRgb(RED[0], RED[1], RED[2]) }
+}
+
+const normalizeAngle = (value: number): number => ((value % 360) + 360) % 360
+
+const normalizeRangeBound = (value: number): number => {
+  if (!Number.isFinite(value)) return 0
+  if (value === 360) return 360
+  return normalizeAngle(value)
+}
+
+const isAngleInRange = (
+  angle: number,
+  range: { from: number; to: number },
+): boolean => {
+  const normalizedAngle = normalizeAngle(angle)
+  const from = normalizeRangeBound(range.from)
+  const to = normalizeRangeBound(range.to)
+
+  const effectiveFrom = from === 360 ? 0 : from
+  const effectiveTo = to === 360 ? 359.999999 : to
+
+  if (effectiveFrom <= effectiveTo) {
+    return normalizedAngle >= effectiveFrom && normalizedAngle <= effectiveTo
+  }
+
+  return normalizedAngle >= effectiveFrom || normalizedAngle <= effectiveTo
+}
+
+const getSpotWindQuality = (
+  angle: number,
+  spot?: Spot | null,
+): 'epic' | 'limit' | 'poor' | null => {
+  const ranges = spot?.optimalConditions?.windDirection
+  if (!ranges) return null
+
+  if (ranges.epic.some((range) => isAngleInRange(angle, range))) return 'epic'
+  if (ranges.limit.some((range) => isAngleInRange(angle, range))) return 'limit'
+  if (ranges.poor.some((range) => isAngleInRange(angle, range))) return 'poor'
+
+  return 'poor'
+}
+
+const getSpotWindDirectionToneStyle = (angle: number, spot?: Spot | null) => {
+  const windQuality = getSpotWindQuality(angle, spot)
+  if (windQuality === 'epic') {
+    return { backgroundColor: toRgb(34, 197, 94) }
+  }
+  if (windQuality === 'limit') {
+    return { backgroundColor: toRgb(250, 204, 21) }
+  }
+  if (windQuality === 'poor') {
+    return { backgroundColor: toRgb(239, 68, 68) }
+  }
+
+  return getWindDirectionToneStyle(angle)
 }
 
 const CustomTooltip = ({
@@ -265,6 +376,7 @@ export const ForecastChart = ({
   range,
   nowMs,
   viewMode = 'chart',
+  spot,
 }: ForecastChartProps) => {
   const [selectedSnapshotLabel, setSelectedSnapshotLabel] = useState('Ahora')
   const chartMargin = { top: 0, right: 0, left: -8, bottom: -12 }
@@ -520,8 +632,15 @@ export const ForecastChart = ({
     paddingRight: `${Math.max(0, CHART_LAYOUT.forecastRightAxisWidth + chartMargin.right)}px`,
   }
 
+  const showPeriodColorBar = hasConditionRanges(
+    spot?.optimalConditions?.swellPeriod,
+  )
+  const showWindColorBar = hasConditionRanges(
+    spot?.optimalConditions?.windDirection,
+  )
+
   return (
-    <div className='space-y-3'>
+    <div>
       {viewMode === 'table' && (
         <div className='rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/70'>
           <table className='w-full border-collapse text-[11px] text-slate-700 dark:text-slate-200'>
@@ -763,40 +882,14 @@ export const ForecastChart = ({
             baselineLabel='0 m'
           />
 
-          <div className='space-y-2.5 rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 py-3 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/70'>
+          <div className='rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/70'>
             <div>
-              <p className='mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
-                Periodo
+              <p className='mb-0.5 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
+                Viento
               </p>
               <div style={chartContentPadding}>
-                <div className='flex h-2 w-full overflow-hidden rounded-full'>
-                  {chartData.map((point) => (
-                    <span
-                      key={`period-${point.time}`}
-                      className='h-full flex-1'
-                      style={getPeriodToneStyle(point.wavePeriod)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <p className='mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
-                Dirección de viento
-              </p>
-              <div style={chartContentPadding}>
-                <div className='flex h-2 w-full overflow-hidden rounded-full'>
-                  {chartData.map((point) => (
-                    <span
-                      key={`wind-${point.time}`}
-                      className='h-full flex-1'
-                      style={getWindDirectionToneStyle(point.windDirection)}
-                    />
-                  ))}
-                </div>
                 <div
-                  className='mt-1.5 grid w-full items-center text-center'
+                  className='grid w-full items-center text-center'
                   style={{
                     gridTemplateColumns: `repeat(${Math.max(chartData.length, 1)}, minmax(0, 1fr))`,
                   }}
@@ -815,6 +908,44 @@ export const ForecastChart = ({
                 </div>
               </div>
             </div>
+
+            {showWindColorBar && (
+              <div>
+                <div style={chartContentPadding}>
+                  <div className='flex h-2 w-full overflow-hidden rounded-full'>
+                    {chartData.map((point) => (
+                      <span
+                        key={`wind-${point.time}`}
+                        className='h-full flex-1'
+                        style={getSpotWindDirectionToneStyle(
+                          point.windDirection,
+                          spot,
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showPeriodColorBar && (
+              <div className='mt-1.5'>
+                <p className='mb-0.5 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
+                  Periodo
+                </p>
+                <div style={chartContentPadding}>
+                  <div className='flex h-2 w-full overflow-hidden rounded-full'>
+                    {chartData.map((point) => (
+                      <span
+                        key={`period-${point.time}`}
+                        className='h-full flex-1'
+                        style={getSpotPeriodToneStyle(point.wavePeriod, spot)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

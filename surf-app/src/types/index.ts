@@ -104,6 +104,19 @@ export interface Spot {
     /** [longitud, latitud] en grados decimales */
     coordinates: [number, number]
   } | null
+  /** Condiciones óptimas por rangos para clasificar estado */
+  optimalConditions?: {
+    swellPeriod?: {
+      epic: Array<{ from: number; to: number }>
+      limit: Array<{ from: number; to: number }>
+      poor: Array<{ from: number; to: number }>
+    }
+    windDirection?: {
+      epic: Array<{ from: number; to: number }>
+      limit: Array<{ from: number; to: number }>
+      poor: Array<{ from: number; to: number }>
+    }
+  }
 }
 
 /** Respuesta de error de la API */

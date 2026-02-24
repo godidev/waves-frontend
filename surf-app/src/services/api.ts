@@ -166,7 +166,7 @@ export const getSurfForecast = async (
 
 export const getSpots = async (): Promise<Spot[]> => {
   return withCache(
-    'spots:list:v2',
+    'spots:list:v3',
     async () => {
       const spots = await fetchJson<Spot[]>('/spots')
       return spots.filter((spot) => spot.spotId.trim().length > 0)
@@ -227,7 +227,7 @@ export const updateSpotInfo = async (
       throw new Error(`API ${response.status}: /spots/${spotId}`)
     }
 
-    invalidateCachedResource('spots:list:v2')
+    invalidateCachedResource('spots:list:v3')
     return (await response.json()) as Spot
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
