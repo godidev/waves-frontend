@@ -203,6 +203,11 @@ export const TimeSeriesChart = ({
   const canRenderChart = containerSize.width > 0 && containerSize.height > 0
   const baselineY =
     typeof leftAxis.domain?.[0] === 'number' ? leftAxis.domain[0] : 0
+  const isSelectedMarkerOnNow =
+    Boolean(showNowMarker) &&
+    closestToNow !== null &&
+    selectedTimeMarker !== undefined &&
+    selectedTimeMarker.time === closestToNow
 
   return (
     <div className='space-y-2 rounded-2xl py-2'>
@@ -368,7 +373,7 @@ export const TimeSeriesChart = ({
                 strokeOpacity={CHART_THEME.selectedMarkerOpacity}
                 strokeDasharray='4 4'
                 label={
-                  selectedTimeMarker.label
+                  selectedTimeMarker.label && !isSelectedMarkerOnNow
                     ? {
                         value: selectedTimeMarker.label,
                         position: 'insideTopRight',

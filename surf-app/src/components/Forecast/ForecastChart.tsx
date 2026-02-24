@@ -882,7 +882,7 @@ export const ForecastChart = ({
             baselineLabel='0 m'
           />
 
-          <div className='rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 py-2 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800/70'>
+          <div className='pt-1'>
             <div>
               <p className='mb-0.5 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
                 Viento
