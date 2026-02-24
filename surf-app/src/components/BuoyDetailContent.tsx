@@ -84,7 +84,7 @@ export const BuoyDetailContent = ({
 
   if (loading) {
     if (!showStatusMessages) return null
-    return <StatusMessage message='Cargando...' />
+    return <StatusMessage message='Cargando…' />
   }
 
   if (error) {

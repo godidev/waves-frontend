@@ -37,7 +37,7 @@ export const BuoyDetailPage = ({ stationId }: BuoyDetailPageProps) => {
   }, [stationId])
 
   if (loading) {
-    return <StatusMessage message='Cargando...' />
+    return <StatusMessage message='Cargando…' />
   }
 
   if (error) {

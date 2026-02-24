@@ -8,6 +8,7 @@ interface SelectMenuProps {
   options: SelectMenuOption[]
   onChange: (value: string) => void
   ariaLabel: string
+  name?: string
   className?: string
   disabled?: boolean
 }
@@ -17,6 +18,7 @@ export const SelectMenu = ({
   options,
   onChange,
   ariaLabel,
+  name,
   className,
   disabled,
 }: SelectMenuProps) => (
@@ -24,6 +26,8 @@ export const SelectMenu = ({
     value={value}
     onChange={(event) => onChange(event.target.value)}
     aria-label={ariaLabel}
+    name={name}
+    autoComplete='off'
     disabled={disabled}
     className={
       className ??

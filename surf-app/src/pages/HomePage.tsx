@@ -327,7 +327,7 @@ export const HomePage = ({
     nearbyBuoysStatus === 'loading' || buoyOptions.length === 0
   const buoySelectOptions =
     nearbyBuoysStatus === 'loading'
-      ? [{ value: activeStationId || 'loading', label: 'Buscando boyas...' }]
+      ? [{ value: activeStationId || 'loading', label: 'Buscando boyas…' }]
       : buoyOptions.length > 0
         ? buoyOptions.map((station) => ({
             value: station.id,
@@ -424,6 +424,7 @@ export const HomePage = ({
                 value={resolvedSpotId}
                 onChange={onSelectSpot}
                 ariaLabel='Seleccionar spot'
+                name='forecast-spot'
                 className={headerSelectClass}
                 options={spotItems}
               />
@@ -509,6 +510,7 @@ export const HomePage = ({
                   value={buoySelectValue}
                   onChange={onSelectStation}
                   ariaLabel='Seleccionar boya'
+                  name='nearby-buoy'
                   disabled={isBuoySelectorDisabled}
                   className={`${headerSelectClass} ${
                     isBuoySelectorDisabled
@@ -529,6 +531,7 @@ export const HomePage = ({
             </div>
             <input
               type='range'
+              name='buoy-search-radius-km'
               min={10}
               max={1000}
               step={10}

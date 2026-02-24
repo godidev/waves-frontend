@@ -101,6 +101,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
             <span>Tema</span>
             <SelectMenu
               value={settings.theme}
+              name='theme'
               onChange={(value) =>
                 onUpdate({
                   ...settings,
@@ -119,6 +120,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
             <span>Spot por defecto</span>
             <SelectMenu
               value={settings.defaultSpotId}
+              name='default-spot'
               onChange={(value) =>
                 onUpdate({ ...settings, defaultSpotId: value })
               }
@@ -131,6 +133,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
             <span>Boya por defecto</span>
             <SelectMenu
               value={settings.defaultStationId}
+              name='default-buoy'
               onChange={(value) =>
                 onUpdate({ ...settings, defaultStationId: value })
               }

@@ -21,7 +21,10 @@ interface MapPageProps {
 }
 
 const COAST_BEACH_BAND_METERS = 1300
+const COAST_BEACH_BAND_KM = COAST_BEACH_BAND_METERS / 1000
 const SOPELANA_DEFAULT_CENTER: [number, number] = [43.3873, -3.0128]
+const DIACRITICS_REGEX = /[\u0300-\u036f]/g
+const MAX_DRAFT_SUGGESTIONS = 8
 
 // Custom marker icon for buoys
 const buoyIcon = new Icon({
@@ -100,7 +103,7 @@ const normalizeText = (value: string): string =>
   value
     .toLocaleLowerCase('es-ES')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(DIACRITICS_REGEX, '')
     .trim()
 
 const SEARCH_STOP_WORDS = new Set([
@@ -113,8 +116,8 @@ const SEARCH_STOP_WORDS = new Set([
   'las',
 ])
 
-const tokenize = (value: string): string[] =>
-  normalizeText(value)
+const tokenizeNormalized = (value: string): string[] =>
+  value
     .split(/\s+/)
     .filter((token) => token.length > 0 && !SEARCH_STOP_WORDS.has(token))
 
@@ -138,8 +141,8 @@ const getSpotSearchScore = (query: string, spotName: string): number => {
   if (normalizedName.startsWith(normalizedQuery)) score += 90
   if (normalizedName.includes(normalizedQuery)) score += 65
 
-  const queryTokens = tokenize(normalizedQuery)
-  const nameTokens = tokenize(normalizedName)
+  const queryTokens = tokenizeNormalized(normalizedQuery)
+  const nameTokens = tokenizeNormalized(normalizedName)
 
   if (
     queryTokens.length > 0 &&
@@ -185,9 +188,9 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
 
   const getLocationErrorMessage = (reason: 'outside_spain' | 'inland') => {
     if (reason === 'outside_spain') {
-      return 'Solo puedes colocar spots o boyas en mar/playa de Espana.'
+      return 'Solo puedes colocar spots o boyas en mar/playa de España.'
     }
-    return `Solo puedes colocar spots en el mar o hasta ${(COAST_BEACH_BAND_METERS / 1000).toFixed(1)} km desde la costa.`
+    return `Solo puedes colocar spots en el mar o hasta ${COAST_BEACH_BAND_KM.toFixed(1)} km desde la costa.`
   }
 
   const clearDraftSpot = () => {
@@ -325,7 +328,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
 
   const draftSpotSuggestions = useMemo(() => {
     if (!draftSpotQuery.trim()) {
-      return inactiveSpots.slice(0, 8)
+      return inactiveSpots.slice(0, MAX_DRAFT_SUGGESTIONS)
     }
 
     return inactiveSpots
@@ -335,7 +338,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
       }))
       .filter((entry) => entry.score > 0)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
+      .slice(0, MAX_DRAFT_SUGGESTIONS)
       .map((entry) => entry.spot)
   }, [draftSpotQuery, inactiveSpots])
 
@@ -347,14 +350,20 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
 
   useEffect(() => {
     if (!draftSpotPosition) return
-    window.setTimeout(() => {
+    const timerId = window.setTimeout(() => {
       draftMarkerRef.current?.openPopup()
     }, 0)
+    return () => {
+      window.clearTimeout(timerId)
+    }
   }, [draftSpotPosition, draftSpotSuggestions.length])
 
   const sopelanaSpotCenter = useMemo(() => {
     const sopelanaSpot = spots.find((spot) => {
-      if (!spot.location?.coordinates || spot.location.coordinates.length !== 2) {
+      if (
+        !spot.location?.coordinates ||
+        spot.location.coordinates.length !== 2
+      ) {
         return false
       }
       return normalizeText(spot.spotName).includes('sopelana')
@@ -394,7 +403,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
       {!draftSpotPosition && (
         <div className='absolute bottom-4 left-4 z-10 rounded-xl bg-ocean-800/80 px-3 py-2 text-[11px] text-ocean-200 backdrop-blur'>
           {loading ? (
-            <p>Cargando mapa...</p>
+            <p>Cargando mapa…</p>
           ) : (
             <div className='space-y-0.5'>
               <p>Boyas: {buoysWithCoordinates.length}</p>
@@ -655,6 +664,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
 
                 <input
                   type='text'
+                  name='spot-search'
                   value={draftSpotQuery}
                   onChange={(event) => {
                     setDraftSpotQuery(event.target.value)
@@ -669,6 +679,9 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
                     setDraftSpotQuery(firstSuggestion.spotName)
                   }}
                   placeholder='Buscar spot (ej: somo)'
+                  autoComplete='off'
+                  spellCheck={false}
+                  aria-label='Buscar spot inactivo para activar'
                   className='w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs text-slate-800 focus:border-sky-500 focus:outline-none'
                 />
 
