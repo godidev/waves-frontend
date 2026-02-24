@@ -21,6 +21,7 @@ interface MapPageProps {
 }
 
 const COAST_BEACH_BAND_METERS = 1300
+const SOPELANA_DEFAULT_CENTER: [number, number] = [43.3873, -3.0128]
 
 // Custom marker icon for buoys
 const buoyIcon = new Icon({
@@ -351,21 +352,38 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     }, 0)
   }, [draftSpotPosition, draftSpotSuggestions.length])
 
-  // Calculate map center from buoys/spots or use default Spain center
+  const sopelanaSpotCenter = useMemo(() => {
+    const sopelanaSpot = spots.find((spot) => {
+      if (!spot.location?.coordinates || spot.location.coordinates.length !== 2) {
+        return false
+      }
+      return normalizeText(spot.spotName).includes('sopelana')
+    })
+
+    if (!sopelanaSpot?.location?.coordinates) return null
+
+    return [
+      sopelanaSpot.location.coordinates[1],
+      sopelanaSpot.location.coordinates[0],
+    ] as [number, number]
+  }, [spots])
+
+  // Default center prefers Sopelana.
   const mapCenter: [number, number] = useMemo(
     () =>
-      buoysWithCoordinates.length > 0
+      sopelanaSpotCenter ??
+      (activeSpotsWithCoordinates.length > 0
         ? [
-            buoysWithCoordinates[0].location!.coordinates[1],
-            buoysWithCoordinates[0].location!.coordinates[0],
+            activeSpotsWithCoordinates[0].location!.coordinates[1],
+            activeSpotsWithCoordinates[0].location!.coordinates[0],
           ]
-        : activeSpotsWithCoordinates.length > 0
+        : buoysWithCoordinates.length > 0
           ? [
-              activeSpotsWithCoordinates[0].location!.coordinates[1],
-              activeSpotsWithCoordinates[0].location!.coordinates[0],
+              buoysWithCoordinates[0].location!.coordinates[1],
+              buoysWithCoordinates[0].location!.coordinates[0],
             ]
-          : [40.4, -3.7],
-    [activeSpotsWithCoordinates, buoysWithCoordinates],
+          : SOPELANA_DEFAULT_CENTER),
+    [activeSpotsWithCoordinates, buoysWithCoordinates, sopelanaSpotCenter],
   )
 
   return (
@@ -386,7 +404,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
           )}
         </div>
       )}
-      <MapContainer center={mapCenter} zoom={6} className='h-full w-full'>
+      <MapContainer center={mapCenter} zoom={9} className='h-full w-full'>
         <SpotPlacementHandler
           onPick={handlePickSpotPosition}
           onInvalidPick={(reason) => {
