@@ -18,6 +18,7 @@ import { validateSpainSeaOrBeachLocation } from '../utils/spainCoastValidation'
 import { BottomSheet } from '../components/BottomSheet'
 import { PageHeader } from '../components/PageHeader'
 import { useSettingsContext } from '../context/SettingsContext'
+import { MapStatusPanel } from './MapStatusPanel'
 import {
   queryKeys,
   useBuoysListQuery,
@@ -324,21 +325,12 @@ export const MapPage = () => {
       <div className='absolute left-4 top-4 z-10'>
         <PageHeader title='Mapa' />
       </div>
-      {!draftSpotPosition && (
-        <div className='absolute bottom-4 left-4 z-10 rounded-xl bg-ocean-800/80 px-3 py-2 text-[11px] text-ocean-200 backdrop-blur'>
-          {loading ? (
-            <p>Cargando mapa…</p>
-          ) : mapStatus === 'error' ? (
-            <p>Error al cargar datos del mapa</p>
-          ) : (
-            <div className='space-y-0.5'>
-              {mapStats.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <MapStatusPanel
+        visible={!draftSpotPosition}
+        loading={loading}
+        status={mapStatus}
+        stats={mapStats}
+      />
       <MapContainer center={mapCenter} zoom={9} className='h-full w-full'>
         <SpotPlacementHandler
           onPick={handlePickSpotPosition}
