@@ -8,6 +8,7 @@ import type {
 import {
   CACHE_TTL,
   getCachedResource,
+  getCachedResourceStale,
   setCachedResource,
   invalidateCachedResource,
 } from './storage'
@@ -62,9 +63,17 @@ const withCache = async <T>(
   if (inFlight) return inFlight
 
   const request = (async () => {
-    const freshData = await fetcher()
-    setCachedResource(cacheKey, freshData)
-    return freshData
+    try {
+      const freshData = await fetcher()
+      setCachedResource(cacheKey, freshData)
+      return freshData
+    } catch (error) {
+      const staleData = getCachedResourceStale<T>(cacheKey)
+      if (staleData !== null) {
+        return staleData
+      }
+      throw error
+    }
   })()
 
   inFlightRequests.set(cacheKey, request)
