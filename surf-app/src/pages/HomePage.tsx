@@ -7,6 +7,7 @@ import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
 import { SelectMenu } from '../components/SelectMenu'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
+import { LabeledToggleGroup } from '../components/LabeledToggleGroup'
 import { useSettingsContext } from '../context/SettingsContext'
 import {
   useBuoyDataQuery,
@@ -289,64 +290,32 @@ export const HomePage = () => {
           }
         />
         <div className='mb-2 flex flex-wrap items-center justify-center gap-4'>
-          <div className='inline-flex items-center gap-1.5'>
-            <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
-              Tiempo
-            </span>
-            <div
-              role='group'
-              aria-label='Rango del forecast'
-              className={compactGroupClass}
-            >
-              {(['48h', '7d'] as const).map((range) => (
-                <button
-                  key={range}
-                  type='button'
-                  aria-pressed={forecastRange === range}
-                  onClick={() => setForecastRange(range)}
-                  className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                    forecastRange === range
-                      ? 'bg-sky-100 font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-200'
-                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-          </div>
+          <LabeledToggleGroup
+            ariaLabel='Rango del forecast'
+            label='Tiempo'
+            value={forecastRange}
+            options={[
+              { label: '48h', value: '48h' },
+              { label: '7d', value: '7d' },
+            ]}
+            onChange={(value) => setForecastRange(value as '48h' | '7d')}
+            groupClassName={compactGroupClass}
+          />
 
-          <div className='inline-flex items-center gap-1.5'>
-            <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
-              Tipo
-            </span>
-            <div
-              role='group'
-              aria-label='Vista de previsión'
-              className={compactGroupClass}
-            >
-              {(
-                [
-                  { label: 'Gráfico', value: 'chart' },
-                  { label: 'Tabla', value: 'table' },
-                ] as const
-              ).map((option) => (
-                <button
-                  key={option.value}
-                  type='button'
-                  aria-pressed={forecastViewMode === option.value}
-                  onClick={() => setForecastViewMode(option.value)}
-                  className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                    forecastViewMode === option.value
-                      ? 'bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <LabeledToggleGroup
+            ariaLabel='Vista de previsión'
+            label='Tipo'
+            value={forecastViewMode}
+            options={[
+              { label: 'Gráfico', value: 'chart' },
+              { label: 'Tabla', value: 'table' },
+            ]}
+            onChange={(value) =>
+              setForecastViewMode(value as 'chart' | 'table')
+            }
+            groupClassName={compactGroupClass}
+            activeClassName='bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+          />
         </div>
         <Suspense fallback={<StatusMessage message='Cargando…' />}>
           <ForecastChart
@@ -409,64 +378,31 @@ export const HomePage = () => {
             />
           </div>
           <div className='mb-2 flex flex-wrap items-center justify-center gap-4'>
-            <div className='inline-flex items-center gap-1.5'>
-              <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
-                Tiempo
-              </span>
-              <div
-                role='group'
-                aria-label='Rango de horas de boya'
-                className={compactGroupClass}
-              >
-                {(['6', '12', '24'] as const).map((hours) => (
-                  <button
-                    key={hours}
-                    type='button'
-                    aria-pressed={buoyHours === hours}
-                    onClick={() => setBuoyHours(hours)}
-                    className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                      buoyHours === hours
-                        ? 'bg-sky-100 font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-200'
-                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-                    }`}
-                  >
-                    {hours}h
-                  </button>
-                ))}
-              </div>
-            </div>
+            <LabeledToggleGroup
+              ariaLabel='Rango de horas de boya'
+              label='Tiempo'
+              value={buoyHours}
+              options={[
+                { label: '6h', value: '6' },
+                { label: '12h', value: '12' },
+                { label: '24h', value: '24' },
+              ]}
+              onChange={(value) => setBuoyHours(value as '6' | '12' | '24')}
+              groupClassName={compactGroupClass}
+            />
 
-            <div className='inline-flex items-center gap-1.5'>
-              <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300'>
-                Tipo
-              </span>
-              <div
-                role='group'
-                aria-label='Vista de boyas'
-                className={compactGroupClass}
-              >
-                {(
-                  [
-                    { label: 'Gráfico', value: 'chart' },
-                    { label: 'Tabla', value: 'table' },
-                  ] as const
-                ).map((option) => (
-                  <button
-                    key={option.value}
-                    type='button'
-                    aria-pressed={buoyViewMode === option.value}
-                    onClick={() => setBuoyViewMode(option.value)}
-                    className={`rounded-full px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
-                      buoyViewMode === option.value
-                        ? 'bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <LabeledToggleGroup
+              ariaLabel='Vista de boyas'
+              label='Tipo'
+              value={buoyViewMode}
+              options={[
+                { label: 'Gráfico', value: 'chart' },
+                { label: 'Tabla', value: 'table' },
+              ]}
+              onChange={(value) => setBuoyViewMode(value as 'chart' | 'table')}
+              groupClassName={compactGroupClass}
+              activeClassName='bg-emerald-100 font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+            />
           </div>
           <Suspense fallback={<StatusMessage message='Cargando…' />}>
             {nearbyBuoysStatus === 'loading' ? (
