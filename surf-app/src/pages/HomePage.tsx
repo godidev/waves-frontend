@@ -1,14 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import {
-  getSurfForecast,
-  getSpots,
-  getBuoysNear,
-  getTotalWaveHeight,
-  getPrimarySwell,
-  getBuoyData,
-} from '../services/api'
+import { getTotalWaveHeight, getPrimarySwell } from '../services/api'
 import './HomePage.css'
-import type { SurfForecast, Station, BuoyDataDoc, Spot } from '../types'
+import type { SurfForecast } from '../types'
 import { degreesToCardinal } from '../types'
 import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
@@ -16,10 +9,20 @@ import { SelectMenu } from '../components/SelectMenu'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
 import { useSettingsContext } from '../context/SettingsContext'
 import {
+  useBuoyDataQuery,
+  useBuoysNearQuery,
+  useSpotsQuery,
+  useSurfForecastQuery,
+} from '../hooks/useAppQueries'
+import {
   buildBuoySelectState,
   buildSpotItems,
   resolveSpotId,
 } from './homePageSelectors'
+import {
+  deriveForecastStatus,
+  deriveNearbyBuoysStatus,
+} from './homePageQueryState'
 
 const formatNumber = (value: number, locale: string, digits = 0): string =>
   value.toLocaleString(locale, {
@@ -45,21 +48,7 @@ const BuoyDetailContent = lazy(() =>
 export const HomePage = () => {
   const { settings, updateSettings } = useSettingsContext()
   const { defaultSpotId, defaultStationId, buoySearchRadiusKm } = settings
-  const [forecasts, setForecasts] = useState<SurfForecast[]>([])
-  const [hourlyForecasts, setHourlyForecasts] = useState<SurfForecast[]>([])
   const [nowMs, setNowMs] = useState(() => Date.now())
-  const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
-    'loading',
-  )
-  const [spots, setSpots] = useState<Spot[]>([])
-  const [spotsLoaded, setSpotsLoaded] = useState(false)
-  const [stations, setStations] = useState<Station[]>([])
-  const [nearbyBuoysStatus, setNearbyBuoysStatus] = useState<
-    'idle' | 'loading' | 'success' | 'error'
-  >('idle')
-  const [latestBuoyRecord, setLatestBuoyRecord] = useState<BuoyDataDoc | null>(
-    null,
-  )
   const [forecastRange, setForecastRange] = useState<'48h' | '7d'>('48h')
   const [forecastViewMode, setForecastViewMode] = useState<'chart' | 'table'>(
     'chart',
@@ -74,6 +63,12 @@ export const HomePage = () => {
   const activeStationId = defaultStationId
   const forecastVariant = forecastRange === '48h' ? 'hourly' : 'general'
   const forecastLimit = forecastRange === '48h' ? 72 : 21
+
+  const { data: spotsData, isLoading: isSpotsLoading } = useSpotsQuery()
+  const spots = useMemo(
+    () => (spotsData ?? []).filter((spot) => spot.active === true),
+    [spotsData],
+  )
 
   useEffect(() => {
     if (safeBuoySearchRadiusKm !== buoySearchRadiusKm) {
@@ -101,53 +96,45 @@ export const HomePage = () => {
     [resolvedSpotId, spots],
   )
 
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      if (!spotsLoaded) return
+  const mainForecastQuery = useSurfForecastQuery(
+    resolvedSpotId,
+    forecastVariant,
+    1,
+    forecastLimit,
+  )
 
-      setStatus('loading')
-      try {
-        const forecastResponse = await getSurfForecast(
-          resolvedSpotId,
-          forecastVariant,
-          1,
-          forecastLimit,
-        )
-        if (!mounted) return
+  const hourlySummaryQuery = useSurfForecastQuery(
+    resolvedSpotId,
+    'hourly',
+    1,
+    72,
+  )
 
-        setForecasts(forecastResponse)
+  const forecasts = useMemo(
+    () => (mainForecastQuery.data ?? []) as SurfForecast[],
+    [mainForecastQuery.data],
+  )
+  const hourlyForecasts = useMemo(
+    () =>
+      forecastVariant === 'hourly'
+        ? forecasts
+        : ((hourlySummaryQuery.data ?? []) as SurfForecast[]),
+    [forecastVariant, forecasts, hourlySummaryQuery.data],
+  )
 
-        if (forecastVariant === 'hourly') {
-          setHourlyForecasts(forecastResponse)
-        } else {
-          try {
-            const hourlyResponse = await getSurfForecast(
-              resolvedSpotId,
-              'hourly',
-              1,
-              72,
-            )
-            if (!mounted) return
-            setHourlyForecasts(hourlyResponse)
-          } catch (err) {
-            console.error('Failed to load hourly forecast summary data:', err)
-            if (!mounted) return
-            setHourlyForecasts([])
-          }
-        }
-
-        setStatus('success')
-      } catch {
-        if (!mounted) return
-        setStatus('error')
-      }
-    }
-    void load()
-    return () => {
-      mounted = false
-    }
-  }, [forecastLimit, forecastVariant, resolvedSpotId, spotsLoaded])
+  const status =
+    isSpotsLoading && spots.length === 0
+      ? 'loading'
+      : deriveForecastStatus({
+          isFetchingMain:
+            mainForecastQuery.isLoading || mainForecastQuery.isFetching,
+          isFetchingHourly:
+            forecastVariant === 'hourly'
+              ? false
+              : hourlySummaryQuery.isLoading || hourlySummaryQuery.isFetching,
+          mainHasData: forecasts.length > 0,
+          hasError: Boolean(mainForecastQuery.error),
+        })
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -160,70 +147,32 @@ export const HomePage = () => {
   }, [])
 
   useEffect(() => {
-    let mounted = true
-    const loadSpots = async () => {
-      try {
-        const spotData = await getSpots()
-        if (!mounted) return
-        setSpots(spotData.filter((spot) => spot.active === true))
-      } catch (err) {
-        console.error('Failed to load forecast spots:', err)
-      } finally {
-        if (mounted) setSpotsLoaded(true)
-      }
-    }
-
-    void loadSpots()
-    return () => {
-      mounted = false
-    }
-  }, [])
-
-  useEffect(() => {
     if (!spots.length) return
     if (resolvedSpotId !== activeSpotId) {
       updateSettings({ defaultSpotId: resolvedSpotId })
     }
   }, [activeSpotId, resolvedSpotId, spots.length, updateSettings])
 
-  useEffect(() => {
-    let mounted = true
-    const coordinates = resolvedSpot?.location?.coordinates
-    if (!coordinates || coordinates.length < 2) {
-      setStations([])
-      setNearbyBuoysStatus('error')
-      return () => {
-        mounted = false
-      }
-    }
+  const coordinates = resolvedSpot?.location?.coordinates
+  const hasCoordinates = Boolean(coordinates && coordinates.length >= 2)
+  const longitude = hasCoordinates ? (coordinates?.[0] ?? null) : null
+  const latitude = hasCoordinates ? (coordinates?.[1] ?? null) : null
 
-    const [longitude, latitude] = coordinates
-    setNearbyBuoysStatus('loading')
-    setStations([])
+  const nearbyBuoysQuery = useBuoysNearQuery(
+    longitude,
+    latitude,
+    safeBuoySearchRadiusKm,
+  )
+  const stations = useMemo(
+    () => nearbyBuoysQuery.data ?? [],
+    [nearbyBuoysQuery.data],
+  )
 
-    const loadNearbyStations = async () => {
-      try {
-        const stationData = await getBuoysNear(
-          longitude,
-          latitude,
-          safeBuoySearchRadiusKm,
-        )
-        if (!mounted) return
-        setStations(stationData)
-        setNearbyBuoysStatus('success')
-      } catch (err) {
-        console.error('Failed to load nearby buoys:', err)
-        if (!mounted) return
-        setStations([])
-        setNearbyBuoysStatus('error')
-      }
-    }
-
-    void loadNearbyStations()
-    return () => {
-      mounted = false
-    }
-  }, [resolvedSpot, safeBuoySearchRadiusKm])
+  const nearbyBuoysStatus = deriveNearbyBuoysStatus({
+    hasCoordinates,
+    isFetching: nearbyBuoysQuery.isLoading || nearbyBuoysQuery.isFetching,
+    hasError: Boolean(nearbyBuoysQuery.error),
+  })
 
   useEffect(() => {
     if (!stations.length) return
@@ -231,34 +180,16 @@ export const HomePage = () => {
     updateSettings({ defaultStationId: stations[0].buoyId })
   }, [activeStationId, stations, updateSettings])
 
-  useEffect(() => {
-    if (!activeStationId) {
-      setLatestBuoyRecord(null)
-      return
-    }
-    if (!stations.some((station) => station.buoyId === activeStationId)) {
-      setLatestBuoyRecord(null)
-      return
-    }
-
-    let mounted = true
-    const loadLatestBuoy = async () => {
-      try {
-        const latest = await getBuoyData(activeStationId, 1)
-        if (!mounted) return
-        setLatestBuoyRecord(latest[0] ?? null)
-      } catch (err) {
-        console.error('Failed to load latest buoy record:', err)
-        if (!mounted) return
-        setLatestBuoyRecord(null)
-      }
-    }
-
-    void loadLatestBuoy()
-    return () => {
-      mounted = false
-    }
-  }, [activeStationId, stations])
+  const shouldFetchLatestBuoy =
+    activeStationId.trim().length > 0 &&
+    stations.some((station) => station.buoyId === activeStationId)
+  const latestBuoyQuery = useBuoyDataQuery(
+    shouldFetchLatestBuoy ? activeStationId : '',
+    1,
+  )
+  const latestBuoyRecord = shouldFetchLatestBuoy
+    ? ((latestBuoyQuery.data ?? [])[0] ?? null)
+    : null
 
   const selected = useMemo(() => {
     if (!hourlyForecasts.length) return null
