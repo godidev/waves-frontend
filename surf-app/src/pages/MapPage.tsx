@@ -30,10 +30,10 @@ import {
   getInactiveSpotsWithCoordinates,
 } from './mapPageSelectors'
 import { deriveMapLoadingState } from './mapPageQueryState'
+import { getMapCenter, getSopelanaSpotCenter } from './mapPageCenter'
 
 const COAST_BEACH_BAND_METERS = 1300
 const COAST_BEACH_BAND_KM = COAST_BEACH_BAND_METERS / 1000
-const SOPELANA_DEFAULT_CENTER: [number, number] = [43.3873, -3.0128]
 
 // Custom marker icon for buoys
 const buoyIcon = new Icon({
@@ -275,40 +275,19 @@ export const MapPage = () => {
     }
   }, [draftSpotPosition, draftSpotSuggestions.length])
 
-  const sopelanaSpotCenter = useMemo(() => {
-    const sopelanaSpot = spots.find((spot) => {
-      if (
-        !spot.location?.coordinates ||
-        spot.location.coordinates.length !== 2
-      ) {
-        return false
-      }
-      return spot.spotName.toLocaleLowerCase('es-ES').includes('sopelana')
-    })
-
-    if (!sopelanaSpot?.location?.coordinates) return null
-
-    return [
-      sopelanaSpot.location.coordinates[1],
-      sopelanaSpot.location.coordinates[0],
-    ] as [number, number]
-  }, [spots])
+  const sopelanaSpotCenter = useMemo(
+    () => getSopelanaSpotCenter(spots),
+    [spots],
+  )
 
   // Default center prefers Sopelana.
   const mapCenter: [number, number] = useMemo(
     () =>
-      sopelanaSpotCenter ??
-      (activeSpotsWithCoordinates.length > 0
-        ? [
-            activeSpotsWithCoordinates[0].location!.coordinates[1],
-            activeSpotsWithCoordinates[0].location!.coordinates[0],
-          ]
-        : buoysWithCoordinates.length > 0
-          ? [
-              buoysWithCoordinates[0].location!.coordinates[1],
-              buoysWithCoordinates[0].location!.coordinates[0],
-            ]
-          : SOPELANA_DEFAULT_CENTER),
+      getMapCenter({
+        sopelanaSpotCenter,
+        activeSpotsWithCoordinates,
+        buoysWithCoordinates,
+      }),
     [activeSpotsWithCoordinates, buoysWithCoordinates, sopelanaSpotCenter],
   )
 
