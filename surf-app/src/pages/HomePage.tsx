@@ -188,7 +188,7 @@ export const HomePage = ({
       try {
         const spotData = await getSpots()
         if (!mounted) return
-        setSpots(spotData)
+        setSpots(spotData.filter((spot) => spot.active === true))
       } catch (err) {
         console.error('Failed to load forecast spots:', err)
       } finally {
