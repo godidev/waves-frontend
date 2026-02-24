@@ -29,15 +29,13 @@ import {
   buildSelectedDirections,
   getClosestForecast,
 } from './homePageSummary'
+import { clampBuoySearchRadiusKm } from './homePageBuoyRadius'
 
 const formatNumber = (value: number, locale: string, digits = 0): string =>
   value.toLocaleString(locale, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
-
-const clampBuoySearchRadiusKm = (value: number): number =>
-  Math.min(1000, Math.max(10, Math.round(value)))
 
 const ForecastChart = lazy(() =>
   import('../components/Forecast/ForecastChart').then((module) => ({
