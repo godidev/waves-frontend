@@ -9,6 +9,11 @@ import {
   getSpotWindQuality,
   hasConditionRanges,
 } from './forecastConditions'
+import {
+  buildSnapshotItems,
+  resolveActiveSnapshotLabel,
+  type ForecastChartPoint,
+} from './forecastSnapshots'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -18,8 +23,6 @@ interface ForecastChartProps {
   viewMode?: 'chart' | 'table'
   spot?: Spot | null
 }
-
-type Trend = 'up' | 'down' | 'flat' | null
 
 const PERIOD_THRESHOLDS = {
   min: 6,
@@ -42,16 +45,6 @@ const formatNumber = (value: number, locale: string, digits = 0): string =>
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
-
-const getTrend = (
-  current: number,
-  baseline: number,
-  tolerance: number,
-): Trend => {
-  const delta = current - baseline
-  if (Math.abs(delta) <= tolerance) return 'flat'
-  return delta > 0 ? 'up' : 'down'
-}
 
 const getNiceEnergyStep = (rawStep: number): number => {
   if (!Number.isFinite(rawStep) || rawStep <= 0) return 50
@@ -306,7 +299,7 @@ export const ForecastChart = ({
   const [selectedSnapshotLabel, setSelectedSnapshotLabel] = useState('Ahora')
   const chartMargin = { top: 0, right: 0, left: -8, bottom: -12 }
 
-  const chartData = useMemo(
+  const chartData = useMemo<ForecastChartPoint[]>(
     () =>
       forecasts.map((forecast) => ({
         time: new Date(forecast.date).getTime(),
@@ -440,113 +433,15 @@ export const ForecastChart = ({
     return map
   }, [leftAxisTicks, rightEnergyScale.ticks])
 
-  const snapshotItems = useMemo(() => {
-    if (!chartData.length) return []
-
-    const baselinePoint = chartData.reduce(
-      (best, point) => {
-        if (!best) return point
-        return Math.abs(point.time - nowMs) < Math.abs(best.time - nowMs)
-          ? point
-          : best
-      },
-      null as (typeof chartData)[number] | null,
-    )
-
-    const targets =
-      range === '7d'
-        ? (() => {
-            const dayTargets = new Map<
-              string,
-              {
-                label: string
-                timestamp: number
-              }
-            >()
-
-            chartData.forEach((point) => {
-              const date = new Date(point.time)
-              const dayKey = date.toDateString()
-              if (dayTargets.has(dayKey)) return
-
-              dayTargets.set(dayKey, {
-                label: date.toLocaleDateString(locale, {
-                  weekday: 'short',
-                  day: 'numeric',
-                }),
-                timestamp: point.time,
-              })
-            })
-
-            return Array.from(dayTargets.values())
-          })()
-        : [
-            { label: 'Ahora', timestamp: nowMs },
-            { label: '+6h', timestamp: nowMs + 6 * 60 * 60 * 1000 },
-            { label: '+24h', timestamp: nowMs + 24 * 60 * 60 * 1000 },
-            { label: '+36h', timestamp: nowMs + 36 * 60 * 60 * 1000 },
-          ]
-
-    return targets.map((target) => {
-      const closest = chartData.reduce(
-        (best, point) => {
-          if (!best) return point
-          return Math.abs(point.time - target.timestamp) <
-            Math.abs(best.time - target.timestamp)
-            ? point
-            : best
-        },
-        null as (typeof chartData)[number] | null,
-      )
-
-      if (!closest) {
-        return {
-          label: target.label,
-          time: null,
-          hour: '--',
-          waveHeight: '--',
-          waveHeightTrend: null,
-          wavePeriod: '--',
-          energy: '--',
-          energyTrend: null,
-          windSpeed: '--',
-          windDirection: null,
-        }
-      }
-
-      const showTrend =
-        baselinePoint !== null &&
-        Math.abs(closest.time - baselinePoint.time) > 1
-
-      return {
-        label: target.label,
-        time: closest.time,
-        hour: new Date(closest.time).toLocaleTimeString(locale, {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        waveHeight: formatNumber(closest.waveHeight, locale, 1),
-        waveHeightTrend: showTrend
-          ? getTrend(closest.waveHeight, baselinePoint.waveHeight, 0.05)
-          : null,
-        energy: formatNumber(Math.round(closest.energy), locale),
-        energyTrend: showTrend
-          ? getTrend(closest.energy, baselinePoint.energy, 25)
-          : null,
-        wavePeriod: formatNumber(closest.wavePeriod, locale, 1),
-        windSpeed: formatNumber(closest.windSpeed, locale),
-        windDirection: closest.windDirection,
-      }
-    })
-  }, [chartData, locale, nowMs, range])
-
-  const activeSnapshotLabel = snapshotItems.some(
-    (item) => item.label === selectedSnapshotLabel,
+  const snapshotItems = useMemo(
+    () => buildSnapshotItems(chartData, range, locale, nowMs),
+    [chartData, locale, nowMs, range],
   )
-    ? selectedSnapshotLabel
-    : (snapshotItems.find((item) => item.label === 'Ahora')?.label ??
-      snapshotItems[0]?.label ??
-      'Ahora')
+
+  const activeSnapshotLabel = resolveActiveSnapshotLabel(
+    snapshotItems,
+    selectedSnapshotLabel,
+  )
 
   const selectedSnapshot = snapshotItems.find(
     (item) => item.label === activeSnapshotLabel,
