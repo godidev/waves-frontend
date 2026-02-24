@@ -96,12 +96,14 @@ export interface Spot {
   spotId: string
   /** Nombre visible del spot */
   spotName: string
+  /** Indica si el spot está activo para mostrarse en la app */
+  active?: boolean
   /** Ubicación geográfica del spot en formato GeoJSON */
-  location: {
+  location?: {
     type: 'Point'
     /** [longitud, latitud] en grados decimales */
     coordinates: [number, number]
-  }
+  } | null
 }
 
 /** Respuesta de error de la API */

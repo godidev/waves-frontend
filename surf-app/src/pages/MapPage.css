@@ -34,6 +34,18 @@
   animation: spotPulse 2.2s ease-out infinite;
 }
 
+.spot-marker--inactive {
+  filter: grayscale(1);
+  opacity: 0.85;
+  transform: scale(0.85);
+  background: linear-gradient(145deg, #9ca3af, #6b7280);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.35);
+}
+
+.spot-marker--inactive::after {
+  display: none;
+}
+
 @keyframes spotPulse {
   0% {
     transform: scale(0.88);

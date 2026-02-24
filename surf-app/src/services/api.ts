@@ -5,7 +5,12 @@ import type {
   BuoyDataDoc,
   Spot,
 } from '../types'
-import { CACHE_TTL, getCachedResource, setCachedResource } from './storage'
+import {
+  CACHE_TTL,
+  getCachedResource,
+  setCachedResource,
+  invalidateCachedResource,
+} from './storage'
 
 type SurfForecastVariant = 'hourly' | 'general'
 
@@ -187,6 +192,42 @@ export const getBuoysNear = async (
     },
     CACHE_TTL.stations,
   )
+}
+
+export const updateSpotInfo = async (
+  spotId: string,
+  payload: {
+    active: boolean
+    coordinates?: [number, number]
+  },
+): Promise<Spot> => {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/spots/${spotId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API ${response.status}: /spots/${spotId}`)
+    }
+
+    invalidateCachedResource('spots:list:v2')
+    return (await response.json()) as Spot
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(`API timeout: /spots/${spotId}`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 export const getPrimarySwell = (forecast: SurfForecast) => {
