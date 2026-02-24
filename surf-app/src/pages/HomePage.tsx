@@ -15,15 +15,17 @@ import { SectionHeader } from '../components/SectionHeader'
 import { SelectMenu } from '../components/SelectMenu'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
 import { useSettingsContext } from '../context/SettingsContext'
+import {
+  buildBuoySelectState,
+  buildSpotItems,
+  resolveSpotId,
+} from './homePageSelectors'
 
 const formatNumber = (value: number, locale: string, digits = 0): string =>
   value.toLocaleString(locale, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   })
-
-const normalizeSpotId = (spotId: string): string =>
-  spotId.trim().toLocaleLowerCase('es-ES')
 
 const clampBuoySearchRadiusKm = (value: number): number =>
   Math.min(1000, Math.max(10, Math.round(value)))
@@ -89,22 +91,10 @@ export const HomePage = () => {
     }
   }
 
-  const resolvedSpotId = useMemo(() => {
-    if (!spots.length) return activeSpotId
-
-    const byId = spots.find(
-      (spot) => normalizeSpotId(spot.spotId) === normalizeSpotId(activeSpotId),
-    )
-    if (byId) return byId.spotId
-
-    const byName = spots.find(
-      (spot) =>
-        normalizeSpotId(spot.spotName) === normalizeSpotId(activeSpotId),
-    )
-    if (byName) return byName.spotId
-
-    return spots[0].spotId
-  }, [activeSpotId, spots])
+  const resolvedSpotId = useMemo(
+    () => resolveSpotId(activeSpotId, spots),
+    [activeSpotId, spots],
+  )
 
   const resolvedSpot = useMemo(
     () => spots.find((spot) => spot.spotId === resolvedSpotId) ?? null,
@@ -191,28 +181,10 @@ export const HomePage = () => {
 
   useEffect(() => {
     if (!spots.length) return
-
-    const byId = spots.find(
-      (spot) => normalizeSpotId(spot.spotId) === normalizeSpotId(activeSpotId),
-    )
-    if (byId && byId.spotId !== activeSpotId) {
-      updateSettings({ defaultSpotId: byId.spotId })
-      return
+    if (resolvedSpotId !== activeSpotId) {
+      updateSettings({ defaultSpotId: resolvedSpotId })
     }
-
-    if (!byId) {
-      const byName = spots.find(
-        (spot) =>
-          normalizeSpotId(spot.spotName) === normalizeSpotId(activeSpotId),
-      )
-      if (byName) {
-        updateSettings({ defaultSpotId: byName.spotId })
-        return
-      }
-
-      updateSettings({ defaultSpotId: spots[0].spotId })
-    }
-  }, [activeSpotId, spots, updateSettings])
+  }, [activeSpotId, resolvedSpotId, spots.length, updateSettings])
 
   useEffect(() => {
     let mounted = true
@@ -302,53 +274,20 @@ export const HomePage = () => {
 
   const locale = 'es-ES'
 
-  const buoyOptions = useMemo(() => {
-    return stations.map((station) => ({
-      id: station.buoyId,
-      name: station.name,
-    }))
-  }, [stations])
+  const {
+    options: buoySelectOptions,
+    value: buoySelectValue,
+    disabled: isBuoySelectorDisabled,
+    hasActiveBuoy,
+  } = useMemo(
+    () => buildBuoySelectState(nearbyBuoysStatus, stations, activeStationId),
+    [activeStationId, nearbyBuoysStatus, stations],
+  )
 
-  const hasActiveBuoy = buoyOptions.some((item) => item.id === activeStationId)
-  const isBuoySelectorDisabled =
-    nearbyBuoysStatus === 'loading' || buoyOptions.length === 0
-  const buoySelectOptions =
-    nearbyBuoysStatus === 'loading'
-      ? [{ value: activeStationId || 'loading', label: 'Buscando boyas…' }]
-      : buoyOptions.length > 0
-        ? buoyOptions.map((station) => ({
-            value: station.id,
-            label: station.name,
-          }))
-        : [{ value: 'none', label: 'Sin boyas cercanas' }]
-  const buoySelectValue =
-    nearbyBuoysStatus === 'loading'
-      ? activeStationId || 'loading'
-      : hasActiveBuoy
-        ? activeStationId
-        : (buoyOptions[0]?.id ?? 'none')
-
-  const spotItems = useMemo(() => {
-    const map = new Map<string, { value: string; label: string }>()
-
-    spots.forEach((spot) => {
-      map.set(normalizeSpotId(spot.spotId), {
-        value: spot.spotId,
-        label: spot.spotName,
-      })
-    })
-
-    if (!spots.length) {
-      map.set(normalizeSpotId(defaultSpotId), {
-        value: defaultSpotId,
-        label: defaultSpotId,
-      })
-    }
-
-    return Array.from(map.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, locale),
-    )
-  }, [defaultSpotId, locale, spots])
+  const spotItems = useMemo(
+    () => buildSpotItems(spots, defaultSpotId),
+    [defaultSpotId, spots],
+  )
 
   const latestReadingText = latestBuoyRecord
     ? `${formatNumber(latestBuoyRecord.height, locale, 2)} m · ${formatNumber(latestBuoyRecord.period, locale, 1)} s`
