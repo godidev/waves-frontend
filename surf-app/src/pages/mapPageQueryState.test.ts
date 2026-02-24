@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deriveMapLoadingState } from './mapPageQueryState'
+import { deriveMapLoadingState, deriveMapStatus } from './mapPageQueryState'
 
 describe('mapPageQueryState', () => {
   it('is loading while queries are fetching without enough data', () => {
@@ -31,5 +31,31 @@ describe('mapPageQueryState', () => {
         spotsCount: 6,
       }),
     ).toBe(false)
+  })
+
+  it('returns error status when both queries fail and no map data exists', () => {
+    expect(
+      deriveMapStatus({
+        isBuoysLoading: false,
+        isSpotsLoading: false,
+        hasBuoysError: true,
+        hasSpotsError: true,
+        buoysCount: 0,
+        spotsCount: 0,
+      }),
+    ).toBe('error')
+  })
+
+  it('returns ready status when there is at least one dataset', () => {
+    expect(
+      deriveMapStatus({
+        isBuoysLoading: false,
+        isSpotsLoading: false,
+        hasBuoysError: true,
+        hasSpotsError: true,
+        buoysCount: 3,
+        spotsCount: 0,
+      }),
+    ).toBe('ready')
   })
 })

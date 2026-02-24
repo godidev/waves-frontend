@@ -29,7 +29,7 @@ import {
   getInactiveSpotsSorted,
   getInactiveSpotsWithCoordinates,
 } from './mapPageSelectors'
-import { deriveMapLoadingState } from './mapPageQueryState'
+import { deriveMapLoadingState, deriveMapStatus } from './mapPageQueryState'
 import { getMapCenter, getSopelanaSpotCenter } from './mapPageCenter'
 
 const COAST_BEACH_BAND_METERS = 1300
@@ -131,8 +131,16 @@ export const MapPage = () => {
   const [updatingSpotId, setUpdatingSpotId] = useState<string | null>(null)
   const draftMarkerRef = useRef<LeafletMarker | null>(null)
 
-  const { data: buoysData, isLoading: isBuoysLoading } = useBuoysListQuery()
-  const { data: spotsData, isLoading: isSpotsLoading } = useSpotsQuery()
+  const {
+    data: buoysData,
+    isLoading: isBuoysLoading,
+    isError: hasBuoysError,
+  } = useBuoysListQuery()
+  const {
+    data: spotsData,
+    isLoading: isSpotsLoading,
+    isError: hasSpotsError,
+  } = useSpotsQuery()
 
   const buoys = useMemo(() => buoysData ?? [], [buoysData])
   const spots = useMemo(() => spotsData ?? [], [spotsData])
@@ -140,6 +148,15 @@ export const MapPage = () => {
   const loading = deriveMapLoadingState({
     isBuoysLoading,
     isSpotsLoading,
+    buoysCount: buoys.length,
+    spotsCount: spots.length,
+  })
+
+  const mapStatus = deriveMapStatus({
+    isBuoysLoading,
+    isSpotsLoading,
+    hasBuoysError,
+    hasSpotsError,
     buoysCount: buoys.length,
     spotsCount: spots.length,
   })
@@ -300,6 +317,8 @@ export const MapPage = () => {
         <div className='absolute bottom-4 left-4 z-10 rounded-xl bg-ocean-800/80 px-3 py-2 text-[11px] text-ocean-200 backdrop-blur'>
           {loading ? (
             <p>Cargando mapa…</p>
+          ) : mapStatus === 'error' ? (
+            <p>Error al cargar datos del mapa</p>
           ) : (
             <div className='space-y-0.5'>
               <p>Boyas: {buoysWithCoordinates.length}</p>
