@@ -10,6 +10,8 @@ Aplicación frontend para consultar condiciones de surf y boyas, construida con 
 - Tailwind CSS
 - Recharts
 - React Router
+- Leaflet + React Leaflet
+- Turf.js (validación geoespacial de costa)
 
 ## Scripts
 
@@ -47,6 +49,26 @@ La tarjeta de resumen superior usa siempre datos hourly y selecciona el punto m�
 - Sistema de gráficos compartido (`src/components/charts`) y componente de select compartido (`src/components/SelectMenu.tsx`)
 - Ajustes persistidos del usuario (tema, spot por defecto, estación por defecto)
 - El tema solo se cambia desde Ajustes (el footer ya no incluye toggle de tema)
+- Validación de ubicación en mapa: solo permite colocar/arrastrar spots en mar o en franja de playa cercana a costa de España
+
+## Validación geoespacial del mapa
+
+- Regla actual: se permite en mar y en tierra a <= `1.3 km` de costa.
+- Implementación en `src/utils/spainCoastValidation.ts`.
+- Datos geográficos usados por el frontend:
+  - `src/data/spainLand.geo.json`
+  - `src/data/spainCoastline.geo.json`
+- La validación se aplica al click en mapa y al drag del pin provisional en `src/pages/MapPage.tsx`.
+
+### Regenerar geodata
+
+Si quieres actualizar la geometría de costa/territorio desde las fuentes públicas:
+
+```bash
+node scripts/generate-spain-geodata.mjs
+```
+
+Este comando sobrescribe los archivos en `src/data/`.
 
 ## Estructura del proyecto
 

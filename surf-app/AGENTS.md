@@ -4,6 +4,8 @@
 
 React 19 + Vite 7 single-page application for surf forecasting. Uses TypeScript 5.9 with strict mode, Tailwind CSS 3.4 for styling, React Router DOM v7 for routing, Recharts for charts, and Leaflet for maps. No server-side rendering.
 
+Map view includes geospatial validation for spot placement (Spain sea/coast rules) using Turf and GeoJSON datasets under `src/data/`.
+
 ## Build, Lint, and Format Commands
 
 ```bash
@@ -24,11 +26,15 @@ src/
   components/          # Reusable UI components (PascalCase filenames)
   components/Forecast/ # Forecast-specific components
   components/charts/   # Shared chart system (theme + base chart)
+  data/                # GeoJSON datasets used by map validation
   pages/               # Route-level page components
   hooks/               # Custom React hooks (camelCase with use prefix)
   services/            # API client and localStorage wrapper
   types/               # TypeScript interfaces and utility type functions
   utils/               # Pure utility functions (time formatting)
+
+scripts/
+  generate-spain-geodata.mjs # Regenerates Spain land/coast GeoJSON files
 ```
 
 Key files:
@@ -54,6 +60,7 @@ Key files:
 
 - Strict mode enabled with `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`
 - Target: ES2022, module: ESNext, bundler resolution
+- `resolveJsonModule` enabled (GeoJSON imports from TypeScript)
 - Use `import type { Foo }` for type-only imports (enforced by `verbatimModuleSyntax`)
 - Inline type imports are also acceptable: `import { type ReactNode, useState } from 'react'`
 - No path aliases -- use relative imports (`../services/api`, `./Icons`)
@@ -144,6 +151,15 @@ No blank-line separation is enforced between groups, but the ordering is consist
 - Custom theme colors: `ocean-*` (blues) and `sand-*` (beiges) in `tailwind.config.js`
 - `clsx` is available but not widely used; most components use template literals for conditional classes
 - Minimal vanilla CSS only for scrollbar hiding and Leaflet map overrides
+
+### Maps and Geospatial Rules
+
+- Spot placement in `MapPage` is validated against Spain coastline/land geometry via `src/utils/spainCoastValidation.ts`
+- Current acceptance rule: allow sea points and allow land points only when distance to coast is <= 1.3 km
+- Land geometry source file: `src/data/spainLand.geo.json`
+- Coastline source file: `src/data/spainCoastline.geo.json`
+- Regeneration script: `node scripts/generate-spain-geodata.mjs`
+- Frontend validation improves UX but does not replace backend validation (backend should enforce same rule)
 
 ### Language
 

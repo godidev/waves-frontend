@@ -25,3 +25,4 @@ Desde `surf-app/`:
 - Capa `src/services/api.ts` con cache local + deduplicación de requests en vuelo.
 - Requests con timeout para evitar bloqueos de UI por backend lento.
 - UI optimizada para lectura rápida de pasado/presente/futuro.
+- En mapa, la colocación de spots se valida geoespacialmente (mar + franja costera) usando Turf y GeoJSON de España en `surf-app/src/data/`.

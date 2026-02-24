@@ -18,6 +18,7 @@ import 'leaflet/dist/leaflet.css'
 import './MapPage.css'
 import type { BuoyInfoDoc, Spot } from '../types'
 import { getBuoysList, getSpots, updateSpotInfo } from '../services/api'
+import { validateSpainSeaOrBeachLocation } from '../utils/spainCoastValidation'
 import { BottomSheet } from '../components/BottomSheet'
 import { PageHeader } from '../components/PageHeader'
 import { SelectMenu } from '../components/SelectMenu'
@@ -25,6 +26,8 @@ import { SelectMenu } from '../components/SelectMenu'
 interface MapPageProps {
   onFocusBuoy: (id: string) => void
 }
+
+const COAST_BEACH_BAND_METERS = 1300
 
 // Custom marker icon for buoys
 const buoyIcon = new Icon({
@@ -56,9 +59,13 @@ const inactiveSpotIcon = new DivIcon({
 
 interface SpotPlacementHandlerProps {
   onPick: (position: [number, number]) => void
+  onInvalidPick: (reason: 'outside_spain' | 'inland') => void
 }
 
-const SpotPlacementHandler = ({ onPick }: SpotPlacementHandlerProps) => {
+const SpotPlacementHandler = ({
+  onPick,
+  onInvalidPick,
+}: SpotPlacementHandlerProps) => {
   useMapEvents({
     click: (event) => {
       const target = event.originalEvent.target as HTMLElement | null
@@ -69,6 +76,17 @@ const SpotPlacementHandler = ({ onPick }: SpotPlacementHandlerProps) => {
       ) {
         return
       }
+
+      const validation = validateSpainSeaOrBeachLocation(
+        event.latlng.lat,
+        event.latlng.lng,
+        COAST_BEACH_BAND_METERS,
+      )
+      if (!validation.valid) {
+        onInvalidPick(validation.reason ?? 'inland')
+        return
+      }
+
       onPick([event.latlng.lat, event.latlng.lng])
     },
   })
@@ -101,6 +119,13 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
     nextActive: boolean
   } | null>(null)
   const [updatingSpotId, setUpdatingSpotId] = useState<string | null>(null)
+
+  const getLocationErrorMessage = (reason: 'outside_spain' | 'inland') => {
+    if (reason === 'outside_spain') {
+      return 'Solo puedes colocar spots o boyas en mar/playa de Espana.'
+    }
+    return `Solo puedes colocar spots en el mar o hasta ${(COAST_BEACH_BAND_METERS / 1000).toFixed(1)} km desde la costa.`
+  }
 
   const closeAddSpot = () => {
     setIsSpotFormOpen(false)
@@ -306,7 +331,15 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
         </div>
       </div>
       <MapContainer center={mapCenter} zoom={6} className='h-full w-full'>
-        <SpotPlacementHandler onPick={setDraftSpotPosition} />
+        <SpotPlacementHandler
+          onPick={(position) => {
+            setDraftSpotPosition(position)
+            setCreateSpotError(null)
+          }}
+          onInvalidPick={(reason) => {
+            setCreateSpotError(getLocationErrorMessage(reason))
+          }}
+        />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -490,7 +523,19 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
               dragend: (event) => {
                 const marker = event.target as LeafletMarker
                 const { lat, lng } = marker.getLatLng()
+                const validation = validateSpainSeaOrBeachLocation(
+                  lat,
+                  lng,
+                  COAST_BEACH_BAND_METERS,
+                )
+                if (!validation.valid) {
+                  setCreateSpotError(
+                    getLocationErrorMessage(validation.reason ?? 'inland'),
+                  )
+                  return
+                }
                 setDraftSpotPosition([lat, lng])
+                setCreateSpotError(null)
               },
             }}
           >
