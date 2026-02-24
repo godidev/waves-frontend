@@ -63,7 +63,7 @@ const SpotPlacementHandler = ({
   onPick,
   onInvalidPick,
 }: SpotPlacementHandlerProps) => {
-  useMapEvents({
+  const map = useMapEvents({
     click: (event) => {
       const target = event.originalEvent.target as HTMLElement | null
       if (
@@ -84,6 +84,10 @@ const SpotPlacementHandler = ({
         return
       }
 
+      map.flyTo(event.latlng, map.getZoom(), {
+        animate: true,
+        duration: 0.35,
+      })
       onPick([event.latlng.lat, event.latlng.lng])
     },
   })
@@ -624,6 +628,7 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
               autoClose={false}
               closeOnClick={false}
               closeButton={false}
+              autoPan={false}
               className='draft-spot-popup'
             >
               <div
