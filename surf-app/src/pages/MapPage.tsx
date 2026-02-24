@@ -8,21 +8,28 @@ import {
 } from 'react-leaflet'
 import { DivIcon, Icon } from 'leaflet'
 import type { Marker as LeafletMarker } from 'leaflet'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import 'leaflet/dist/leaflet.css'
 import './MapPage.css'
 import type { BuoyInfoDoc, Spot } from '../types'
-import { getBuoysList, getSpots, updateSpotInfo } from '../services/api'
+import { updateSpotInfo } from '../services/api'
 import { validateSpainSeaOrBeachLocation } from '../utils/spainCoastValidation'
 import { BottomSheet } from '../components/BottomSheet'
 import { PageHeader } from '../components/PageHeader'
 import { useSettingsContext } from '../context/SettingsContext'
+import {
+  queryKeys,
+  useBuoysListQuery,
+  useSpotsQuery,
+} from '../hooks/useAppQueries'
 import {
   getActiveSpotsWithCoordinates,
   getDraftSpotSuggestions,
   getInactiveSpotsSorted,
   getInactiveSpotsWithCoordinates,
 } from './mapPageSelectors'
+import { deriveMapLoadingState } from './mapPageQueryState'
 
 const COAST_BEACH_BAND_METERS = 1300
 const COAST_BEACH_BAND_KM = COAST_BEACH_BAND_METERS / 1000
@@ -107,11 +114,9 @@ const runPopupAction = (
 
 export const MapPage = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { updateSettings } = useSettingsContext()
-  const [buoys, setBuoys] = useState<BuoyInfoDoc[]>([])
-  const [spots, setSpots] = useState<Spot[]>([])
   const [selected, setSelected] = useState<BuoyInfoDoc | null>(null)
-  const [loading, setLoading] = useState(true)
   const [draftSpotId, setDraftSpotId] = useState<string | null>(null)
   const [draftSpotQuery, setDraftSpotQuery] = useState('')
   const [draftSpotPosition, setDraftSpotPosition] = useState<
@@ -125,6 +130,32 @@ export const MapPage = () => {
   } | null>(null)
   const [updatingSpotId, setUpdatingSpotId] = useState<string | null>(null)
   const draftMarkerRef = useRef<LeafletMarker | null>(null)
+
+  const { data: buoysData, isLoading: isBuoysLoading } = useBuoysListQuery()
+  const { data: spotsData, isLoading: isSpotsLoading } = useSpotsQuery()
+
+  const buoys = useMemo(() => buoysData ?? [], [buoysData])
+  const spots = useMemo(() => spotsData ?? [], [spotsData])
+
+  const loading = deriveMapLoadingState({
+    isBuoysLoading,
+    isSpotsLoading,
+    buoysCount: buoys.length,
+    spotsCount: spots.length,
+  })
+
+  const updateSpotMutation = useMutation({
+    mutationFn: ({
+      spotId,
+      payload,
+    }: {
+      spotId: string
+      payload: { active: boolean; coordinates?: [number, number] }
+    }) => updateSpotInfo(spotId, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.spots })
+    },
+  })
 
   const getLocationErrorMessage = (reason: 'outside_spain' | 'inland') => {
     if (reason === 'outside_spain') {
@@ -160,12 +191,13 @@ export const MapPage = () => {
     try {
       setIsSavingSpot(true)
       setCreateSpotError(null)
-      await updateSpotInfo(draftSpotId, {
-        active: true,
-        coordinates: [draftSpotPosition[1], draftSpotPosition[0]],
+      await updateSpotMutation.mutateAsync({
+        spotId: draftSpotId,
+        payload: {
+          active: true,
+          coordinates: [draftSpotPosition[1], draftSpotPosition[0]],
+        },
       })
-      const updatedSpots = await getSpots()
-      setSpots(updatedSpots)
       clearDraftSpot()
     } catch (error) {
       console.error('Failed to update spot:', error)
@@ -186,12 +218,13 @@ export const MapPage = () => {
 
     try {
       setUpdatingSpotId(spot.spotId)
-      await updateSpotInfo(spot.spotId, {
-        active: nextActive,
-        coordinates,
+      await updateSpotMutation.mutateAsync({
+        spotId: spot.spotId,
+        payload: {
+          active: nextActive,
+          coordinates,
+        },
       })
-      const updatedSpots = await getSpots()
-      setSpots(updatedSpots)
       setPendingSpotAction(null)
     } catch (error) {
       console.error('Failed to update spot active state:', error)
@@ -199,32 +232,6 @@ export const MapPage = () => {
       setUpdatingSpotId(null)
     }
   }
-
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      try {
-        setLoading(true)
-        const [buoyData, spotData] = await Promise.all([
-          getBuoysList(),
-          getSpots(),
-        ])
-        if (!mounted) return
-        setBuoys(buoyData)
-        setSpots(spotData)
-      } catch (error) {
-        console.error('Failed to load map data:', error)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
-      }
-    }
-    void load()
-    return () => {
-      mounted = false
-    }
-  }, [])
 
   // Filter buoys that have valid coordinates
   const buoysWithCoordinates = useMemo(
