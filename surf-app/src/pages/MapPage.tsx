@@ -17,12 +17,16 @@ import { validateSpainSeaOrBeachLocation } from '../utils/spainCoastValidation'
 import { BottomSheet } from '../components/BottomSheet'
 import { PageHeader } from '../components/PageHeader'
 import { useSettingsContext } from '../context/SettingsContext'
+import {
+  getActiveSpotsWithCoordinates,
+  getDraftSpotSuggestions,
+  getInactiveSpotsSorted,
+  getInactiveSpotsWithCoordinates,
+} from './mapPageSelectors'
 
 const COAST_BEACH_BAND_METERS = 1300
 const COAST_BEACH_BAND_KM = COAST_BEACH_BAND_METERS / 1000
 const SOPELANA_DEFAULT_CENTER: [number, number] = [43.3873, -3.0128]
-const DIACRITICS_REGEX = /[\u0300-\u036f]/g
-const MAX_DRAFT_SUGGESTIONS = 8
 
 // Custom marker icon for buoys
 const buoyIcon = new Icon({
@@ -99,74 +103,6 @@ const runPopupAction = (
   event.preventDefault()
   event.stopPropagation()
   action()
-}
-
-const normalizeText = (value: string): string =>
-  value
-    .toLocaleLowerCase('es-ES')
-    .normalize('NFD')
-    .replace(DIACRITICS_REGEX, '')
-    .trim()
-
-const SEARCH_STOP_WORDS = new Set([
-  'playa',
-  'de',
-  'del',
-  'la',
-  'el',
-  'los',
-  'las',
-])
-
-const tokenizeNormalized = (value: string): string[] =>
-  value
-    .split(/\s+/)
-    .filter((token) => token.length > 0 && !SEARCH_STOP_WORDS.has(token))
-
-const isSubsequence = (needle: string, haystack: string): boolean => {
-  if (!needle) return true
-  let index = 0
-  for (const char of haystack) {
-    if (char === needle[index]) index += 1
-    if (index === needle.length) return true
-  }
-  return false
-}
-
-const getSpotSearchScore = (query: string, spotName: string): number => {
-  const normalizedQuery = normalizeText(query)
-  const normalizedName = normalizeText(spotName)
-  if (!normalizedQuery) return 1
-
-  let score = 0
-  if (normalizedName === normalizedQuery) score += 120
-  if (normalizedName.startsWith(normalizedQuery)) score += 90
-  if (normalizedName.includes(normalizedQuery)) score += 65
-
-  const queryTokens = tokenizeNormalized(normalizedQuery)
-  const nameTokens = tokenizeNormalized(normalizedName)
-
-  if (
-    queryTokens.length > 0 &&
-    queryTokens.every((token) =>
-      nameTokens.some((nameToken) => nameToken === token),
-    )
-  ) {
-    score += 55
-  }
-
-  if (
-    queryTokens.length > 0 &&
-    queryTokens.every((token) =>
-      nameTokens.some((nameToken) => nameToken.startsWith(token)),
-    )
-  ) {
-    score += 35
-  }
-
-  if (isSubsequence(normalizedQuery, normalizedName)) score += 12
-
-  return score
 }
 
 export const MapPage = () => {
@@ -301,49 +237,19 @@ export const MapPage = () => {
   )
 
   const activeSpotsWithCoordinates = useMemo(
-    () =>
-      spots.filter(
-        (spot) =>
-          spot.active === true &&
-          spot.location?.coordinates &&
-          spot.location.coordinates.length === 2,
-      ),
+    () => getActiveSpotsWithCoordinates(spots),
     [spots],
   )
 
-  const inactiveSpots = useMemo(
-    () =>
-      spots
-        .filter((spot) => spot.active !== true)
-        .sort((a, b) => a.spotName.localeCompare(b.spotName, 'es-ES')),
-    [spots],
-  )
+  const inactiveSpots = useMemo(() => getInactiveSpotsSorted(spots), [spots])
 
   const inactiveSpotsWithCoordinates = useMemo(
-    () =>
-      spots.filter((spot) => {
-        if (spot.active === true) return false
-        const coordinates = spot.location?.coordinates
-        if (!coordinates || coordinates.length !== 2) return false
-        return !(coordinates[0] === 0 && coordinates[1] === 0)
-      }),
+    () => getInactiveSpotsWithCoordinates(spots),
     [spots],
   )
 
   const draftSpotSuggestions = useMemo(() => {
-    if (!draftSpotQuery.trim()) {
-      return inactiveSpots.slice(0, MAX_DRAFT_SUGGESTIONS)
-    }
-
-    return inactiveSpots
-      .map((spot) => ({
-        spot,
-        score: getSpotSearchScore(draftSpotQuery, spot.spotName),
-      }))
-      .filter((entry) => entry.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, MAX_DRAFT_SUGGESTIONS)
-      .map((entry) => entry.spot)
+    return getDraftSpotSuggestions(inactiveSpots, draftSpotQuery)
   }, [draftSpotQuery, inactiveSpots])
 
   useEffect(() => {
@@ -370,7 +276,7 @@ export const MapPage = () => {
       ) {
         return false
       }
-      return normalizeText(spot.spotName).includes('sopelana')
+      return spot.spotName.toLocaleLowerCase('es-ES').includes('sopelana')
     })
 
     if (!sopelanaSpot?.location?.coordinates) return null
