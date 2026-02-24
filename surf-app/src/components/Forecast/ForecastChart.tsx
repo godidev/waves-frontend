@@ -15,6 +15,7 @@ import {
   type ForecastChartPoint,
 } from './forecastSnapshots'
 import { buildForecastAxes, mapEnergyToLeftAxis } from './forecastAxes'
+import { buildForecastChartData } from './forecastChartData'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -288,15 +289,7 @@ export const ForecastChart = ({
   const chartMargin = { top: 0, right: 0, left: -8, bottom: -12 }
 
   const chartData = useMemo<ForecastChartPoint[]>(
-    () =>
-      forecasts.map((forecast) => ({
-        time: new Date(forecast.date).getTime(),
-        waveHeight: Number((forecast.validSwells[0]?.height ?? 0).toFixed(1)),
-        energy: forecast.energy,
-        wavePeriod: Number((forecast.validSwells[0]?.period ?? 0).toFixed(1)),
-        windSpeed: Number((forecast.wind.speed ?? 0).toFixed(1)),
-        windDirection: Number((forecast.wind.angle ?? 0).toFixed(1)),
-      })),
+    () => buildForecastChartData(forecasts),
     [forecasts],
   )
 
