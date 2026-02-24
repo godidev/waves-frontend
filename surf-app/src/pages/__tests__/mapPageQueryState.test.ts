@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deriveMapLoadingState, deriveMapStatus } from './mapPageQueryState'
+import { deriveMapLoadingState, deriveMapStatus } from '../mapPageQueryState'
 
 describe('mapPageQueryState', () => {
   it('is loading while queries are fetching without enough data', () => {

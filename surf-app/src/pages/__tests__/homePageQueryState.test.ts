@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   deriveForecastStatus,
   deriveNearbyBuoysStatus,
-} from './homePageQueryState'
+} from '../homePageQueryState'
 
 describe('homePageQueryState', () => {
   describe('deriveForecastStatus', () => {

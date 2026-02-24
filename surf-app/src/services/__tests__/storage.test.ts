@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { defaultSettings, getSettings, saveSettings } from './storage'
+import { defaultSettings, getSettings, saveSettings } from '../storage'
 
 describe('storage settings', () => {
   beforeEach(() => {

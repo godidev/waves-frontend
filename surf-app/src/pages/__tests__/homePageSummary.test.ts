@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { SurfForecast } from '../types'
+import type { SurfForecast } from '../../types'
 import {
   buildForecastCurrentText,
   buildSelectedDirections,
   getClosestForecast,
-} from './homePageSummary'
+} from '../homePageSummary'
 
 const makeForecast = (
   date: string,

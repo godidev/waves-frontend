@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { BuoyInfoDoc, Spot } from '../types'
-import { getMapCenter, getSopelanaSpotCenter } from './mapPageCenter'
+import type { BuoyInfoDoc, Spot } from '../../types'
+import { getMapCenter, getSopelanaSpotCenter } from '../mapPageCenter'
 
 const makeSpot = (spot: Partial<Spot>): Spot => ({
   spotId: spot.spotId ?? 'spot-id',

@@ -1,12 +1,12 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { SettingsProvider } from '../context/SettingsContext'
-import { SettingsPage } from './SettingsPage'
+import { SettingsProvider } from '../../context/SettingsContext'
+import { SettingsPage } from '../SettingsPage'
 
 const useSpotsQueryMock = vi.fn()
 const useStationsQueryMock = vi.fn()
 
-vi.mock('../hooks/useAppQueries', () => ({
+vi.mock('../../hooks/useAppQueries', () => ({
   useSpotsQuery: () => useSpotsQueryMock(),
   useStationsQuery: () => useStationsQueryMock(),
 }))

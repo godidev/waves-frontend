@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { Spot, SurfForecast } from '../../types'
-import { ForecastChart } from './ForecastChart'
+import type { Spot, SurfForecast } from '../../../types'
+import { ForecastChart } from '../ForecastChart'
 
 const makeForecast = (
   date: string,

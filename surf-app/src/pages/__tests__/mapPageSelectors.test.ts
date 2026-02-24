@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { Spot } from '../types'
+import type { Spot } from '../../types'
 import {
   getActiveSpotsWithCoordinates,
   getDraftSpotSuggestions,
   getInactiveSpotsSorted,
   getInactiveSpotsWithCoordinates,
-} from './mapPageSelectors'
+} from '../mapPageSelectors'
 
 const makeSpot = (spot: Partial<Spot>): Spot => ({
   spotId: spot.spotId ?? 'spot-id',

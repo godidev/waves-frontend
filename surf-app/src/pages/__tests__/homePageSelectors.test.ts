@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { Spot, Station } from '../types'
+import type { Spot, Station } from '../../types'
 import {
   buildBuoySelectState,
   buildSpotItems,
   resolveSpotId,
-} from './homePageSelectors'
+} from '../homePageSelectors'
 
 const makeSpot = (spot: Partial<Spot>): Spot => ({
   spotId: spot.spotId ?? 'spot-id',
