@@ -1,5 +1,11 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { getTotalWaveHeight, getPrimarySwell } from '../services/api'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  getPrimarySwell,
+  getSpots,
+  getSurfForecast,
+  getTotalWaveHeight,
+} from '../services/api'
 import './HomePage.css'
 import type { SurfForecast } from '../types'
 import { StatusMessage } from '../components/StatusMessage'
@@ -10,9 +16,10 @@ import { LabeledToggleGroup } from '../components/LabeledToggleGroup'
 import { BuoySearchRadiusControl } from '../components/BuoySearchRadiusControl'
 import { useSettingsContext } from '../context/SettingsContext'
 import {
+  queryKeys,
+  useActiveSpotsQuery,
   useBuoyDataQuery,
   useBuoysNearQuery,
-  useSpotsQuery,
   useSurfForecastQuery,
 } from '../hooks/useAppQueries'
 import {
@@ -50,6 +57,7 @@ const BuoyDetailContent = lazy(() =>
 )
 
 export const HomePage = () => {
+  const queryClient = useQueryClient()
   const { settings, updateSettings } = useSettingsContext()
   const { defaultSpotId, defaultStationId, buoySearchRadiusKm } = settings
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -68,7 +76,7 @@ export const HomePage = () => {
   const forecastVariant = forecastRange === '48h' ? 'hourly' : 'general'
   const forecastLimit = forecastRange === '48h' ? 72 : 21
 
-  const { data: spotsData, isLoading: isSpotsLoading } = useSpotsQuery()
+  const { data: spotsData, isLoading: isSpotsLoading } = useActiveSpotsQuery()
   const spots = useMemo(
     () => (spotsData ?? []).filter((spot) => spot.active === true),
     [spotsData],
@@ -100,6 +108,15 @@ export const HomePage = () => {
     [resolvedSpotId, spots],
   )
 
+  useEffect(() => {
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.spots,
+      queryFn: getSpots,
+      staleTime: 6 * 60 * 60 * 1000,
+      gcTime: 7 * 24 * 60 * 60 * 1000,
+    })
+  }, [queryClient])
+
   const mainForecastQuery = useSurfForecastQuery(
     resolvedSpotId,
     forecastVariant,
@@ -113,6 +130,17 @@ export const HomePage = () => {
     1,
     72,
   )
+
+  useEffect(() => {
+    if (resolvedSpotId.trim().length === 0) return
+
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.surfForecast(resolvedSpotId, 'general', 1, 21),
+      queryFn: () => getSurfForecast(resolvedSpotId, 'general', 1, 21),
+      staleTime: 20 * 60 * 1000,
+      gcTime: 24 * 60 * 60 * 1000,
+    })
+  }, [queryClient, resolvedSpotId])
 
   const forecasts = useMemo(
     () => (mainForecastQuery.data ?? []) as SurfForecast[],

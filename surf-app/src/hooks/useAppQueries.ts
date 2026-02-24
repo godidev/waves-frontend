@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import {
+  getActiveSpots,
   getBuoyData,
   getBuoyInfo,
   getBuoysList,
@@ -10,6 +11,7 @@ import {
 } from '../services/api'
 
 export const queryKeys = {
+  activeSpots: ['active-spots'] as const,
   spots: ['spots'] as const,
   stations: ['stations'] as const,
   buoysList: ['buoys-list'] as const,
@@ -30,6 +32,14 @@ export const useSpotsQuery = () =>
   useQuery({
     queryKey: queryKeys.spots,
     queryFn: getSpots,
+    staleTime: 6 * 60 * 60 * 1000,
+    gcTime: 7 * 24 * 60 * 60 * 1000,
+  })
+
+export const useActiveSpotsQuery = () =>
+  useQuery({
+    queryKey: queryKeys.activeSpots,
+    queryFn: getActiveSpots,
     staleTime: 6 * 60 * 60 * 1000,
     gcTime: 7 * 24 * 60 * 60 * 1000,
   })

@@ -89,6 +89,11 @@ export const getSpots = async (): Promise<Spot[]> => {
   return spots.filter((spot) => spot.spotId.trim().length > 0)
 }
 
+export const getActiveSpots = async (): Promise<Spot[]> => {
+  const spots = await fetchJson<Spot[]>('/spots/active')
+  return spots.filter((spot) => spot.spotId.trim().length > 0)
+}
+
 export const getBuoysNear = async (
   longitude: number,
   latitude: number,
