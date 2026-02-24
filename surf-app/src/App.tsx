@@ -5,6 +5,7 @@ import { SettingsProvider, useSettingsContext } from './context/SettingsContext'
 import { Layout } from './pages/Layout'
 import { HomePage } from './pages/HomePage'
 import { StatusMessage } from './components/StatusMessage'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
 
 const MapPage = lazy(() =>
   import('./pages/MapPage').then((module) => ({ default: module.MapPage })),
@@ -76,9 +77,11 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SettingsProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <AppErrorBoundary>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AppErrorBoundary>
     </SettingsProvider>
   </QueryClientProvider>
 )
