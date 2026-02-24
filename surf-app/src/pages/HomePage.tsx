@@ -2,7 +2,6 @@ import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { getTotalWaveHeight, getPrimarySwell } from '../services/api'
 import './HomePage.css'
 import type { SurfForecast } from '../types'
-import { degreesToCardinal } from '../types'
 import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
 import { SelectMenu } from '../components/SelectMenu'
@@ -24,6 +23,11 @@ import {
   deriveForecastStatus,
   deriveNearbyBuoysStatus,
 } from './homePageQueryState'
+import {
+  buildForecastCurrentText,
+  buildSelectedDirections,
+  getClosestForecast,
+} from './homePageSummary'
 
 const formatNumber = (value: number, locale: string, digits = 0): string =>
   value.toLocaleString(locale, {
@@ -192,17 +196,10 @@ export const HomePage = () => {
     ? ((latestBuoyQuery.data ?? [])[0] ?? null)
     : null
 
-  const selected = useMemo(() => {
-    if (!hourlyForecasts.length) return null
-
-    return hourlyForecasts.reduce((closest, forecast) => {
-      const forecastTime = new Date(forecast.date).getTime()
-      const closestTime = new Date(closest.date).getTime()
-      return Math.abs(forecastTime - nowMs) < Math.abs(closestTime - nowMs)
-        ? forecast
-        : closest
-    })
-  }, [hourlyForecasts, nowMs])
+  const selected = useMemo(
+    () => getClosestForecast(hourlyForecasts, nowMs),
+    [hourlyForecasts, nowMs],
+  )
 
   const locale = 'es-ES'
 
@@ -243,17 +240,11 @@ export const HomePage = () => {
 
   const selectedTotalHeight = selected ? getTotalWaveHeight(selected) : 0
   const selectedPrimarySwell = selected ? getPrimarySwell(selected) : null
-  const selectedWaveDirection =
-    selectedPrimarySwell?.angle !== undefined
-      ? `${degreesToCardinal(selectedPrimarySwell.angle)} ${selectedPrimarySwell.angle.toFixed(0)}°`
-      : '--'
-  const selectedWindDirection =
-    selected?.wind.angle !== undefined
-      ? `${degreesToCardinal(selected.wind.angle)} ${selected.wind.angle.toFixed(0)}°`
-      : '--'
-  const forecastCurrentText = selectedPrimarySwell
-    ? `${formatNumber(selectedTotalHeight, locale, 2)} m · ${formatNumber(selectedPrimarySwell.period, locale, 1)} s`
-    : `${formatNumber(selectedTotalHeight, locale, 2)} m · --`
+  const {
+    waveDirection: selectedWaveDirection,
+    windDirection: selectedWindDirection,
+  } = buildSelectedDirections(selected)
+  const forecastCurrentText = buildForecastCurrentText(selected, locale)
 
   return (
     <div className='space-y-4'>
