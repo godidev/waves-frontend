@@ -51,16 +51,17 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
   }, [])
 
   const spotOptions = useMemo(() => {
+    const activeSpots = spots.filter((spot) => spot.active)
     const map = new Map<string, { value: string; label: string }>()
 
-    spots.forEach((spot) => {
+    activeSpots.forEach((spot) => {
       map.set(normalizeSpotId(spot.spotId), {
         value: spot.spotId,
         label: spot.spotName,
       })
     })
 
-    if (!spots.length) {
+    if (!activeSpots.length) {
       const normalizedDefault = normalizeSpotId(settings.defaultSpotId)
       map.set(normalizedDefault, {
         value: settings.defaultSpotId,
