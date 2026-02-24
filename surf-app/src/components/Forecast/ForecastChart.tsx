@@ -16,6 +16,7 @@ import {
 } from './forecastSnapshots'
 import { buildForecastAxes, mapEnergyToLeftAxis } from './forecastAxes'
 import { buildForecastChartData } from './forecastChartData'
+import { ForecastWindBands } from './ForecastWindBands'
 
 interface ForecastChartProps {
   forecasts: SurfForecast[]
@@ -578,71 +579,18 @@ export const ForecastChart = ({
             baselineLabel='0 m'
           />
 
-          <div className='pt-1'>
-            <div>
-              <p className='mb-0.5 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
-                Viento
-              </p>
-              <div style={chartContentPadding}>
-                <div
-                  className='grid w-full items-center text-center'
-                  style={{
-                    gridTemplateColumns: `repeat(${Math.max(chartData.length, 1)}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {chartData.map((point) => (
-                    <span
-                      key={`wind-arrow-${point.time}`}
-                      className='inline-flex h-3.5 w-full items-center justify-center'
-                    >
-                      <DirectionArrow
-                        className='h-2.5 w-2.5 text-sky-600'
-                        degrees={point.windDirection}
-                      />
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {showWindColorBar && (
-              <div>
-                <div style={chartContentPadding}>
-                  <div className='flex h-2 w-full overflow-hidden rounded-full'>
-                    {chartData.map((point) => (
-                      <span
-                        key={`wind-${point.time}`}
-                        className='h-full flex-1'
-                        style={getSpotWindDirectionToneStyle(
-                          point.windDirection,
-                          spot,
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {showPeriodColorBar && (
-              <div className='mt-1.5'>
-                <p className='mb-0.5 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300'>
-                  Periodo
-                </p>
-                <div style={chartContentPadding}>
-                  <div className='flex h-2 w-full overflow-hidden rounded-full'>
-                    {chartData.map((point) => (
-                      <span
-                        key={`period-${point.time}`}
-                        className='h-full flex-1'
-                        style={getSpotPeriodToneStyle(point.wavePeriod, spot)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <ForecastWindBands
+            chartData={chartData}
+            chartContentPadding={chartContentPadding}
+            showWindColorBar={showWindColorBar}
+            showPeriodColorBar={showPeriodColorBar}
+            getWindToneStyle={(angle) =>
+              getSpotWindDirectionToneStyle(angle, spot)
+            }
+            getPeriodToneStyle={(period) =>
+              getSpotPeriodToneStyle(period, spot)
+            }
+          />
         </>
       )}
     </div>
