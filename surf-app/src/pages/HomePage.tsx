@@ -14,6 +14,7 @@ import { StatusMessage } from '../components/StatusMessage'
 import { SectionHeader } from '../components/SectionHeader'
 import { SelectMenu } from '../components/SelectMenu'
 import { HomeSummaryCards } from '../components/HomeSummaryCards'
+import { useSettingsContext } from '../context/SettingsContext'
 
 const formatNumber = (value: number, locale: string, digits = 0): string =>
   value.toLocaleString(locale, {
@@ -39,23 +40,9 @@ const BuoyDetailContent = lazy(() =>
   })),
 )
 
-interface HomePageProps {
-  defaultSpotId: string
-  defaultStationId: string
-  buoySearchRadiusKm: number
-  onSelectSpot: (id: string) => void
-  onSelectStation: (id: string) => void
-  onSelectBuoySearchRadiusKm: (value: number) => void
-}
-
-export const HomePage = ({
-  defaultSpotId,
-  defaultStationId,
-  buoySearchRadiusKm,
-  onSelectSpot,
-  onSelectStation,
-  onSelectBuoySearchRadiusKm,
-}: HomePageProps) => {
+export const HomePage = () => {
+  const { settings, updateSettings } = useSettingsContext()
+  const { defaultSpotId, defaultStationId, buoySearchRadiusKm } = settings
   const [forecasts, setForecasts] = useState<SurfForecast[]>([])
   const [hourlyForecasts, setHourlyForecasts] = useState<SurfForecast[]>([])
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -88,9 +75,9 @@ export const HomePage = ({
 
   useEffect(() => {
     if (safeBuoySearchRadiusKm !== buoySearchRadiusKm) {
-      onSelectBuoySearchRadiusKm(safeBuoySearchRadiusKm)
+      updateSettings({ buoySearchRadiusKm: safeBuoySearchRadiusKm })
     }
-  }, [buoySearchRadiusKm, onSelectBuoySearchRadiusKm, safeBuoySearchRadiusKm])
+  }, [buoySearchRadiusKm, safeBuoySearchRadiusKm, updateSettings])
 
   useEffect(() => {
     setDraftBuoySearchRadiusKm(safeBuoySearchRadiusKm)
@@ -98,7 +85,7 @@ export const HomePage = ({
 
   const commitBuoySearchRadiusKm = () => {
     if (draftBuoySearchRadiusKm !== safeBuoySearchRadiusKm) {
-      onSelectBuoySearchRadiusKm(draftBuoySearchRadiusKm)
+      updateSettings({ buoySearchRadiusKm: draftBuoySearchRadiusKm })
     }
   }
 
@@ -209,7 +196,7 @@ export const HomePage = ({
       (spot) => normalizeSpotId(spot.spotId) === normalizeSpotId(activeSpotId),
     )
     if (byId && byId.spotId !== activeSpotId) {
-      onSelectSpot(byId.spotId)
+      updateSettings({ defaultSpotId: byId.spotId })
       return
     }
 
@@ -219,13 +206,13 @@ export const HomePage = ({
           normalizeSpotId(spot.spotName) === normalizeSpotId(activeSpotId),
       )
       if (byName) {
-        onSelectSpot(byName.spotId)
+        updateSettings({ defaultSpotId: byName.spotId })
         return
       }
 
-      onSelectSpot(spots[0].spotId)
+      updateSettings({ defaultSpotId: spots[0].spotId })
     }
-  }, [activeSpotId, onSelectSpot, spots])
+  }, [activeSpotId, spots, updateSettings])
 
   useEffect(() => {
     let mounted = true
@@ -269,8 +256,8 @@ export const HomePage = ({
   useEffect(() => {
     if (!stations.length) return
     if (stations.some((station) => station.buoyId === activeStationId)) return
-    onSelectStation(stations[0].buoyId)
-  }, [activeStationId, onSelectStation, stations])
+    updateSettings({ defaultStationId: stations[0].buoyId })
+  }, [activeStationId, stations, updateSettings])
 
   useEffect(() => {
     if (!activeStationId) {
@@ -422,7 +409,7 @@ export const HomePage = ({
             <div className='shrink-0'>
               <SelectMenu
                 value={resolvedSpotId}
-                onChange={onSelectSpot}
+                onChange={(value) => updateSettings({ defaultSpotId: value })}
                 ariaLabel='Seleccionar spot'
                 name='forecast-spot'
                 className={headerSelectClass}
@@ -509,7 +496,9 @@ export const HomePage = ({
               <div className='shrink-0'>
                 <SelectMenu
                   value={buoySelectValue}
-                  onChange={onSelectStation}
+                  onChange={(value) =>
+                    updateSettings({ defaultStationId: value })
+                  }
                   ariaLabel='Seleccionar boya'
                   name='nearby-buoy'
                   disabled={isBuoySelectorDisabled}

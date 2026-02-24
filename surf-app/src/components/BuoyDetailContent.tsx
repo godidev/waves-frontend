@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
-import { getBuoyData } from '../services/api'
+import { useMemo, useState } from 'react'
 import type { BuoyDataDoc } from '../types'
 import { MetricCard } from './MetricCard'
 import { BuoyChart } from './BuoyChart'
@@ -7,6 +6,7 @@ import { BuoyTable } from './BuoyTable'
 import { SegmentedToggle } from './SegmentedToggle'
 import { StatusMessage } from './StatusMessage'
 import { DirectionArrow, WaveHeight, WavePeriod } from './Icons'
+import { useBuoyDataQuery } from '../hooks/useAppQueries'
 
 interface BuoyDetailContentProps {
   stationId: string
@@ -29,35 +29,17 @@ export const BuoyDetailContent = ({
   showMetrics = true,
 }: BuoyDetailContentProps) => {
   const [range, setRange] = useState<RangeOption>('6')
-  const [buoyData, setBuoyData] = useState<BuoyDataDoc[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const {
+    data: buoyDataResponse,
+    isLoading,
+    isError,
+  } = useBuoyDataQuery(stationId, 24)
+  const buoyData: BuoyDataDoc[] = useMemo(
+    () => buoyDataResponse ?? [],
+    [buoyDataResponse],
+  )
   const locale = 'es-ES'
   const activeRange = hours ?? range
-
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      setLoading(true)
-      setError(false)
-      try {
-        // Fetch máximo (24h) una sola vez por estación y derivar 6h/12h/24h en memoria
-        const data = await getBuoyData(stationId, 24)
-        if (!mounted) return
-        setBuoyData(data)
-      } catch (err) {
-        console.error('Failed to load buoy data:', err)
-        if (!mounted) return
-        setError(true)
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-    void load()
-    return () => {
-      mounted = false
-    }
-  }, [stationId])
 
   // Convert BuoyDataDoc to Buoy format for existing components
   const buoys = useMemo(() => {
@@ -82,12 +64,12 @@ export const BuoyDetailContent = ({
 
   const latest = useMemo(() => visibleBuoys.at(-1), [visibleBuoys])
 
-  if (loading) {
+  if (isLoading) {
     if (!showStatusMessages) return null
     return <StatusMessage message='Cargando…' />
   }
 
-  if (error) {
+  if (isError) {
     if (!showStatusMessages) return null
     return <StatusMessage message='Error al cargar datos' variant='error' />
   }

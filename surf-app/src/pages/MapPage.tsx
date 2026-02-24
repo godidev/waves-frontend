@@ -8,6 +8,7 @@ import {
 } from 'react-leaflet'
 import { DivIcon, Icon } from 'leaflet'
 import type { Marker as LeafletMarker } from 'leaflet'
+import { useNavigate } from 'react-router-dom'
 import 'leaflet/dist/leaflet.css'
 import './MapPage.css'
 import type { BuoyInfoDoc, Spot } from '../types'
@@ -15,10 +16,7 @@ import { getBuoysList, getSpots, updateSpotInfo } from '../services/api'
 import { validateSpainSeaOrBeachLocation } from '../utils/spainCoastValidation'
 import { BottomSheet } from '../components/BottomSheet'
 import { PageHeader } from '../components/PageHeader'
-
-interface MapPageProps {
-  onFocusBuoy: (id: string) => void
-}
+import { useSettingsContext } from '../context/SettingsContext'
 
 const COAST_BEACH_BAND_METERS = 1300
 const COAST_BEACH_BAND_KM = COAST_BEACH_BAND_METERS / 1000
@@ -171,7 +169,9 @@ const getSpotSearchScore = (query: string, spotName: string): number => {
   return score
 }
 
-export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
+export const MapPage = () => {
+  const navigate = useNavigate()
+  const { updateSettings } = useSettingsContext()
   const [buoys, setBuoys] = useState<BuoyInfoDoc[]>([])
   const [spots, setSpots] = useState<Spot[]>([])
   const [selected, setSelected] = useState<BuoyInfoDoc | null>(null)
@@ -747,7 +747,8 @@ export const MapPage = ({ onFocusBuoy }: MapPageProps) => {
             </div>
             <button
               onClick={() => {
-                onFocusBuoy(selected.buoyId)
+                updateSettings({ defaultStationId: selected.buoyId })
+                navigate(`/buoy/${selected.buoyId}`)
                 setSelected(null)
               }}
               className='w-full touch-manipulation rounded-xl bg-ocean-500 px-4 py-3 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300'

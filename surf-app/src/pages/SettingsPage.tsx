@@ -1,54 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { SettingsState, Spot, Station } from '../types'
-import { getSpots, getStations } from '../services/api'
+import { useMemo } from 'react'
+import type { Spot, Station } from '../types'
 import { PageHeader } from '../components/PageHeader'
 import { SelectMenu } from '../components/SelectMenu'
+import { useSettingsContext } from '../context/SettingsContext'
+import { useSpotsQuery, useStationsQuery } from '../hooks/useAppQueries'
 
 const normalizeSpotId = (spotId: string): string =>
   spotId.trim().toLocaleLowerCase('es-ES')
 
-interface SettingsPageProps {
-  settings: SettingsState
-  onUpdate: (next: SettingsState) => void
-}
+export const SettingsPage = () => {
+  const { settings, updateSettings } = useSettingsContext()
+  const { data: spotsData } = useSpotsQuery()
+  const { data: stationsData } = useStationsQuery()
 
-export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
-  const [spots, setSpots] = useState<Spot[]>([])
-  const [stations, setStations] = useState<Station[]>([])
-
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      try {
-        const stationData = await getStations()
-        if (!mounted) return
-        setStations(stationData)
-      } catch {
-        // Handle error silently
-      }
-    }
-    void load()
-    return () => {
-      mounted = false
-    }
-  }, [])
-
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      try {
-        const spotData = await getSpots()
-        if (!mounted) return
-        setSpots(spotData)
-      } catch {
-        // Handle error silently
-      }
-    }
-    void load()
-    return () => {
-      mounted = false
-    }
-  }, [])
+  const spots: Spot[] = useMemo(() => spotsData ?? [], [spotsData])
+  const stations: Station[] = useMemo(() => stationsData ?? [], [stationsData])
 
   const spotOptions = useMemo(() => {
     const activeSpots = spots.filter((spot) => spot.active)
@@ -104,10 +70,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
               value={settings.theme}
               name='theme'
               onChange={(value) =>
-                onUpdate({
-                  ...settings,
-                  theme: value as 'dark' | 'light',
-                })
+                updateSettings({ theme: value as 'dark' | 'light' })
               }
               ariaLabel='Seleccionar tema'
               className={selectClass}
@@ -122,9 +85,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
             <SelectMenu
               value={settings.defaultSpotId}
               name='default-spot'
-              onChange={(value) =>
-                onUpdate({ ...settings, defaultSpotId: value })
-              }
+              onChange={(value) => updateSettings({ defaultSpotId: value })}
               ariaLabel='Seleccionar spot por defecto'
               className={selectClass}
               options={spotOptions}
@@ -135,9 +96,7 @@ export const SettingsPage = ({ settings, onUpdate }: SettingsPageProps) => {
             <SelectMenu
               value={settings.defaultStationId}
               name='default-buoy'
-              onChange={(value) =>
-                onUpdate({ ...settings, defaultStationId: value })
-              }
+              onChange={(value) => updateSettings({ defaultStationId: value })}
               ariaLabel='Seleccionar boya por defecto'
               className={selectClass}
               options={buoyOptions}

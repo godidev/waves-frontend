@@ -1,12 +1,7 @@
 import { Suspense, lazy } from 'react'
-import {
-  BrowserRouter,
-  Route,
-  Routes,
-  useNavigate,
-  useParams,
-} from 'react-router-dom'
-import { useSettings } from './hooks/useSettings'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom'
+import { SettingsProvider, useSettingsContext } from './context/SettingsContext'
 import { Layout } from './pages/Layout'
 import { HomePage } from './pages/HomePage'
 import { StatusMessage } from './components/StatusMessage'
@@ -27,47 +22,33 @@ const BuoyDetailPage = lazy(() =>
 
 const RouteLoading = () => <StatusMessage message='Cargando…' />
 
-const BuoyRoute = ({ stationId }: { stationId: string }) => {
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+const BuoyRoute = () => {
   const params = useParams()
-  return <BuoyDetailPage stationId={params.id ?? stationId} />
+  const {
+    settings: { defaultStationId },
+  } = useSettingsContext()
+  return <BuoyDetailPage stationId={params.id ?? defaultStationId} />
 }
 
 const AppRoutes = () => {
-  const { settings, setSettings } = useSettings()
-  const navigate = useNavigate()
-
   return (
     <Routes>
       <Route path='/' element={<Layout />}>
-        <Route
-          index
-          element={
-            <HomePage
-              defaultSpotId={settings.defaultSpotId}
-              defaultStationId={settings.defaultStationId}
-              buoySearchRadiusKm={settings.buoySearchRadiusKm}
-              onSelectSpot={(id) =>
-                setSettings((prev) => ({ ...prev, defaultSpotId: id }))
-              }
-              onSelectStation={(id) =>
-                setSettings((prev) => ({ ...prev, defaultStationId: id }))
-              }
-              onSelectBuoySearchRadiusKm={(value) =>
-                setSettings((prev) => ({ ...prev, buoySearchRadiusKm: value }))
-              }
-            />
-          }
-        />
+        <Route index element={<HomePage />} />
         <Route
           path='map'
           element={
             <Suspense fallback={<RouteLoading />}>
-              <MapPage
-                onFocusBuoy={(id) => {
-                  setSettings((prev) => ({ ...prev, defaultStationId: id }))
-                  navigate(`/buoy/${id}`)
-                }}
-              />
+              <MapPage />
             </Suspense>
           }
         />
@@ -75,10 +56,7 @@ const AppRoutes = () => {
           path='settings'
           element={
             <Suspense fallback={<RouteLoading />}>
-              <SettingsPage
-                settings={settings}
-                onUpdate={(next) => setSettings(next)}
-              />
+              <SettingsPage />
             </Suspense>
           }
         />
@@ -86,7 +64,7 @@ const AppRoutes = () => {
           path='buoy/:id'
           element={
             <Suspense fallback={<RouteLoading />}>
-              <BuoyRoute stationId={settings.defaultStationId} />
+              <BuoyRoute />
             </Suspense>
           }
         />
@@ -96,9 +74,13 @@ const AppRoutes = () => {
 }
 
 const App = () => (
-  <BrowserRouter>
-    <AppRoutes />
-  </BrowserRouter>
+  <QueryClientProvider client={queryClient}>
+    <SettingsProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </SettingsProvider>
+  </QueryClientProvider>
 )
 
 export default App
