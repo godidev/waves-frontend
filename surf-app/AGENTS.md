@@ -12,12 +12,14 @@ Map view includes geospatial validation for spot placement (Spain sea/coast rule
 npm run dev            # Start Vite dev server
 npm run build          # TypeScript check (tsc -b) then Vite production build
 npm run lint           # ESLint (flat config, v9)
+npm run test           # Vitest run (jsdom)
+npm run test:watch     # Vitest watch mode
 npm run format         # Prettier -- write all files
 npm run format:check   # Prettier -- check only (CI-friendly)
 npm run preview        # Serve production build locally
 ```
 
-**There is no test framework configured.** No jest, vitest, cypress, or playwright. No `npm test` script exists.
+Test stack is configured with Vitest + Testing Library (`jsdom`) and global setup at `src/tests/setup.ts`.
 
 ## Project Structure
 
@@ -26,10 +28,16 @@ src/
   components/          # Reusable UI components (PascalCase filenames)
   components/Forecast/ # Forecast-specific components
   components/charts/   # Shared chart system (theme + base chart)
+  components/**/__tests__/ # Component/unit tests
+  context/             # App-wide context providers
+  context/__tests__/   # Context tests
   data/                # GeoJSON datasets used by map validation
   pages/               # Route-level page components
+  pages/__tests__/     # Page-level selector/helper tests
   hooks/               # Custom React hooks (camelCase with use prefix)
   services/            # API client and localStorage wrapper
+  services/__tests__/  # Service tests
+  tests/               # Vitest setup and test polyfills
   types/               # TypeScript interfaces and utility type functions
   utils/               # Pure utility functions (time formatting)
 
@@ -91,7 +99,7 @@ No blank-line separation is enforced between groups, but the ordering is consist
 | Category               | Convention           | Example                          |
 | ---------------------- | -------------------- | -------------------------------- |
 | Component files        | PascalCase `.tsx`    | `MetricCard.tsx`, `HomePage.tsx` |
-| Hook files             | camelCase `.ts`      | `useSettings.ts`                 |
+| Hook files             | camelCase `.ts`      | `useAppQueries.ts`               |
 | Service/util files     | camelCase `.ts`      | `api.ts`, `time.ts`              |
 | Directories            | lowercase            | `components/`, `hooks/`          |
 | Components             | PascalCase           | `MetricCard`, `BottomNav`        |
@@ -108,39 +116,26 @@ No blank-line separation is enforced between groups, but the ordering is consist
 - Pattern: `const fn = async (...): Promise<T> => { fetch -> check response.ok -> throw Error -> return json }`
 - Use `URLSearchParams` for query strings; `String()` for number conversion
 - Default parameter values for optional params (e.g., `limit = 6`)
+- Server-state fetching, cache and invalidation are managed in React Query hooks (`src/hooks/useAppQueries.ts`)
 - Forecast data has two endpoints by variant:
   - `hourly` -> `/surf-forecast/:spot/hourly`
   - `general` -> `/surf-forecast/:spot/general`
   - `getSurfForecast` receives variant as the second argument
 - Error messages in thrown errors are in **English**: `'Failed to fetch stations'`
-- Helper/derived functions (e.g., `getPrimarySwell`) are co-located in `api.ts`
+- Helper/derived functions are progressively extracted to feature helpers/selectors for testability
 
 ### Error Handling
 
 - API layer: `if (!response.ok) throw new Error('...')` -- no custom error classes
 - Storage: `try/catch` with silent fallback to defaults
-- Components use a **mounted flag** pattern to prevent state updates after unmount:
-  ```ts
-  useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      // ... if (!mounted) return
-    }
-    void load()
-    return () => {
-      mounted = false
-    }
-  }, [deps])
-  ```
-- Async status tracked with union type: `'loading' | 'error' | 'success'`
-- Fire-and-forget async calls prefixed with `void`: `void load()`
-- Secondary data loads log errors with `console.error()` and fail silently
+- Route/app fallback protection uses `AppErrorBoundary`
+- Query error/loading states should be derived from React Query state whenever possible
 
 ### State Management
 
-- No state management library (no Redux, Zustand, etc.)
-- React `useState`/`useEffect` for all state
-- `useMemo` for derived/computed values
+- Server state: React Query (`@tanstack/react-query`)
+- Global client settings: `SettingsContext` + reducer
+- Local UI state: component `useState`/`useMemo`
 - Settings persisted to `localStorage` via `src/services/storage.ts`
 - Theme switching is controlled from `SettingsPage` (no theme toggle in footer nav)
 

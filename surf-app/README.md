@@ -19,6 +19,8 @@ Aplicación frontend para consultar condiciones de surf y boyas, construida con 
 npm run dev
 npm run build
 npm run lint
+npm run test
+npm run test:watch
 npm run format
 npm run format:check
 npm run preview
@@ -46,10 +48,11 @@ La tarjeta de resumen superior usa siempre datos hourly y selecciona el punto m�
 
 - Gráfico de forecast con selector de spot y selector de rango (`48h` / `7d`)
 - Gráfico de boyas con selector de estación y selector de horas (`6h` / `12h` / `24h`)
-- Sistema de gráficos compartido (`src/components/charts`) y componente de select compartido (`src/components/SelectMenu.tsx`)
+- Sistema de gráficos compartido (`src/components/charts`) y componentes reutilizables de UI (`SelectMenu`, `LabeledToggleGroup`)
 - Ajustes persistidos del usuario (tema, spot por defecto, estación por defecto)
 - El tema solo se cambia desde Ajustes (el footer ya no incluye toggle de tema)
 - Validación de ubicación en mapa: solo permite colocar/arrastrar spots en mar o en franja de playa cercana a costa de España
+- Estado servidor y caché de datos gestionados con React Query (`src/hooks/useAppQueries.ts`)
 
 ## Validación geoespacial del mapa
 
@@ -77,9 +80,15 @@ src/
   components/
   components/Forecast/
   components/charts/
+  components/**/__tests__/
   hooks/
+  context/
+  context/__tests__/
   pages/
+  pages/__tests__/
   services/
+  services/__tests__/
+  tests/                # setup global de Vitest
   types/
   utils/
 ```
